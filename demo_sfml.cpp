@@ -5,7 +5,8 @@ int main()
 {
     sf::RenderWindow window(sf::VideoMode(800, 600), "Hello, GameTree!");
 
-    //how do you make vsync actually work? see https://www.maketecheasier.com/get-rid-screen-tearing-linux/
+    //how do you make vsync actually work? see https://www.maketecheasier.com/get-rid-screen-tearing-linux/ - yup, like that, the intel
+    //section worked on entrapta
     window.setVerticalSyncEnabled(true); // call it once, after creating the window
 
     // set up some stuff to draw
