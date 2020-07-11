@@ -11,7 +11,7 @@
 using namespace tiledreader;
 
 int main(int argc, char *argv[]) {
-  printf("Hello and welcome to Tiled2GT, the tenacious Tiled to Gametree conversion utility.\n");
+  //printf("Hello and welcome to Tiled2GT, the tenacious Tiled to Gametree conversion utility.\n");
 
   //parse command line.
   //WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -24,19 +24,21 @@ int main(int argc, char *argv[]) {
   // why not use https://github.com/CLIUtils/CLI11
   // got CLI11.hpp release 1.9.1 from https://github.com/CLIUtils/CLI11/releases
 
-  // LEFT OFF HERE: PUT IN ARG PARSING, see
+  // Time for arg parsing
   // https://github.com/CLIUtils/CLI11#adding-options
 
-  if(argc < 2) {
-    fprintf(stderr,"Usage: Tiled2GT [OPTIONS] <Tiled file>\n");
-    fprintf(stderr,"need:\n");
-    fprintf(stderr,"- input map file, tmx (later maybe json too) \n");
-    fprintf(stderr,"- output directory if we're writing tile sheets and metadata separately\n");
-    fprintf(stderr,"- output format (separate files, glommed metadata & pngs to be read with loadFromMemory or \n");
-    fprintf(stderr,"  similar)\n");
-    fprintf(stderr,"- whether we want a header file made (or more generally output format - bin, json)\n");
-    exit(1);
-  }
+  CLI::App app{"Hello and welcome to Tiled2GT, the tenacious Tiled to Gametree conversion utility."};
+
+  // if(argc < 2) {
+  //   fprintf(stderr,"Usage: Tiled2GT [OPTIONS] <Tiled file>\n");
+  //   fprintf(stderr,"need:\n");
+  //   fprintf(stderr,"- input map file, tmx (later maybe json too) \n");
+  //   fprintf(stderr,"- output directory if we're writing tile sheets and metadata separately\n");
+  //   fprintf(stderr,"- output format (separate files, glommed metadata & pngs to be read with loadFromMemory or \n");
+  //   fprintf(stderr,"  similar)\n");
+  //   fprintf(stderr,"- whether we want a header file made (or more generally output format - bin, json)\n");
+  //   exit(1);
+  // }
 
 
   TiledReader tr;
