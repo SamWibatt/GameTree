@@ -3,8 +3,9 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "",
+    "activeFile": "Terrain.tsx",
     "expandedProjectPaths": [
+        "."
     ],
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
@@ -41,14 +42,31 @@
                 "x": 193.77359834722517,
                 "y": 110.06625347296432
             }
+        },
+        "Autotiles_Water.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 3
+        },
+        "Ground.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "Terrain.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
         }
     },
     "map.lastUsedExportFilter": "JSON map files (*.json)",
     "map.layerDataFormat": null,
     "openFiles": [
+        "Ground.tsx",
+        "Terrain.tsx"
     ],
     "project": "demo_map.tiled-project",
     "recentFiles": [
+        "Ground.tsx",
+        "Terrain.tsx",
+        "Autotiles_Water.tsx",
         "/home/sean/dev/GameNoodles/sfml/hello/assets/tiled_map/Collection.tsx",
         "/home/sean/dev/GameNoodles/sfml/hello/assets/tiled_map/singlescreen.tmx",
         "/home/sean/dev/GameNoodles/sfml/hello/assets/tiled_map/singlescreen-map.json",
@@ -56,5 +74,6 @@
         "/home/sean/dev/GameNoodles/sfml/hello/assets/tiled_map/canari_8bit_topdown.tsx",
         "/home/sean/dev/GameNoodles/sfml/hello/assets/tiled_map/KenneyUIPixelPack.tsx",
         "/home/sean/dev/GameNoodles/sfml/hello/assets/tiled_map/mazetest.tsx"
-    ]
+    ],
+    "tileset.lastUsedFormat": "tsx"
 }

@@ -2,8 +2,9 @@
     "automappingRulesFile": "",
     "commands": [
     ],
-    "extensionsPath": "../../../GameNoodles/sfml/hello/assets/tiled_map/extensions",
+    "extensionsPath": "extensions",
     "folders": [
+        "."
     ],
     "objectTypesFile": ""
 }
