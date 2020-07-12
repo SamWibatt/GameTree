@@ -14,9 +14,7 @@
 #include <map>
 #include <functional>
 
-//TEMP! for platform-specific sfml stuff
-#include "sfmlsprite.h"
-using namespace sfml_assets;
+//using namespace gtree_sfml;
 
 namespace gt {
 
@@ -95,6 +93,77 @@ namespace gt {
     // *****************************************************************************************
     // *****************************************************************************************
 
+  };
+
+  // SPRITE ======================================================================================
+
+    // single frame
+  class SpriteFrame {
+    public:
+      //data members
+      int ulx, uly;         //texture coordinates, pixels, within sprite sheet texture
+      int wid, ht;          //extents of rectangle within sprite sheet texture
+      float offx, offy;     //offsets to give to sprite.setOrigin(sf::Vector2f(offx, offy));
+      int dur;              //duration, millis
+
+    public:
+      SpriteFrame() {}
+      SpriteFrame(int ux, int uy, int w, int h, int ox, int oy, int dr) {
+        ulx = ux; 
+        uly = uy;
+        wid = w;
+        ht = h;
+        offx = ox;
+        offy = oy;
+        dur = dr;
+      }
+      virtual ~SpriteFrame() {}
+  };
+
+  //There needs to be a class that's like a "directory" for these
+  //contains inventory of actions, # directions & such for each of those
+  //can be defined in a header emitted by asesprite2sfml
+  class SpriteInfo {
+    public:
+      //data members
+      // these map character name, action name, direction name to indices into frame map below
+      std::map<std::string,int> character_to_index;
+      std::map<std::string,int> action_to_index;
+      std::map<std::string,int> direction_to_index;
+
+    public:
+      SpriteInfo(){}
+      virtual ~SpriteInfo() {}
+
+    public:
+      //member functions
+      int get_index_for_character(std::string chname) {
+        auto it = character_to_index.find(chname);
+        if(it == character_to_index.end()) return -1;
+        return it->second;
+      }
+      int get_index_for_action(std::string actname) {
+        auto it = action_to_index.find(actname);
+        if(it == action_to_index.end()) return -1;
+        return it->second;
+      }
+      int get_index_for_direction(std::string dirname) {
+        auto it = direction_to_index.find(dirname);
+        if(it == direction_to_index.end()) return -1;
+        return it->second;
+      }
+  };
+
+  //platform-independent Sprite object that plat-spec ones will subclass
+  class Sprite {
+    public:
+      //data members
+      SpriteInfo info;
+      std::map<int, std::map<int, std::map<int, std::vector<SpriteFrame>>>> frames;
+
+    public:
+      Sprite() {}
+      virtual ~Sprite() {}
   };
 
 
@@ -256,7 +325,7 @@ namespace gt {
   class Actor : public EventEntity {
     public:
       //data members
-      std::shared_ptr<SFMLSprite> sprite;
+      std::shared_ptr<Sprite> sprite;
       int current_character;
       int current_direction;
       int current_action;
@@ -269,7 +338,7 @@ namespace gt {
       Actor();
       virtual ~Actor();
 
-      const SFMLSpriteFrame *get_current_spriteframe() {
+      const SpriteFrame *get_current_spriteframe() {
         //sanity check: should we do all this for every frame? on a "real computer" it's no problem
         //once per sprite per frame advance is not terrible overhead, but damn
         if(sprite == nullptr || 
@@ -279,7 +348,7 @@ namespace gt {
           current_frame == -1 || current_frame >= sprite->frames[current_character][current_action][current_direction].size()) {
           return nullptr;
         }
-        //was return std::shared_ptr<SFMLSpriteFrame>(&(sprite->frames[current_character][current_action][current_direction][current_frame]));
+        //was return std::shared_ptr<SpriteFrame>(&(sprite->frames[current_character][current_action][current_direction][current_frame]));
         return &(sprite->frames[current_character][current_action][current_direction][current_frame]);
       }
 

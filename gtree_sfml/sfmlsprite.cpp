@@ -1,5 +1,5 @@
 #include "sfmlsprite.h"
 
-namespace sfml_assets {
+namespace gtree_sfml {
   
 }
