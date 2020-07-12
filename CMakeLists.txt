@@ -13,9 +13,9 @@ target_include_directories(gametree PUBLIC "asepritereader")
 target_link_directories(gametree PUBLIC "asepritereader")
 
 # platform-specific subdirectory for using gametree with sfml - need to reorganize
-add_subdirectory("sfml_assets")
-target_include_directories(gametree PUBLIC "sfml_assets")
-target_link_directories(gametree PUBLIC "sfml_assets")
+add_subdirectory("gtree_sfml")
+target_include_directories(gametree PUBLIC "gtree_sfml")
+target_link_directories(gametree PUBLIC "gtree_sfml")
 
 
 
