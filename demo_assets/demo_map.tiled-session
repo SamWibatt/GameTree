@@ -1,0 +1,63 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "/home/sean/dev/GameNoodles/sfml/hello/assets/tiled_map/singlescreen.tmx",
+    "expandedProjectPaths": [
+        "/home/sean/dev/GameNoodles/sfml/hello/assets/tiled_map"
+    ],
+    "file.lastUsedOpenFilter": "All Files (*)",
+    "fileStates": {
+        "/home/sean/dev/GameNoodles/sfml/hello/assets/tiled_map/Collection.tsx": {
+            "dynamicWrapping": true,
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "/home/sean/dev/GameNoodles/sfml/hello/assets/tiled_map/KenneyUIPixelPack.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 3.0047
+        },
+        "/home/sean/dev/GameNoodles/sfml/hello/assets/tiled_map/canari_8bit_topdown.tsx": {
+            "dynamicWrapping": false,
+            "scaleInDock": 0.8541,
+            "scaleInEditor": 2.33
+        },
+        "/home/sean/dev/GameNoodles/sfml/hello/assets/tiled_map/hello-map.tmx": {
+            "scale": 2.232,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 799.9551971326164,
+                "y": 799.9551971326164
+            }
+        },
+        "/home/sean/dev/GameNoodles/sfml/hello/assets/tiled_map/mazetest.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 4.2751
+        },
+        "/home/sean/dev/GameNoodles/sfml/hello/assets/tiled_map/singlescreen.tmx": {
+            "scale": 1.4037,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 193.77359834722517,
+                "y": 110.06625347296432
+            }
+        }
+    },
+    "map.lastUsedExportFilter": "JSON map files (*.json)",
+    "map.layerDataFormat": null,
+    "openFiles": [
+        "/home/sean/dev/GameNoodles/sfml/hello/assets/tiled_map/Collection.tsx",
+        "/home/sean/dev/GameNoodles/sfml/hello/assets/tiled_map/singlescreen.tmx"
+    ],
+    "project": "demo_map.tiled-project",
+    "recentFiles": [
+        "/home/sean/dev/GameNoodles/sfml/hello/assets/tiled_map/Collection.tsx",
+        "/home/sean/dev/GameNoodles/sfml/hello/assets/tiled_map/singlescreen.tmx",
+        "/home/sean/dev/GameNoodles/sfml/hello/assets/tiled_map/singlescreen-map.json",
+        "/home/sean/dev/GameNoodles/sfml/hello/assets/tiled_map/hello-map.tmx",
+        "/home/sean/dev/GameNoodles/sfml/hello/assets/tiled_map/canari_8bit_topdown.tsx",
+        "/home/sean/dev/GameNoodles/sfml/hello/assets/tiled_map/KenneyUIPixelPack.tsx",
+        "/home/sean/dev/GameNoodles/sfml/hello/assets/tiled_map/mazetest.tsx"
+    ]
+}
