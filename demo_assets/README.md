@@ -13,5 +13,8 @@ Following are from [Ascension Game Dev Intersect Assets](https://github.com/Asce
 * `Natural_Dog_001.png` - Characters and Monsters from PixelFox. 
 * `Npc_Generic_016.png`, `Npc_Generic_019.png` - Sprites commissioned from Jon Collier (aka Zetasis). Draws from PixelFox's original designs.
 * `Particles.png` - Animations by PixelFox. 
+* `Autotiles_Water.png` - Credit goes to George (George Bailey), Murdoc (Cordell Carrier), and Zetasis (Jon Collier) for making several extras.
+* `Ground.png`, `Terrain.png` - Tileset additions and updates by Zetasis (Jon Collier)!
 
-* sounds are cc-by or pd and lots of good UI clicks and stuff
+**GET SOME SOUNDS IN TOO**
+* Intersect sounds are cc-by or pd and lots of good UI clicks and stuff

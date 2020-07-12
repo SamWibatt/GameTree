@@ -3,9 +3,8 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "/home/sean/dev/GameNoodles/sfml/hello/assets/tiled_map/singlescreen.tmx",
+    "activeFile": "",
     "expandedProjectPaths": [
-        "/home/sean/dev/GameNoodles/sfml/hello/assets/tiled_map"
     ],
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
@@ -47,8 +46,6 @@
     "map.lastUsedExportFilter": "JSON map files (*.json)",
     "map.layerDataFormat": null,
     "openFiles": [
-        "/home/sean/dev/GameNoodles/sfml/hello/assets/tiled_map/Collection.tsx",
-        "/home/sean/dev/GameNoodles/sfml/hello/assets/tiled_map/singlescreen.tmx"
     ],
     "project": "demo_map.tiled-project",
     "recentFiles": [
