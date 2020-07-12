@@ -18,3 +18,7 @@ Following are from [Ascension Game Dev Intersect Assets](https://github.com/Asce
 
 **GET SOME SOUNDS IN TOO**
 * Intersect sounds are cc-by or pd and lots of good UI clicks and stuff
+
+* and THOSE they refer to external source at OpenGameArt - which is pretty neat!
+* GUI sounds - https://opengameart.org/art-search-advanced?keys=gui&title=&field_art_tags_tid_op=or&field_art_tags_tid=&name=&field_art_type_tid%5B%5D=13&sort_by=count&sort_order=DESC&items_per_page=24&Collection=
+* oh interesting there's stuff like Kenney on there, even public domain https://opengameart.org/content/ui-pack

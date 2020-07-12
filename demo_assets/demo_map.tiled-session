@@ -3,7 +3,7 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "Terrain.tsx",
+    "activeFile": "",
     "expandedProjectPaths": [
         "."
     ],
@@ -59,8 +59,6 @@
     "map.lastUsedExportFilter": "JSON map files (*.json)",
     "map.layerDataFormat": null,
     "openFiles": [
-        "Ground.tsx",
-        "Terrain.tsx"
     ],
     "project": "demo_map.tiled-project",
     "recentFiles": [
