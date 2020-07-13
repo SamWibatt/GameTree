@@ -83,6 +83,8 @@ int main(int argc, char *argv[]) {
   // ******************************** YAY this is worky on entrapta with
   // /home/sean/dev/cpp/GameTree/build/tiledreader/tiled2gt -i ~/dev/GameNoodles/sfml/hello/assets/tiled_map/singlescreen.tmx -o ~/tmp/tiled2gt/
   // writes the tileset pngs and json files for the tile atlas!
+  // didn't write the pngs on takkun, hm
+  // aha, bc I didn't put the slash on the end of output dir, fix
   printf("About to convert Tiled file %s...\n",tiled_input_file.c_str());
   tr.read_map_file(tiled_input_file, output_dir);  
 

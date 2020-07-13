@@ -11,8 +11,13 @@
 #include <set>
 #include <map>
 #include "pugixml.hpp"
+//set up include dirs to have json/single_include
+#include "nlohmann/json.hpp"
+
 
 using namespace pugi;
+using json = nlohmann::json;
+
 
 namespace tiledreader {
 
@@ -41,6 +46,19 @@ namespace tiledreader {
         wid = w;
         ht = h;
       }
+
+      public:
+        void add_to_json(json& j, std::string layer_atlas_name) {
+          j[layer_atlas_name].push_back(std::map<std::string, int>{
+            {"gid", int(gid) },
+            {"tileset_index", tileset_index },
+            {"image_index", image_index },
+            {"ulx", ulx},
+            {"uly", uly},
+            {"wid", wid},
+            {"ht", ht}
+          });
+        }
   };
 
 
@@ -102,7 +120,7 @@ namespace tiledreader {
 
   };
 
-  typedef enum {
+  typedef enum : int {
     TL_TiledLayer,
     TL_ObjectLayer,
     TL_Unknown
@@ -154,6 +172,61 @@ namespace tiledreader {
         layer_name = nam;
         layer_w = lw;
         layer_h = lh;
+      }
+
+    public:
+      void add_to_json(json& j, std::string layer_metadata_name) {
+        j[layer_metadata_name]["layer_id"] = layer_id;
+        j[layer_metadata_name]["layer_name"] = layer_name;
+
+        if(type == TL_TiledLayer) {
+          j[layer_metadata_name]["type"] = "tiled";
+
+          // int layer_w; // = grandkid.attribute("width").as_int();
+          // int layer_h; // = grandkid.attribute("height").as_int();
+          // std::vector<tile_index_t> mapcells;
+          // std::string encoding;
+          // int tile_width;   //pixel width of tiles, if applicable
+          // int tile_height;
+
+          j[layer_metadata_name]["layer_w"] = layer_w;
+          j[layer_metadata_name]["layer_h"] = layer_h;
+          j[layer_metadata_name]["encoding"] = encoding;
+          j[layer_metadata_name]["tile_width"] = tile_width;
+          j[layer_metadata_name]["tile_height"] = tile_height;
+
+          //can you do this?
+          j[layer_metadata_name]["mapcells"] = mapcells;
+
+          // these are for animated and odd-size tiles & c? ... how DOES that work? Oh, it's in the atlas
+          for(auto bjecto : tile_objects) {
+            j[layer_metadata_name]["tile_objects"].push_back(std::map<std::string,int>{
+              {"id", bjecto->id},
+              {"gid", int(bjecto->gid)},
+              {"orx", bjecto->orx},
+              {"ory", bjecto->ory},
+              {"wid", bjecto->wid},
+              {"ht", bjecto->ht}
+            });
+          }
+
+        } else if(type == TL_ObjectLayer) { 
+          j[layer_metadata_name]["type"] = "object";
+
+          for(auto bjecto : tile_objects) {
+            j[layer_metadata_name]["tile_objects"].push_back(std::map<std::string,int>{
+              {"id", bjecto->id},
+              {"gid", int(bjecto->gid)},
+              {"orx", bjecto->orx},
+              {"ory", bjecto->ory},
+              {"wid", bjecto->wid},
+              {"ht", bjecto->ht}
+            });
+          }
+        } else {
+          j[layer_metadata_name]["type"] = "unknown";
+        }
+
       }
   };
 

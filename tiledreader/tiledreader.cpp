@@ -3,8 +3,6 @@
 #include "tiledreader.h"
 //stuff from crunch
 #include "crunch_main.h"
-//set up include dirs to have json/single_include
-#include "nlohmann/json.hpp"
 #include <fstream>
 #include <iomanip>
 
@@ -13,6 +11,9 @@ using json = nlohmann::json;
 
 
 namespace tiledreader {
+
+  // HEY MAKE THIS OS INDEPENDENT
+  std::string path_sep = "/";
 
   // TILESET =============================================================================================  
   //returns a tuple of (image #, ulx, uly, wid, ht) or -1s if the gid isn't in this one
@@ -80,9 +81,10 @@ namespace tiledreader {
     //libpng 1.6.37 or newer installed - looks like focal has it
     //and looks like we can just stick paths together if they're relative
     //let's assume source is relative...?
-    auto const pos=parentfile.find_last_of('/');
+    //DO THE PATHS IN THIS USE THE OS-SPEC?
+    auto const pos=parentfile.find_last_of(path_sep[0]);
     std::string parentpath = parentfile.substr(0,pos);
-    std::string sourcetsx = parentpath + "/" + tsroot.attribute("source").value();
+    std::string sourcetsx = parentpath + path_sep + tsroot.attribute("source").value();
     //printf("    tsx file is %s\n",sourcetsx.c_str());
 
     //need to parse that one as xml too!
@@ -162,9 +164,9 @@ namespace tiledreader {
                 return nullptr; 
               }
 
-              auto const pngpos=sourcetsx.find_last_of('/');
+              auto const pngpos=sourcetsx.find_last_of(path_sep[0]);
               std::string tsxpath = sourcetsx.substr(0,pngpos);
-              std::string sourcepng = tsxpath + "/" + imgnode.attribute("source").as_string();
+              std::string sourcepng = tsxpath + path_sep + imgnode.attribute("source").as_string();
               //printf("        png file is %s\n",sourcepng.c_str());
               ts->images.push_back(TilesetImage(imgnode.attribute("width").as_int(), 
                                                 imgnode.attribute("height").as_int(), 
@@ -186,9 +188,9 @@ namespace tiledreader {
           //<image source="../Kenney_Assets_1/UI_Pixel_Pack/UIpackSheet_magenta.png" trans="ff00ff" width="538" height="592"/>
           if(std::string(grandkid.name()) == "image") {
             //memorize for later png ripping
-            auto const pngpos=sourcetsx.find_last_of('/');
+            auto const pngpos=sourcetsx.find_last_of(path_sep[0]);
             std::string tsxpath = sourcetsx.substr(0,pngpos);
-            std::string sourcepng = tsxpath + "/" + grandkid.attribute("source").as_string();
+            std::string sourcepng = tsxpath + path_sep + grandkid.attribute("source").as_string();
             //printf("        png file is %s\n",sourcepng.c_str());
 
             ts->images.push_back(TilesetImage(grandkid.attribute("width").as_int(), grandkid.attribute("height").as_int(),
@@ -513,7 +515,7 @@ namespace tiledreader {
     //Step 4. invoke crunch to produce a single bitmap we'll use as a texture for this layer.
     //        create texture from crunch's output bitmap
     //        say we die if there is more than one packer for now
-    std::string name = sptml->layer_name + "_tileset";
+    std::string name = "Tileset_" + sptml->layer_name;
     if(!do_crunch(name,outputDir)) {
       printf("ERROR crunch failed\n");
       //return std::make_pair(nullptr,nullptr);
@@ -530,7 +532,7 @@ namespace tiledreader {
     //new_atlas[0] = atlas_record();
     // To be consistent with the above writing out the .png, let's write out the atlas too!
     // what does that look like? FTM let's emit json - yay nother submodule? We want to be able to read json maps anyway
-    json json_atlas;
+    // - moving json part down below so whole map has one 
     for(tile_index_t gid: unique_gids) {
       if(gid != 0) {
         atlas_record atrec;
@@ -546,33 +548,10 @@ namespace tiledreader {
         atrec.ht = packers[0]->bitmaps[pkrbmpind]->height;
         new_atlas[gid] = atrec;
 
-        //see if this works to make an array of atlas records in the json
-        // tile_index_t gid;
-        // int tileset_index;    // index into map's list of tilesets, 0 for outward
-        // int image_index;      // index into a given list of Bitmap images; for single texture sfml map layers, always 0
-        // int ulx;
-        // int uly; 
-        // int wid;
-        // int ht;
-        json_atlas.push_back(std::map<std::string, int>{
-          {"gid", int(atrec.gid) },
-          {"tileset_index", atrec.tileset_index },
-          {"image_index", atrec.image_index },
-          {"ulx", atrec.ulx},
-          {"uly", atrec.uly},
-          {"wid", atrec.wid},
-          {"ht", atrec.ht}
-        });
 
       }
     }
 
-    //emit json atlas
-    std::string json_atlas_name = outputDir + "/" + sptml->layer_name + "_atlas.json"; 
-    printf("-- writing json atlas %s\n",json_atlas_name.c_str());
-    std::ofstream json_outstream(json_atlas_name);
-    //setw(4) does 4 space pretty print
-    json_outstream << std::setw(4) << json_atlas << endl;
     
     return new_atlas;
 
@@ -586,6 +565,11 @@ namespace tiledreader {
       printf("Read faily!\n");
       return nullptr;
     }
+
+    //fiddle output directory to have a slash on the end
+    // HEY MAKE THIS OS-INDEPENDENT correctly
+    if(outputDir[outputDir.length()-1] != path_sep[0])
+      outputDir += path_sep;
 
     //Map object we're building
     std::shared_ptr<TiledMap> tm = std::shared_ptr<TiledMap>(new TiledMap);
@@ -632,13 +616,48 @@ namespace tiledreader {
     }
 
     //so now we have a map with layers and tilesets. Is that all we need? NO! We need the .png files for the layers' tilesets, too!
+    json json_map;
 
     //this used to be in tiled2sfml & now it's here!
     //so we need to call the png & atlas make on each layer
     for(int layer_num = 0; layer_num < tm->layers.size(); layer_num++) {
       std::unordered_map<tile_index_t, atlas_record> layer_atlas = MakeTilesheetPNGAndAtlas(tm, layer_num, outputDir);
       //DO SOMETHING WITH LAYER_ATLAS? I guess don't really need to just yet but could; maketilesheetpngandatlas emits file
+      // - and actually it would be better to build the json here from the atlas
+      //need to make legal json key somehow
+      //THIS NEEDS TO BE THE SAME AS THE PNG NAME but for packer number then we can use the key to load the png
+      std::string layer_atlas_name = "Tileset_" + tm->layers[layer_num]->layer_name;
+      std::string layer_metadata_name = "Layer_" + tm->layers[layer_num]->layer_name;
+
+      // lets see what this does - it'll make an array, huh
+      //json_map[layer_metadata_name].push_back(std::make_pair<std::string,tilemaplayer_type>("type",
+      //  tm->layers[layer_num]->type))
+      // do this kind of thing instead
+      //json_map[layer_metadata_name]["type"] = tm->layers[layer_num]->type;
+      tm->layers[layer_num]->add_to_json(json_map,layer_metadata_name);
+
+
+      // tileset atlas add to map json 
+      for(auto atrec: layer_atlas) atrec.second.add_to_json(json_map, layer_atlas_name);
     }
+
+    // *******************************************************************************************
+    // *******************************************************************************************
+    // *******************************************************************************************
+    // NEED TO EMIT THE TILESET OBJECTS TOO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // *******************************************************************************************
+    // *******************************************************************************************
+    // *******************************************************************************************
+
+    //emit json map metadata
+    // outputDir has a slash on end so just concat
+    // MAKE A REAL NAME
+    std::string json_map_name = outputDir + "outmap.json"; 
+    printf("-- writing json map %s\n",json_map_name.c_str());
+    std::ofstream json_outstream(json_map_name);
+    //setw(4) does 4 space pretty print
+    json_outstream << std::setw(4) << json_map << endl;
+
 
     return tm;    
   }
