@@ -12,6 +12,12 @@ add_subdirectory("crunch_modified")
 target_include_directories(tiledreader PUBLIC "crunch_modified")
 target_link_directories(tiledreader PUBLIC "crunch_modified")
 
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+# this is gross but it gets unhappy if I do 2 copies of the library
+# do I need the subdir if I'm just going to use the header?
+#add_subdirectory("../asepritereader/json")
+target_include_directories(tiledreader PUBLIC "../asepritereader/json/single_include") 
+
 target_link_libraries(tiledreader pugixml-static crunch)
 
 add_executable(tiled2gt tiled2gt.cpp)

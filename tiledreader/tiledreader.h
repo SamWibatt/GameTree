@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <sstream>
 #include <set>
+#include <map>
 #include "pugixml.hpp"
 
 using namespace pugi;
@@ -16,6 +17,32 @@ using namespace pugi;
 namespace tiledreader {
 
   typedef uint32_t tile_index_t;
+
+  //atlas record is used in the mapping from original tile gid to subregion of the sf::Texture associated with it
+  //or for gid to the same in a list of images
+  class atlas_record {
+    public:
+      tile_index_t gid;
+      int tileset_index;    // index into map's list of tilesets, 0 for outward
+      int image_index;      // index into a given list of Bitmap images; for single texture sfml map layers, always 0
+      int ulx;
+      int uly; 
+      int wid;
+      int ht;
+
+    public:
+      atlas_record() {}
+      atlas_record(tile_index_t g, int ts, int ii, int ux, int uy, int w, int h) {
+        gid = g;
+        tileset_index = ts;
+        image_index = ii;
+        ulx = ux;
+        uly = uy;
+        wid = w;
+        ht = h;
+      }
+  };
+
 
   class TilesetImage {
     public:
@@ -147,7 +174,11 @@ namespace tiledreader {
       virtual ~TiledReader() {}
 
     public:
-      virtual std::shared_ptr<TiledMap> read_map_file(std::string filename);
+      virtual std::unordered_map<tile_index_t, atlas_record> MakeTilesheetPNGAndAtlas(std::shared_ptr<TiledMap> sptm, int layer_num, 
+                                                                                      std::string outputDir);
+      std::string get_name_for_bmp(tile_index_t gid);
+      bool do_crunch(std::string name,std::string outputDir);
+      virtual std::shared_ptr<TiledMap> read_map_file(std::string filename, std::string outputDir);
   };
 
 

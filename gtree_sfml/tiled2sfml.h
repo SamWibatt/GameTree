@@ -10,8 +10,6 @@
 #include "tiledreader.h"
 #include "sfmlmap.h"
 
-//stuff from crunch
-#include "crunch_main.h"
 
 using namespace tiledreader;
 using namespace sfml_assets;
@@ -19,28 +17,29 @@ using namespace sfml_assets;
 
 //atlas record is used in the mapping from original tile gid to subregion of the sf::Texture associated with it
 //or for gid to the same in a list of images
-class atlas_record {
-  public:
-    tile_index_t gid;
-    int tileset_index;    // index into map's list of tilesets, 0 for outward
-    int image_index;      // index into a given list of Bitmap images; for single texture sfml map layers, always 0
-    int ulx;
-    int uly; 
-    int wid;
-    int ht;
+// relocated to tiledreader
+// class atlas_record {
+//   public:
+//     tile_index_t gid;
+//     int tileset_index;    // index into map's list of tilesets, 0 for outward
+//     int image_index;      // index into a given list of Bitmap images; for single texture sfml map layers, always 0
+//     int ulx;
+//     int uly; 
+//     int wid;
+//     int ht;
 
-  public:
-    atlas_record() {}
-    atlas_record(tile_index_t g, int ts, int ii, int ux, int uy, int w, int h) {
-      gid = g;
-      tileset_index = ts;
-      image_index = ii;
-      ulx = ux;
-      uly = uy;
-      wid = w;
-      ht = h;
-    }
-};
+//   public:
+//     atlas_record() {}
+//     atlas_record(tile_index_t g, int ts, int ii, int ux, int uy, int w, int h) {
+//       gid = g;
+//       tileset_index = ts;
+//       image_index = ii;
+//       ulx = ux;
+//       uly = uy;
+//       wid = w;
+//       ht = h;
+//     }
+// };
 
 class Tiled2SFML {
   public:
