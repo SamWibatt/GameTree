@@ -12,6 +12,11 @@ add_subdirectory("asepritereader")
 target_include_directories(gametree PUBLIC "asepritereader")
 target_link_directories(gametree PUBLIC "asepritereader")
 
+# this is gross - need to refactor all this to handle the json
+# submodule properly
+target_include_directories(gametree PUBLIC "asepritereader/json/single_include") 
+
+
 # platform-specific subdirectory for using gametree with sfml - need to reorganize
 add_subdirectory("gtree_sfml")
 target_include_directories(gametree PUBLIC "gtree_sfml")

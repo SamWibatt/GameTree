@@ -35,6 +35,8 @@ namespace sfml_assets {
       //animated tiles present a problem there but could just do minor surgery on submaps to make it happen
       //how do we know which submap corresponds to what area? 
       //let's just start with one vertex array per layer. 
+      // HEY LET'S DO TRIANGLE STRIPS
+      // EACH SHOULD HAVE A BOUNDING BOX, ACCOUNTING FOR UNUSUALLY SIZED TILES
       std::vector<sf::VertexArray> layer_vert_arrays;
 
     public:

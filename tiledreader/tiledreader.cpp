@@ -641,22 +641,16 @@ namespace tiledreader {
       for(auto atrec: layer_atlas) atrec.second.add_to_json(json_map, layer_atlas_name);
     }
 
-    // *******************************************************************************************
-    // *******************************************************************************************
-    // *******************************************************************************************
-    // NEED TO EMIT THE TILESET OBJECTS TOO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // *******************************************************************************************
-    // *******************************************************************************************
-    // *******************************************************************************************
-
-    //emit json map metadata
-    // outputDir has a slash on end so just concat
-    // MAKE A REAL NAME
-    std::string json_map_name = outputDir + "outmap.json"; 
-    printf("-- writing json map %s\n",json_map_name.c_str());
-    std::ofstream json_outstream(json_map_name);
-    //setw(4) does 4 space pretty print
-    json_outstream << std::setw(4) << json_map << endl;
+    // This is great! But misconceived. We don't want Tiled metadata, we want GT metadata, so we need to postprocess Tiled into that.
+    // Is there any reason to emit metadata for this format? The tm data structure + the png files should be good.
+    // //emit json map metadata
+    // // outputDir has a slash on end so just concat
+    // // MAKE A REAL NAME
+    // std::string json_map_name = outputDir + "outmap.json"; 
+    // printf("-- writing json map %s\n",json_map_name.c_str());
+    // std::ofstream json_outstream(json_map_name);
+    // //setw(4) does 4 space pretty print
+    // json_outstream << std::setw(4) << json_map << endl;
 
 
     return tm;    

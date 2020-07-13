@@ -13,6 +13,7 @@ set_property(TARGET asepritereader PROPERTY CXX_STANDARD 11)
 # add_subdirectory(subproject)
 # Then LOL I see I had this solution showing in json's own readme - https://github.com/nlohmann/json#embedded
 # set(JSON_BuildTests OFF CACHE BOOL "Build the unit tests when BUILD_TESTING is enabled.")
-set(JSON_BuildTests OFF CACHE INTERNAL "")
-add_subdirectory("json")
+# do we even need to add the subdir? we're just using a header
+#set(JSON_BuildTests OFF CACHE INTERNAL "")
+#add_subdirectory("json")
 target_include_directories(asepritereader PUBLIC "json/single_include") 

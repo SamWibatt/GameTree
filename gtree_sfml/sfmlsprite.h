@@ -10,7 +10,7 @@ namespace gtree_sfml {
 
   // SpriteFrame and SpriteFrameInfo are non-sfml-dependent, let's move them to gametree
 
-  class SFMLSprite : public Sprite {
+  class SFMLSprite : public GTSprite {
     public:
       //data members
       sf::Texture spritesheet;

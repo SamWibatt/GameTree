@@ -12,6 +12,10 @@ add_subdirectory("crunch_modified")
 target_include_directories(tiledreader PUBLIC "crunch_modified")
 target_link_directories(tiledreader PUBLIC "crunch_modified")
 
+# for conversion to gametree - THIS IS GROSS
+target_include_directories(tiledreader PUBLIC "..")
+target_link_directories(tiledreader PUBLIC "..")
+
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 # this is gross but it gets unhappy if I do 2 copies of the library
 # do I need the subdir if I'm just going to use the header?
@@ -22,4 +26,4 @@ target_link_libraries(tiledreader pugixml-static crunch)
 
 add_executable(tiled2gt tiled2gt.cpp)
 target_include_directories(tiled2gt PUBLIC "pugixml/src") 
-target_link_libraries(tiled2gt tiledreader)
+target_link_libraries(tiled2gt tiledreader gametree)

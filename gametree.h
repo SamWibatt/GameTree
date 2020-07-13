@@ -13,8 +13,10 @@
 #include <vector>
 #include <map>
 #include <functional>
+//set up include dirs to have json/single_include
+#include "nlohmann/json.hpp"
 
-//using namespace gtree_sfml;
+using json = nlohmann::json;
 
 namespace gt {
 
@@ -31,10 +33,10 @@ namespace gt {
   // there was no danger of any machine staying up that long without a restart. Now, though.
   typedef uint64_t timestamp_t;
 
-  class Event;
-  class EventEntity;
+  class GTEvent;
+  class GTEventEntity;
 
-  class Time {
+  class GTTime {
     public:
       timestamp_t current_time;
 
@@ -50,18 +52,18 @@ namespace gt {
       //std::map<timestamp_t, std::shared_ptr<Event>> ev_list;
 
       // instead, here are the entities registered against this Time
-      std::vector<EventEntity *> clients;
+      std::vector<GTEventEntity *> clients;
 
 
     public:
-      Time() { 
+      GTTime() { 
         //start at time 0 with everything paused
         current_time = 0;
         paused = true; 
       }
 
-      ~Time() {
-        printf("Freeing Time object\n");
+      ~GTTime() {
+        printf("Freeing GTTime object\n");
       }
 
     public:
@@ -75,7 +77,7 @@ namespace gt {
       timestamp_t get_current_time() { return current_time; }
 
       // managing clients
-      bool add_client(EventEntity  *cli); 
+      bool add_client(GTEventEntity  *cli); 
       bool remove_client(id_t client_id);
 
 
@@ -95,10 +97,148 @@ namespace gt {
 
   };
 
+  // MAP =========================================================================================
+  // Will be organized similarly to a Tiled map, bc why not, but streamlined to contain only
+  // what's necessary at runtime.
+
+  // GTTile is the texture vertex info for a tile in a given tile sheet
+  class GTTile {
+    public:
+      int ulx;
+      int uly; 
+      int wid;
+      int ht;
+
+    public:
+      GTTile() {}
+      GTTile(int ux, int uy, int w, int h) {
+        ulx = ux;
+        uly = uy;
+        wid = w;
+        ht = h;
+      }
+      virtual ~GTTile() {}
+
+      // for writing to json file - should this be here?
+      // there should be a read-FROM-json one def
+      public:
+        virtual void add_to_json(json& j, std::string layer_atlas_name) {
+          j[layer_atlas_name].push_back(std::map<std::string, int>{
+            {"ulx", ulx},
+            {"uly", uly},
+            {"wid", wid},
+            {"ht", ht}
+          });
+        }
+
+        // assuming that e.g. j[layer_atlas_name][tile index]
+        // is usable as a json itself, and that's jt
+        // FIND OUT IF THIS IS A GOOD WAY TO DO THIS 
+        virtual bool get_from_json(json& jt) {
+          if(jt.count("ulx") == 0 || jt.count("uly") == 0 ||
+              jt.count("wid") == 0 || jt.count("ht") == 0) {
+            //error! missing a field
+            fprintf(stderr,"*** ERROR: tile needs ulx, uly, wid, ht, got %s\n",jt.dump().c_str());
+            return false;
+          }
+          ulx = jt["ulx"];
+          uly = jt["uly"];
+          wid = jt["wid"];
+          ht = jt["ht"];
+          return true;
+        }
+  };
+
+  //**********************************************************************************************
+  //**********************************************************************************************
+  //**********************************************************************************************
+  // MAYBE THERE IS AN ANIMATED TILE SUBCLASS OF THAT WHICH EVENTS CAN
+  // ADVANCE?
+  // SHOULD TILES AND MAPS BE ENTITIES / EVENT ENTITIES?
+  //**********************************************************************************************
+  //**********************************************************************************************
+  //**********************************************************************************************
+
+
+  //base class for layers
+  class GTMapLayer {
+    public:
+      //data members
+      //single source of tile imagery - 
+      //bytes that are just a png file in memory. May later have other formats
+      std::vector<uint8_t> image_data;
+      //tile atlas - texture coordinates within image for tile n
+      //tile 0 is always the no-tile, but put an entry in here for it
+      //to keep the map indexing simple
+      std::vector<GTTile> tile_atlas;
+
+    public:
+      void init() {
+        image_data.clear();
+        tile_atlas.clear();
+        //add a dummy tile for tile 0, which should never get rendered
+        tile_atlas.push_back(GTTile(0,0,0,0));
+      }
+      GTMapLayer() {
+        init();
+      }
+      virtual ~GTMapLayer() {}
+
+      // ****************************************************************
+      // ****************************************************************
+      // ****************************************************************
+      // JSON IN/OUT WILL NEED TO BE DONE BY SUBCLASSES.
+      // HOW DO WE KNOW WHICH KIND TO INSTANTIATE ON READING?
+      // DO WE NEED A TYPE FIELD?
+      // ****************************************************************
+      // ****************************************************************
+      // ****************************************************************
+  };
+
+  typedef uint32_t GTtile_index_t;
+
+  // layer that consists of a square grid of (at least mostly) same-size tiles
+  // may have some odd-sized ones
+  // the defining characteristic is that tile placement is
+  // determined by the grid. 
+  class GTTiledMapLayer : public GTMapLayer {
+    int layer_tilewid;   //layer width in tiles
+    int layer_tileht;    //height
+    int tile_pixwid;     //tile grid width in pixels
+    int tile_pixht;      //height
+    
+    //tilemap entries are indices into tile_atlas; 0 means no tile in
+    //that grid location
+    std::vector<GTtile_index_t> tile_map;
+  };
+
+  //location / extent of a free-floating tile as opposed to TiledMapLayer
+  //grid-determined location
+  class GTObjectTile {
+    int orx;        //origin x
+    int ory;        //origin y
+    int wid;        //width 
+    int ht;         //height
+    int offx;       //offset from drawing point to origin
+    int offy;       //"
+  };
+
+  //layer that consists of tiles individually placed with no grid
+  class GTObjectsTileLayer : public GTMapLayer {
+    public:
+      std::vector<GTObjectTile> tile_objects;
+  };
+
+  class GTMap {
+    // Tiled map has only lists of tilesets and layers.
+    // do we need the notion of a tileset?
+    // each layer has a tile sheet and atlas, yes?
+  };
+
   // SPRITE ======================================================================================
 
     // single frame
-  class SpriteFrame {
+  class GTSpriteFrame {
     public:
       //data members
       int ulx, uly;         //texture coordinates, pixels, within sprite sheet texture
@@ -107,8 +247,8 @@ namespace gt {
       int dur;              //duration, millis
 
     public:
-      SpriteFrame() {}
-      SpriteFrame(int ux, int uy, int w, int h, int ox, int oy, int dr) {
+      GTSpriteFrame() {}
+      GTSpriteFrame(int ux, int uy, int w, int h, int ox, int oy, int dr) {
         ulx = ux; 
         uly = uy;
         wid = w;
@@ -117,13 +257,13 @@ namespace gt {
         offy = oy;
         dur = dr;
       }
-      virtual ~SpriteFrame() {}
+      virtual ~GTSpriteFrame() {}
   };
 
-  //There needs to be a class that's like a "directory" for these
+  //There needs to be a class GTthat's like a "directory" for these
   //contains inventory of actions, # directions & such for each of those
   //can be defined in a header emitted by asesprite2sfml
-  class SpriteInfo {
+  class GTSpriteInfo {
     public:
       //data members
       // these map character name, action name, direction name to indices into frame map below
@@ -132,8 +272,8 @@ namespace gt {
       std::map<std::string,int> direction_to_index;
 
     public:
-      SpriteInfo(){}
-      virtual ~SpriteInfo() {}
+      GTSpriteInfo(){}
+      virtual ~GTSpriteInfo() {}
 
     public:
       //member functions
@@ -155,15 +295,15 @@ namespace gt {
   };
 
   //platform-independent Sprite object that plat-spec ones will subclass
-  class Sprite {
+  class GTSprite {
     public:
       //data members
-      SpriteInfo info;
-      std::map<int, std::map<int, std::map<int, std::vector<SpriteFrame>>>> frames;
+      GTSpriteInfo info;
+      std::map<int, std::map<int, std::map<int, std::vector<GTSpriteFrame>>>> frames;
 
     public:
-      Sprite() {}
-      virtual ~Sprite() {}
+      GTSprite() {}
+      virtual ~GTSprite() {}
   };
 
 
@@ -174,20 +314,21 @@ namespace gt {
   // though Noun has grammar baggage. How about Entity?
   // Entity should be minimal: id and children(kids)
   // might not even keep the kids, might shfufle them into a subclass
-  class Entity {
+  class GTEntity {
     //data members
     protected:
       id_t id;
       // pointers to avoid object slicing, smart pointers to avoid memory allocation hassles
-      std::vector<std::shared_ptr<Entity>> kids;
+      // do we need this?
+      // std::vector<std::shared_ptr<GTEntity>> kids;
 
     public:
       void init() { 
         id = get_next_id();
         printf("- entity init, id %u\n",id); 
       }
-      Entity() { init(); }
-      virtual ~Entity() { 
+      GTEntity() { init(); }
+      virtual ~GTEntity() { 
         //does this need to be explicit? kids.clear();
         printf("Deleting entity id %u\n",id); 
       }
@@ -196,18 +337,19 @@ namespace gt {
       id_t get_id() { return id; }
       void set_id(id_t i) { id = i; }
 
-      std::vector<std::shared_ptr<Entity>> &get_kids() { return kids; }
-      void add_kid(std::shared_ptr<Entity> ent) { kids.push_back(ent); }
-      std::shared_ptr<Entity> get_kid_by_index(int i) {
-        if(kids.size() <= i) return nullptr;
-        return kids[i];
-      }
-      std::shared_ptr<Entity> get_kid_by_id(id_t i) {
-        for(auto kid: kids) {
-          if(kid->get_id() == i) return kid;
-        }
-        return nullptr;
-      }
+      // revive if we're going to have child pointers
+      // std::vector<std::shared_ptr<GTEntity>> &get_kids() { return kids; }
+      // void add_kid(std::shared_ptr<GTEntity> ent) { kids.push_back(ent); }
+      // std::shared_ptr<GTEntity> get_kid_by_index(int i) {
+      //   if(kids.size() <= i) return nullptr;
+      //   return kids[i];
+      // }
+      // std::shared_ptr<GTEntity> get_kid_by_id(id_t i) {
+      //   for(auto kid: kids) {
+      //     if(kid->get_id() == i) return kid;
+      //   }
+      //   return nullptr;
+      // }
 
   };
 
@@ -278,12 +420,12 @@ namespace gt {
   //was typedef std::function<int(EventEntity *, timestamp_t)> event_func_t;
   typedef std::function<int(timestamp_t)> event_func_t;
 
-  class EventEntity : public Entity {
+  class GTEventEntity : public GTEntity {
     public:
       //data members
       // clock that governs this entity
       // since we're not creating it, don't use a smart ptr!
-      Time *clock;
+      GTTime *clock;
       // event list, ordered by timestamp
       // this works(ish), but it's complicated and gross
       //std::map<timestamp_t, std::shared_ptr<Event>> ev_list;
@@ -297,11 +439,11 @@ namespace gt {
 
 
     public:
-      EventEntity();
-      virtual ~EventEntity();
+      GTEventEntity();
+      virtual ~GTEventEntity();
 
     public:
-      void register_clock(Time &tim) { 
+      void register_clock(GTTime &tim) { 
         clock = &tim; 
         tim.add_client(this);
       }
@@ -322,10 +464,10 @@ namespace gt {
   // ACTOR =======================================================================================
 
   // stepping ahead, let's make one work, and then refactor.
-  class Actor : public EventEntity {
+  class GTActor : public GTEventEntity {
     public:
       //data members
-      std::shared_ptr<Sprite> sprite;
+      std::shared_ptr<GTSprite> sprite;
       int current_character;
       int current_direction;
       int current_action;
@@ -335,10 +477,10 @@ namespace gt {
       bool visible;
 
     public:
-      Actor();
-      virtual ~Actor();
+      GTActor();
+      virtual ~GTActor();
 
-      const SpriteFrame *get_current_spriteframe() {
+      const GTSpriteFrame *get_current_spriteframe() {
         //sanity check: should we do all this for every frame? on a "real computer" it's no problem
         //once per sprite per frame advance is not terrible overhead, but damn
         if(sprite == nullptr || 
@@ -348,7 +490,7 @@ namespace gt {
           current_frame == -1 || current_frame >= sprite->frames[current_character][current_action][current_direction].size()) {
           return nullptr;
         }
-        //was return std::shared_ptr<SpriteFrame>(&(sprite->frames[current_character][current_action][current_direction][current_frame]));
+        //was return std::shared_ptr<GTSpriteFrame>(&(sprite->frames[current_character][current_action][current_direction][current_frame]));
         return &(sprite->frames[current_character][current_action][current_direction][current_frame]);
       }
 

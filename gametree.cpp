@@ -17,7 +17,7 @@ namespace gt {
   // *****************************************************************************************
   // ADVANCE GLOBAL TIME
 
-  void Time::advance_time(timestamp_t delta) {
+  void GTTime::advance_time(timestamp_t delta) {
 
     //if we're paused, bail
     if(paused) return;
@@ -30,7 +30,7 @@ namespace gt {
     }
   }
 
-  bool Time::add_client(EventEntity *cli) {
+  bool GTTime::add_client(GTEventEntity *cli) {
       //what would make this fail? like, it's already there?
       if(cli == nullptr) return false;
 
@@ -47,7 +47,7 @@ namespace gt {
   }
 
   
-  bool Time::remove_client(id_t client_id) {
+  bool GTTime::remove_client(id_t client_id) {
     for(auto cit = clients.begin(); cit != clients.end(); cit++) {
       if((*cit)->get_id() == client_id) {
         //this might invalidate the iterator, but we're leaving anyway
@@ -61,12 +61,12 @@ namespace gt {
 
   // EVENTENTITY ====================================================================================
 
-  EventEntity::EventEntity() {
+  GTEventEntity::GTEventEntity() {
     clock = nullptr;
     printf("Creating event entity, id %u\n",id);
   }
 
-  EventEntity::~EventEntity() {
+  GTEventEntity::~GTEventEntity() {
     //remove from clock's client list
     if(clock != nullptr) {
       printf("Event entity %u removing itself from clock client list\n",id);
@@ -76,7 +76,7 @@ namespace gt {
     printf("Destroying event entity, id %u\n",id);
   }
 
-  void EventEntity::handle_events() {
+  void GTEventEntity::handle_events() {
     // bail if we're not active
     if(!active) {
       return;
@@ -115,7 +115,7 @@ namespace gt {
   }
 
   // ACTOR ==========================================================================================
-  Actor::Actor() {
+  GTActor::GTActor() {
     // id should be filled in by Entity ctor
     printf("Creating actor id %u\n",id);
     sprite = nullptr;
@@ -125,13 +125,13 @@ namespace gt {
     current_frame = -1;
   }
 
-  Actor::~Actor() {
+  GTActor::~GTActor() {
     //sprite is a smart pointer, just let it go?
-    printf("Destroying Actor id %u\n",id);
+    printf("Destroying GTActor id %u\n",id);
   }
 
   // MIGHT ALSO PASS IN WHETHER THE ANIMATION REPEATS
-  int Actor::set_action(std::string actname) {
+  int GTActor::set_action(std::string actname) {
     if(sprite == nullptr) return -1;
     int actind = sprite->info.get_index_for_action(actname);
     if(actind == -1) return -1;
@@ -143,7 +143,7 @@ namespace gt {
   }
 
   // MIGHT ALSO PASS IN WHETHER THE ANIMATION REPEATS
-  int Actor::set_direction(std::string dirname) {
+  int GTActor::set_direction(std::string dirname) {
     if(sprite == nullptr) return -1;
     int dirind = sprite->info.get_index_for_direction(dirname);
     if(dirind == -1) return -1;
@@ -154,7 +154,7 @@ namespace gt {
     return set_frame(0);
   }
 
-  int Actor::set_frame(int fr) {
+  int GTActor::set_frame(int fr) {
     // bail if duplicate? not necessarily, is this only called by set_action and set_direction?
     // if that's so, and we happen to be on the same frame they want to set, upcoming events could be wrong
     // needs a better name
@@ -175,7 +175,7 @@ namespace gt {
     // ev_list[ts] = std::shared_ptr<Event>(new AdvanceFrameEvent(ts,this));
     // return true;
 
-    event_func_t nuev = std::bind(&Actor::advance_frame_event, this, _1);
+    event_func_t nuev = std::bind(&GTActor::advance_frame_event, this, _1);
     add_event(clock->get_current_time() + fram->dur, nuev);
 
     return 1;
@@ -185,7 +185,7 @@ namespace gt {
   // default implementation adds 1 to frame, mods by # frames in current action/direction
   // returns number of millis to wait until next frame, 0 if the animation is ending
   // NOT ANYMORE does like others and returns -1 on error, 1 on success
-  int Actor::advance_frame_event(timestamp_t lts) {
+  int GTActor::advance_frame_event(timestamp_t lts) {
 
     //RIDICULOUSLY VERBOSE DEBUG
     //printf("advance_frame_event at %lu called at %lu\n",lts,clock->get_current_time());
@@ -204,7 +204,7 @@ namespace gt {
     // next frame should be fram->dur after the event that called this - which is what?
     // handed in as lts.
     // std::function<int(virtbindkid *)> rpvkn = &virtbindkid::narg;
-    event_func_t nuev = std::bind(&Actor::advance_frame_event, this, _1);
+    event_func_t nuev = std::bind(&GTActor::advance_frame_event, this, _1);
     add_event(lts + fram->dur, nuev);
 
     return 1;     //success

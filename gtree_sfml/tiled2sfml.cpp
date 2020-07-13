@@ -267,6 +267,21 @@ sf::VertexArray Tiled2SFML::MakeLayerVertexArray(std::shared_ptr<TiledMap> sptm,
                                                   std::unordered_map<tile_index_t,atlas_record> atlas) {
 
   //printf("- Building vertex arrays\n");
+
+  //**************************************************************************************************************************************
+  //**************************************************************************************************************************************
+  //**************************************************************************************************************************************
+  // HEY LET'S USE TRIANGLE STRIPS INSTEAD OF QUADS
+  // no worse for object layers
+  // lots fewer verts for contiguous tiled bits of tiles the same size
+  // no-tile index 0 means start a new strip
+  // make strips no longer than screen-tile-width tiles wide, then have no worse than (2hw + 2w) tiles to clip/draw?
+  // or do it by height, whichever seems better
+  // see https://github.com/SamWibatt/GameTree/issues/5
+  //**************************************************************************************************************************************
+  //**************************************************************************************************************************************
+  //**************************************************************************************************************************************
+
   sf::VertexArray layerverts;
   std::shared_ptr<TiledMapLayer> sptml = sptm->layers[layer_num];
   layerverts.setPrimitiveType(sf::Quads);

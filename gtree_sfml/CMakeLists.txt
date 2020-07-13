@@ -15,4 +15,8 @@ if(NOT SFML_FOUND)
 	message("-> Make sure the SFML libraries >= 2.5 with the same configuration (Release/Debug, Static/Dynamic) exist.\n")
 endif()
 
+# this is gross - need to refactor all this to handle the json
+# submodule properly
+target_include_directories(gtree_sfml PUBLIC "../asepritereader/json/single_include") 
+
 target_link_libraries(gtree_sfml PUBLIC sfml-graphics)

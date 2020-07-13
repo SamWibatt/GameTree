@@ -8,9 +8,23 @@
 //#include <filesystem>     //this requires C++17 and I can't get stuff to compile with it in clang or gcc no matter what intellisense says, going back to 11
 #include <system_error>
 #include "tiledreader.h"
+#include "gametree.h"
 #include "CLI11.hpp"
 
 using namespace tiledreader;
+using namespace gt;
+
+// CONVERSION ====================================================================================
+
+std::shared_ptr<GTMap> tiled_map_to_gt_map(std::shared_ptr<TiledMap> ptm) {
+  std::shared_ptr<GTMap> pmap = std::shared_ptr<GTMap>(new GTMap());
+
+  // **** WRITE THIS
+
+  return pmap;
+}
+
+// MAIN ==========================================================================================
 
 
 int main(int argc, char *argv[]) {
@@ -82,12 +96,16 @@ int main(int argc, char *argv[]) {
   // std::shared_ptr<TiledMap> ptm = tr.read_map_file(mappath);
   // ******************************** YAY this is worky on entrapta with
   // /home/sean/dev/cpp/GameTree/build/tiledreader/tiled2gt -i ~/dev/GameNoodles/sfml/hello/assets/tiled_map/singlescreen.tmx -o ~/tmp/tiled2gt/
-  // writes the tileset pngs and json files for the tile atlas!
-  // didn't write the pngs on takkun, hm
-  // aha, bc I didn't put the slash on the end of output dir, fix
-  printf("About to convert Tiled file %s...\n",tiled_input_file.c_str());
-  tr.read_map_file(tiled_input_file, output_dir);  
+  // writes the tileset pngs!
+  printf("About to read Tiled file %s...\n",tiled_input_file.c_str());
 
-  
+  // maybe rename this method bc it saves pngs out, too
+  std::shared_ptr<TiledMap> ptm = tr.read_map_file(tiled_input_file, output_dir);  
+
+  // so: now to convert TiledReader objects into GT objects.
+  // that should all be in this file.
+  std::shared_ptr<GTMap> pmap = tiled_map_to_gt_map(ptm);
+
+  // now emit it!!!!!!!!!!!!!!!!!!  
 
 }
