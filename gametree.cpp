@@ -1,4 +1,7 @@
 #include "gametree.h"
+#include "cppcodec/base64_url.hpp"
+using base64 = cppcodec::base64_url;
+
 
 using std::placeholders::_1;
 
@@ -213,10 +216,19 @@ namespace gt {
   // MAP =========================================================================================
 
   // GTMapLayer ----------------------------------------------------------------------------------
+  // so this takes a json that is a sub-json created by one of the subclasses, qv.
   bool GTMapLayer::add_to_json(json& j) {
-    // write image data in base64? https://github.com/tplgy/cppcodec#base64
-    // That's added as a submodule in root of this project, hopework
-    return false;     //TEMP
+    // base class handles image_data and tile_atlas
+    // write image data in base64_url - https://github.com/tplgy/cppcodec#base64
+    std::string encoded_png = base64::encode(image_data);
+
+    j["image_data"] = encoded_png;
+
+    for(auto t : tile_atlas) {
+      t.add_to_json(j["tile_data"]);
+    }
+
+    return true;
   }
 
   bool GTMapLayer::get_from_json(json& jt) {
@@ -227,8 +239,28 @@ namespace gt {
 
   //subclass overrides need to call the base class one to add/get image data and tile atlas
   bool GTTiledMapLayer::add_to_json(json& j) {
-    if(!GTMapLayer::add_to_json(j)) return false; 
-    return false;     //TEMP
+    json subj;
+
+    if(!GTMapLayer::add_to_json(subj)) return false; 
+
+    // put in a type field so reader knows how to handle - or should we just look for fields we know will be there?
+    // let's make it explicit
+    subj["type"] = "tiled";
+
+    // so for tiled map add the tile map specific stuff
+    subj["layer_tilewid"] = layer_tilewid;
+    subj["layer_tileht"] = layer_tileht;
+    subj["layer_pixwid"] = tile_pixwid;
+    subj["layer_pixht"] = tile_pixht;
+
+    // then emit tile_map;
+    for(auto ti : tile_map) {
+      subj["tiled_map"].push_back(ti);
+    }
+
+    j.push_back(subj);
+
+    return true;
   }
 
   bool GTTiledMapLayer::get_from_json(json& jt) {
@@ -255,7 +287,18 @@ namespace gt {
   }
 
   bool GTObjectTile::add_to_json(json& j) {
-    return false; //temp!
+    json subj;
+    subj["tile"] = tile;
+    subj["orx"] = orx;
+    subj["ory"] = ory;
+    subj["wid"] = wid;
+    subj["ht"] = ht;
+    subj["offx"] = offx;
+    subj["offy"] = offy;
+
+    j.push_back(subj);
+
+    return true;
   }
 
   bool GTObjectTile::get_from_json(json& jt) {
@@ -265,8 +308,20 @@ namespace gt {
   // GTObjectsMapLayer ---------------------------------------------------------------------------
 
   bool GTObjectsMapLayer::add_to_json(json& j) {
-    if(!GTMapLayer::add_to_json(j)) return false; 
-    return false;     //TEMP
+    json subj;
+    if(!GTMapLayer::add_to_json(subj)) return false; 
+
+    //emit type
+    subj["type"] = "objects";
+
+    //emit tile_objects
+    for(auto tob : tile_objects) {
+      tob->add_to_json(subj["tile_objects"]);
+    }
+
+    j.push_back(subj);
+
+    return true;
   }
 
   bool GTObjectsMapLayer::get_from_json(json& jt) {
@@ -283,7 +338,13 @@ namespace gt {
   }
 
   bool GTMap::add_to_json(json& j) {
-    return false;       //TEMP!
+
+    //emit layers
+    for(auto lyr : layers) {
+      lyr->add_to_json(j["layers"]);
+    }
+
+    return true;
   }
 
   bool GTMap::get_from_json(json& j) {

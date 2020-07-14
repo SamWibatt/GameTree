@@ -22,6 +22,9 @@ add_subdirectory("gtree_sfml")
 target_include_directories(gametree PUBLIC "gtree_sfml")
 target_link_directories(gametree PUBLIC "gtree_sfml")
 
+# for base64 encode/decode
+target_include_directories(gametree PUBLIC "cppcodec")
+
 
 
 # put demo stuff here - we will want the gametree library
@@ -39,6 +42,10 @@ endif()
 
 # TEMPORARY!!!!!!!!!!!!!!!!!!!!!!!!!! CURRENTLY GAMETREE DEPENDS ON SFML!
 target_link_libraries(gametree PUBLIC sfml-graphics sfml-window sfml-system)
+
+# TEMP
+target_include_directories(demosfml PUBLIC "cppcodec")
+
 
 # demosfml will always depend on sfml
 target_link_libraries(demosfml PUBLIC gametree sfml-graphics sfml-window sfml-system)

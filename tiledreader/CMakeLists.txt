@@ -25,5 +25,6 @@ target_include_directories(tiledreader PUBLIC "../asepritereader/json/single_inc
 target_link_libraries(tiledreader pugixml-static crunch)
 
 add_executable(tiled2gt tiled2gt.cpp)
+target_include_directories(tiled2gt PUBLIC "../cppcodec")
 target_include_directories(tiled2gt PUBLIC "pugixml/src") 
 target_link_libraries(tiled2gt tiledreader gametree)

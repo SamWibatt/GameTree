@@ -5,15 +5,21 @@
 // or whatever
 
 #include <cstdio>
+#include <fstream>
 #include <cerrno>
 //#include <filesystem>     //this requires C++17 and I can't get stuff to compile with it in clang or gcc no matter what intellisense says, going back to 11
 #include <system_error>
 #include "tiledreader.h"
 #include "gametree.h"
 #include "CLI11.hpp"
+#include "cppcodec/base64_rfc4648.hpp"
+using base64 = cppcodec::base64_rfc4648;
+
 
 using namespace tiledreader;
 using namespace gt;
+using json = nlohmann::json;
+
 
 // CONVERSION ====================================================================================
 
@@ -49,9 +55,14 @@ std::shared_ptr<GTObjectsMapLayer> tiled_obj_layer_to_gt_obj_layer(std::shared_p
   // int ht;
   pgoml->tile_objects.clear();
 
-  // so the remapping here is to replace the original TiledMapObjectTileLocation's gid with its remapped index into tile_atlas. 
+  // so the remapping here is to replace the original TiledMapObjectTileLocation's gid with its remapped index into tile_atlas.
+  // **************** HOW DO WE GET OFFSET X AND Y? TILED DOESN'T PROVIDE THEM CURRENTLY 
+  int offx = 0;
+  int offy = 0; 
   for(auto tob : ptl->tile_objects) {
-    pgoml->tile_objects.push_back(std::shared_ptr<GTObjectTile>(new GTObjectTile(gidmapping[tob->gid], tob->orx, tob->ory, tob->wid, tob->ht, 0, 0)));
+    pgoml->tile_objects.push_back(std::shared_ptr<GTObjectTile>(
+      new GTObjectTile(gidmapping[tob->gid], tob->orx, tob->ory, tob->wid, tob->ht, offx, offy))
+    );
   }
 
   return pgoml;
@@ -194,6 +205,12 @@ int main(int argc, char *argv[]) {
   // if a header was requested, note that we will emit one
   if(!header_output_file.empty()) emit_header = true;
 
+  // make sure output dir has a slash on the end
+  // MAKE THIS PLATFORM INDEPENDENT
+  if(output_dir[output_dir.length()-1] != '/') {
+    output_dir += "/";
+  }
+
   // create output directory if it doesn't exist - LATER - compiler is barfing at this saying filesystem isn't a namespace,
   // even after #include<filesystem>, so I have a bad setting somewhere, I think
   // drat, can't get this to work
@@ -220,6 +237,17 @@ int main(int argc, char *argv[]) {
   // that should all be in this file.
   std::shared_ptr<GTMap> pmap = tiled_map_to_gt_map(ptm, output_dir);
 
-  // now emit it!!!!!!!!!!!!!!!!!!  
+  // now emit it!!!!!!!!!!!!!!!!!!
+  std::string json_filename = output_dir + "mapout.json";   //GET A REAL NAME  
+  printf("Writing json file %s\n",json_filename.c_str());
+  json jmap;
+  pmap->add_to_json(jmap);
+  std::ofstream json_outstream(json_filename);
+  //setw(4) does 4 space pretty print
+  json_outstream << std::setw(4) << jmap << std::endl;
+
+  if(emit_header) {
+    // EMIT HEADER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  }
 
 }
