@@ -5,6 +5,7 @@
 // or whatever
 
 #include <cstdio>
+#include <cerrno>
 //#include <filesystem>     //this requires C++17 and I can't get stuff to compile with it in clang or gcc no matter what intellisense says, going back to 11
 #include <system_error>
 #include "tiledreader.h"
@@ -16,10 +17,123 @@ using namespace gt;
 
 // CONVERSION ====================================================================================
 
-std::shared_ptr<GTMap> tiled_map_to_gt_map(std::shared_ptr<TiledMap> ptm) {
+std::shared_ptr<GTTiledMapLayer> tiled_tile_layer_to_gt_tile_layer(std::shared_ptr<TiledMapLayer> ptl, std::map<tile_index_t,GTtile_index_t>& gidmapping) {
+  std::shared_ptr<GTTiledMapLayer> pgtml = std::shared_ptr<GTTiledMapLayer>(new GTTiledMapLayer());
+
+  //ok now step through the mapcells and remap
+  // * scan ptl->mapcells to produce pgtml->tile_map, copying any 0 across to 0, 
+  //   any other number to the map entry for it in the map we built before
+  //   OR could just put gidmapping[0] = 0
+  pgtml->tile_map.resize(ptl->mapcells.size());
+  std::transform(ptl->mapcells.begin(),ptl->mapcells.end(), pgtml->tile_map.begin(), [&gidmapping](tile_index_t i){ return gidmapping[i]; });
+
+  //fill in simple data members
+  pgtml->layer_tilewid = ptl->layer_w;
+  pgtml->layer_tileht = ptl->layer_h;
+  pgtml->tile_pixwid = ptl->tile_width;
+  pgtml->tile_pixht = ptl->tile_height;
+
+  return pgtml;
+}
+
+std::shared_ptr<GTObjectsMapLayer> tiled_obj_layer_to_gt_obj_layer(std::shared_ptr<TiledMapLayer> ptl, std::map<tile_index_t,GTtile_index_t>& gidmapping) {
+  std::shared_ptr<GTObjectsMapLayer> pgoml = std::shared_ptr<GTObjectsMapLayer>(new GTObjectsMapLayer());
+
+  //convert ptl->tile_objects to pgoml->tile_objects
+  //ptl->tile_objects is these class TiledMapObjectTileLocation {
+  // int id;
+  // tile_index_t gid;
+  // float orx;      //origin x/y, not upper left - can be other locations
+  // float ory;
+  // int wid;
+  // int ht;
+  pgoml->tile_objects.clear();
+
+  // so the remapping here is to replace the original TiledMapObjectTileLocation's gid with its remapped index into tile_atlas. 
+  for(auto tob : ptl->tile_objects) {
+    pgoml->tile_objects.push_back(std::shared_ptr<GTObjectTile>(new GTObjectTile(gidmapping[tob->gid], tob->orx, tob->ory, tob->wid, tob->ht, 0, 0)));
+  }
+
+  return pgoml;
+}
+
+std::shared_ptr<GTMapLayer> tiled_layer_to_gt_layer(std::shared_ptr<TiledMap> ptm, int layer_num, std::string output_dir) {
+  std::shared_ptr<GTMapLayer> plyr;
+
+  //what type plyr ends up being depends on its tiled-map type
+  std::shared_ptr<TiledMapLayer> ptl = ptm->layers[layer_num];
+
+  // ptl->layer_atlas needs to be turned into pgtml->tile_atlas
+  // so: 
+  // * scan ptl->layer_atlas to build mapping of unique gids to contiguous numbers.
+  //   remember to reserve tile 0 for no-tile
+  std::map<tile_index_t,GTtile_index_t> gidmapping;
+  gidmapping[0] = 0; //reserve the empty tile
+
+  //drat, layer_atlas is an unordered map. Let's order it all
+  std::set<tile_index_t> ordered_gids;
+  for(auto tatl : *(ptl->layer_atlas)) ordered_gids.insert(tatl.first);
+  GTtile_index_t j = 0;
+  for(auto gid : ordered_gids) if(gid != 0) gidmapping[gid] = j++;
+
+  //now for layer-type-specific stuff
+
+  if(ptl->type == TL_TiledLayer) {
+    plyr = tiled_tile_layer_to_gt_tile_layer(ptl, gidmapping);
+  } else if(ptl->type == TL_ObjectLayer) {
+    plyr = tiled_obj_layer_to_gt_obj_layer(ptl, gidmapping);
+  } else {
+    //unknown!
+    fprintf(stderr, "*** ERROR: unknown layer type %d\n",ptl->type);
+    return nullptr;
+  }
+
+  //in any case, we need the image
+  //plyr->image_data is just the entire contents of the png from ptl
+  //does ptl record that? no, but see tiledreader do_crunch
+  //ASSUMING THERE IS ONLY ONE IMAGE FOR THE TILESET, NAMED LIKE THIS
+  std::string png_path = output_dir + "Tileset_" + ptl->layer_name + "0.png";
+
+  FILE * pngfp = std::fopen(png_path.c_str(), "rb");
+
+  if(pngfp == nullptr) {
+    fprintf(stderr,"*** ERROR: failed to open png file %s - error %s\n",png_path.c_str(),std::strerror(errno));
+    return nullptr;
+  }
+  //get file size and allocate buffer for it
+  std::fseek(pngfp,0,SEEK_END);
+  auto pngsiz = std::ftell(pngfp);
+  std::fseek(pngfp,0,SEEK_SET);
+  plyr->image_data.resize(pngsiz);    //see if this works; I think we want resize and not reserve
+  std::fread(plyr->image_data.data(), sizeof(uint8_t), plyr->image_data.size(), pngfp);
+  fclose(pngfp);
+
+  // now build the contiguous vector pgtml->tile_atlas. pre-insert 0, iterate over ordered_gids as before, get the same ordering.
+  plyr->tile_atlas.clear();
+  plyr->tile_atlas.push_back(GTTile(0,0,0,0));         // put in no-tile in index 0
+  for(auto gid : ordered_gids) 
+    if(gid != 0) {
+      atlas_record &ar = (*(ptl->layer_atlas))[gid];
+      plyr->tile_atlas.push_back(GTTile(ar.ulx, ar.uly, ar.wid, ar.ht));
+    }
+
+  return plyr;
+}
+
+std::shared_ptr<GTMap> tiled_map_to_gt_map(std::shared_ptr<TiledMap> ptm, std::string output_dir) {
   std::shared_ptr<GTMap> pmap = std::shared_ptr<GTMap>(new GTMap());
 
-  // **** WRITE THIS
+  // from the top. Step through layers, converting each.
+  for(auto j = 0; j < ptm->layers.size(); j++) {
+    std::shared_ptr<GTMapLayer> plyr = tiled_layer_to_gt_layer(ptm,j, output_dir);
+    if(plyr != nullptr) {
+      pmap->layers.push_back(plyr);
+    }
+    else {
+      fprintf(stderr,"*** ERROR: failed to convert layer %d\n",j);
+      return nullptr;
+    }
+  }
 
   return pmap;
 }
@@ -104,7 +218,7 @@ int main(int argc, char *argv[]) {
 
   // so: now to convert TiledReader objects into GT objects.
   // that should all be in this file.
-  std::shared_ptr<GTMap> pmap = tiled_map_to_gt_map(ptm);
+  std::shared_ptr<GTMap> pmap = tiled_map_to_gt_map(ptm, output_dir);
 
   // now emit it!!!!!!!!!!!!!!!!!!  
 

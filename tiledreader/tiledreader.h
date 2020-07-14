@@ -161,6 +161,8 @@ namespace tiledreader {
       int tile_height;
       //for object group layers:
       std::vector<std::shared_ptr<TiledMapObjectTileLocation>> tile_objects;
+      // here's the tile atlas recording where the post-crunch texture vertices are per tile
+      std::shared_ptr<std::unordered_map<tile_index_t, atlas_record>> layer_atlas;
       //need something for shapes like circles and polygons
 
 
@@ -247,8 +249,8 @@ namespace tiledreader {
       virtual ~TiledReader() {}
 
     public:
-      virtual std::unordered_map<tile_index_t, atlas_record> MakeTilesheetPNGAndAtlas(std::shared_ptr<TiledMap> sptm, int layer_num, 
-                                                                                      std::string outputDir);
+      virtual std::shared_ptr<std::unordered_map<tile_index_t, atlas_record>> MakeTilesheetPNGAndAtlas(std::shared_ptr<TiledMap> sptm, int layer_num, 
+                                                                                                        std::string outputDir);
       std::string get_name_for_bmp(tile_index_t gid);
       bool do_crunch(std::string name,std::string outputDir);
       virtual std::shared_ptr<TiledMap> read_map_file(std::string filename, std::string outputDir);

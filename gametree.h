@@ -34,6 +34,7 @@ namespace gt {
   typedef uint64_t timestamp_t;
 
   class GTEvent;
+  class GTEntity;
   class GTEventEntity;
 
   class GTTime {
@@ -97,143 +98,6 @@ namespace gt {
 
   };
 
-  // MAP =========================================================================================
-  // Will be organized similarly to a Tiled map, bc why not, but streamlined to contain only
-  // what's necessary at runtime.
-
-  // GTTile is the texture vertex info for a tile in a given tile sheet
-  class GTTile {
-    public:
-      int ulx;
-      int uly; 
-      int wid;
-      int ht;
-
-    public:
-      GTTile() {}
-      GTTile(int ux, int uy, int w, int h) {
-        ulx = ux;
-        uly = uy;
-        wid = w;
-        ht = h;
-      }
-      virtual ~GTTile() {}
-
-      // for writing to json file - should this be here?
-      // there should be a read-FROM-json one def
-      public:
-        virtual void add_to_json(json& j, std::string layer_atlas_name) {
-          j[layer_atlas_name].push_back(std::map<std::string, int>{
-            {"ulx", ulx},
-            {"uly", uly},
-            {"wid", wid},
-            {"ht", ht}
-          });
-        }
-
-        // assuming that e.g. j[layer_atlas_name][tile index]
-        // is usable as a json itself, and that's jt
-        // FIND OUT IF THIS IS A GOOD WAY TO DO THIS 
-        virtual bool get_from_json(json& jt) {
-          if(jt.count("ulx") == 0 || jt.count("uly") == 0 ||
-              jt.count("wid") == 0 || jt.count("ht") == 0) {
-            //error! missing a field
-            fprintf(stderr,"*** ERROR: tile needs ulx, uly, wid, ht, got %s\n",jt.dump().c_str());
-            return false;
-          }
-          ulx = jt["ulx"];
-          uly = jt["uly"];
-          wid = jt["wid"];
-          ht = jt["ht"];
-          return true;
-        }
-  };
-
-  //**********************************************************************************************
-  //**********************************************************************************************
-  //**********************************************************************************************
-  // MAYBE THERE IS AN ANIMATED TILE SUBCLASS OF THAT WHICH EVENTS CAN
-  // ADVANCE?
-  // SHOULD TILES AND MAPS BE ENTITIES / EVENT ENTITIES?
-  //**********************************************************************************************
-  //**********************************************************************************************
-  //**********************************************************************************************
-
-
-  //base class for layers
-  class GTMapLayer {
-    public:
-      //data members
-      //single source of tile imagery - 
-      //bytes that are just a png file in memory. May later have other formats
-      std::vector<uint8_t> image_data;
-      //tile atlas - texture coordinates within image for tile n
-      //tile 0 is always the no-tile, but put an entry in here for it
-      //to keep the map indexing simple
-      std::vector<GTTile> tile_atlas;
-
-    public:
-      void init() {
-        image_data.clear();
-        tile_atlas.clear();
-        //add a dummy tile for tile 0, which should never get rendered
-        tile_atlas.push_back(GTTile(0,0,0,0));
-      }
-      GTMapLayer() {
-        init();
-      }
-      virtual ~GTMapLayer() {}
-
-      // ****************************************************************
-      // ****************************************************************
-      // ****************************************************************
-      // JSON IN/OUT WILL NEED TO BE DONE BY SUBCLASSES.
-      // HOW DO WE KNOW WHICH KIND TO INSTANTIATE ON READING?
-      // DO WE NEED A TYPE FIELD?
-      // ****************************************************************
-      // ****************************************************************
-      // ****************************************************************
-  };
-
-  typedef uint32_t GTtile_index_t;
-
-  // layer that consists of a square grid of (at least mostly) same-size tiles
-  // may have some odd-sized ones
-  // the defining characteristic is that tile placement is
-  // determined by the grid. 
-  class GTTiledMapLayer : public GTMapLayer {
-    int layer_tilewid;   //layer width in tiles
-    int layer_tileht;    //height
-    int tile_pixwid;     //tile grid width in pixels
-    int tile_pixht;      //height
-    
-    //tilemap entries are indices into tile_atlas; 0 means no tile in
-    //that grid location
-    std::vector<GTtile_index_t> tile_map;
-  };
-
-  //location / extent of a free-floating tile as opposed to TiledMapLayer
-  //grid-determined location
-  class GTObjectTile {
-    int orx;        //origin x
-    int ory;        //origin y
-    int wid;        //width 
-    int ht;         //height
-    int offx;       //offset from drawing point to origin
-    int offy;       //"
-  };
-
-  //layer that consists of tiles individually placed with no grid
-  class GTObjectsTileLayer : public GTMapLayer {
-    public:
-      std::vector<GTObjectTile> tile_objects;
-  };
-
-  class GTMap {
-    // Tiled map has only lists of tilesets and layers.
-    // do we need the notion of a tileset?
-    // each layer has a tile sheet and atlas, yes?
-  };
 
   // SPRITE ======================================================================================
 
@@ -509,6 +373,192 @@ namespace gt {
       virtual int advance_frame_event(timestamp_t lts);
 
   };
+
+  // MAP =========================================================================================
+  // Will be organized similarly to a Tiled map, bc why not, but streamlined to contain only
+  // what's necessary at runtime.
+
+  // GTTile is the texture vertex info for a tile in a given tile sheet
+  class GTTile {
+    public:
+      int ulx;
+      int uly; 
+      int wid;
+      int ht;
+
+    public:
+      GTTile() {}
+      GTTile(int ux, int uy, int w, int h) {
+        ulx = ux;
+        uly = uy;
+        wid = w;
+        ht = h;
+      }
+      virtual ~GTTile() {}
+
+      // for writing to json file - should this be here?
+      // assuming that e.g. j[layer_atlas_name] is a json and we hand in that
+      public:
+        virtual bool add_to_json(json& j) {
+          j.push_back(std::map<std::string, int>{
+            {"ulx", ulx},
+            {"uly", uly},
+            {"wid", wid},
+            {"ht", ht}
+          });
+          return true;
+        }
+
+        // assuming that e.g. j[layer_atlas_name][tile index]
+        // is usable as a json itself, and that's jt
+        // FIND OUT IF THIS IS A GOOD WAY TO DO THIS 
+        virtual bool get_from_json(json& jt) {
+          if(jt.count("ulx") == 0 || jt.count("uly") == 0 ||
+              jt.count("wid") == 0 || jt.count("ht") == 0) {
+            //error! missing a field
+            fprintf(stderr,"*** ERROR: tile needs ulx, uly, wid, ht, got %s\n",jt.dump().c_str());
+            return false;
+          }
+          ulx = jt["ulx"];
+          uly = jt["uly"];
+          wid = jt["wid"];
+          ht = jt["ht"];
+          return true;
+        }
+  };
+
+  //**********************************************************************************************
+  //**********************************************************************************************
+  //**********************************************************************************************
+  // ANIMATED TILE SUBCLASS OF THAT WHICH EVENTS CAN ADVANCE
+  // Multiple inheritance: can make it so GTTile is not an Entity but GTAnimatedTile is both
+  // that and an event entity
+  // not sure this is the level at which tile animation will happen, but.
+  //**********************************************************************************************
+  //**********************************************************************************************
+  //**********************************************************************************************
+  class GTAnimatedTile: public GTTile, public GTEventEntity {
+    public:
+      GTAnimatedTile() {}
+      virtual ~GTAnimatedTile() {}
+  };
+
+
+  //base class for layers - assuming that events will occur on them
+  class GTMapLayer : public GTEventEntity {
+    public:
+      //data members
+      //single source of tile imagery - 
+      //bytes that are just a png file in memory. May later have other formats
+      std::vector<uint8_t> image_data;
+      //tile atlas - texture coordinates within image for tile n
+      //tile 0 is always the no-tile, but put an entry in here for it
+      //to keep the map indexing simple
+      std::vector<GTTile> tile_atlas;
+
+    public:
+      void init() {
+        image_data.clear();
+        tile_atlas.clear();
+        //add a dummy tile for tile 0, which should never get rendered
+        tile_atlas.push_back(GTTile(0,0,0,0));
+      }
+      GTMapLayer() {
+        init();
+      }
+      virtual ~GTMapLayer() {}
+
+      // ****************************************************************
+      // ****************************************************************
+      // ****************************************************************
+      // JSON IN/OUT WILL NEED TO BE DONE BY SUBCLASSES.
+      // HOW DO WE KNOW WHICH KIND TO INSTANTIATE ON READING?
+      // DO WE NEED A TYPE FIELD?
+      // well.... *do* we need to stub these? There are the image_data
+      // and atlas to consider in each case.
+      // write image data with https://github.com/tplgy/cppcodec
+      // see https://github.com/tplgy/cppcodec#base64
+      // ****************************************************************
+      // ****************************************************************
+      // ****************************************************************
+      virtual bool add_to_json(json& j);
+      virtual bool get_from_json(json& jt);
+  };
+
+  typedef uint32_t GTtile_index_t;
+
+  // layer that consists of a square grid of (at least mostly) same-size tiles
+  // may have some odd-sized ones
+  // the defining characteristic is that tile placement is
+  // determined by the grid. 
+  class GTTiledMapLayer : public GTMapLayer {
+    public:
+      int layer_tilewid;   //layer width in tiles
+      int layer_tileht;    //height
+      int tile_pixwid;     //tile grid width in pixels
+      int tile_pixht;      //height
+      
+      //tilemap entries are indices into tile_atlas; 0 means no tile in
+      //that grid location
+      std::vector<GTtile_index_t> tile_map;
+
+    public:
+      // json i/o
+      virtual bool add_to_json(json& j) override;
+      virtual bool get_from_json(json& jt) override;
+  };
+
+  //location / extent of a free-floating tile as opposed to TiledMapLayer
+  //grid-determined location
+  //It's not an event entity but subclasses might be, consider
+  class GTObjectTile {
+    public:
+      int tile;       //index into tile_atlas
+      int orx;        //origin x
+      int ory;        //origin y
+      int wid;        //width 
+      int ht;         //height
+      int offx;       //offset from drawing point to origin
+      int offy;       //"
+
+    public:
+      GTObjectTile(); 
+      GTObjectTile(int t, int ox, int oy, int w, int h, int fx, int fy);
+      virtual ~GTObjectTile(); 
+
+    // json i/o
+    public:
+      virtual bool add_to_json(json& j);
+      virtual bool get_from_json(json& jt);
+  };
+
+  //layer that consists of tiles individually placed with no grid
+  class GTObjectsMapLayer : public GTMapLayer {
+    public:
+      std::vector<std::shared_ptr<GTObjectTile>> tile_objects;
+
+    public:
+      // json i/o
+      virtual bool add_to_json(json& j) override;
+      virtual bool get_from_json(json& jt) override;
+  };
+
+  class GTMap : public GTEventEntity {
+    public:
+      // Tiled map has only lists of tilesets and layers.
+      // do we need the notion of a tileset?
+      // each layer has a tile sheet and atlas, yes?
+      std::vector<std::shared_ptr<GTMapLayer>> layers;
+
+    public:
+      GTMap();
+      virtual ~GTMap();
+
+    public:
+      virtual bool add_to_json(json& j);
+      virtual bool get_from_json(json& jt);
+  };
+
 }
 
 #endif

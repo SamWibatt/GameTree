@@ -210,4 +210,84 @@ namespace gt {
     return 1;     //success
   }
 
+  // MAP =========================================================================================
+
+  // GTMapLayer ----------------------------------------------------------------------------------
+  bool GTMapLayer::add_to_json(json& j) {
+    // write image data in base64? https://github.com/tplgy/cppcodec#base64
+    // That's added as a submodule in root of this project, hopework
+    return false;     //TEMP
+  }
+
+  bool GTMapLayer::get_from_json(json& jt) {
+    return false;     //TEMP
+  }
+
+  // GTTiledMapLayer -----------------------------------------------------------------------------
+
+  //subclass overrides need to call the base class one to add/get image data and tile atlas
+  bool GTTiledMapLayer::add_to_json(json& j) {
+    if(!GTMapLayer::add_to_json(j)) return false; 
+    return false;     //TEMP
+  }
+
+  bool GTTiledMapLayer::get_from_json(json& jt) {
+    if(!GTMapLayer::get_from_json(jt)) return false; 
+    return false;     //TEMP
+  }
+
+  // GTObjectTile --------------------------------------------------------------------------------
+
+  GTObjectTile::GTObjectTile() {
+  }
+
+  GTObjectTile::GTObjectTile(int t, int ox, int oy, int w, int h, int fx, int fy) {
+    tile = t;
+    orx = ox;
+    ory = oy;
+    wid = w;
+    ht = h;
+    offx = fx;
+    offy = fy;
+  }
+
+  GTObjectTile::~GTObjectTile() {
+  }
+
+  bool GTObjectTile::add_to_json(json& j) {
+    return false; //temp!
+  }
+
+  bool GTObjectTile::get_from_json(json& jt) {
+    return false; //temp!
+  }
+
+  // GTObjectsMapLayer ---------------------------------------------------------------------------
+
+  bool GTObjectsMapLayer::add_to_json(json& j) {
+    if(!GTMapLayer::add_to_json(j)) return false; 
+    return false;     //TEMP
+  }
+
+  bool GTObjectsMapLayer::get_from_json(json& jt) {
+    if(!GTMapLayer::get_from_json(jt)) return false; 
+    return false;     //TEMP
+  }
+
+  // GTMap ---------------------------------------------------------------------------------------
+
+  GTMap::GTMap() {
+  }
+
+  GTMap::~GTMap() {
+  }
+
+  bool GTMap::add_to_json(json& j) {
+    return false;       //TEMP!
+  }
+
+  bool GTMap::get_from_json(json& j) {
+    return false;       //TEMP!
+  }
+
 }

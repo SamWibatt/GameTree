@@ -413,8 +413,9 @@ namespace tiledreader {
 
 
   //this saves the .png as a side effect, which I guess is ok
-  std::unordered_map<tile_index_t, atlas_record> TiledReader::MakeTilesheetPNGAndAtlas(std::shared_ptr<TiledMap> sptm, int layer_num, std::string outputDir) {
-      std::unordered_map<tile_index_t,atlas_record> new_atlas;      //atlas of gid->atlas record for result
+  std::shared_ptr<std::unordered_map<tile_index_t, atlas_record>> TiledReader::MakeTilesheetPNGAndAtlas(std::shared_ptr<TiledMap> sptm, int layer_num, std::string outputDir) {
+    //  std::unordered_map<tile_index_t,atlas_record> new_atlas;      //atlas of gid->atlas record for result
+    auto new_atlas = std::shared_ptr<std::unordered_map<tile_index_t, atlas_record>>(new std::unordered_map<tile_index_t, atlas_record>());
     std::unordered_map<tile_index_t,atlas_record> orig_atlas;     //gid -> atlas record for original
     std::shared_ptr<TiledMapLayer> sptml = sptm->layers[layer_num];
 
@@ -515,6 +516,8 @@ namespace tiledreader {
     //Step 4. invoke crunch to produce a single bitmap we'll use as a texture for this layer.
     //        create texture from crunch's output bitmap
     //        say we die if there is more than one packer for now
+    // HEY THIS NAME GETS BUILT IN DIFFERENT SPOTS, MAKE A FUNCTION?
+    // see e.g. tiled2gt tiled_layer_to_gt_layer()
     std::string name = "Tileset_" + sptml->layer_name;
     if(!do_crunch(name,outputDir)) {
       printf("ERROR crunch failed\n");
@@ -546,7 +549,7 @@ namespace tiledreader {
         atrec.uly = packers[0]->points[pkrbmpind].y;
         atrec.wid = packers[0]->bitmaps[pkrbmpind]->width;
         atrec.ht = packers[0]->bitmaps[pkrbmpind]->height;
-        new_atlas[gid] = atrec;
+        (*new_atlas)[gid] = atrec;
 
 
       }
@@ -621,24 +624,21 @@ namespace tiledreader {
     //this used to be in tiled2sfml & now it's here!
     //so we need to call the png & atlas make on each layer
     for(int layer_num = 0; layer_num < tm->layers.size(); layer_num++) {
-      std::unordered_map<tile_index_t, atlas_record> layer_atlas = MakeTilesheetPNGAndAtlas(tm, layer_num, outputDir);
+      std::shared_ptr<std::unordered_map<tile_index_t, atlas_record>> layer_atlas = MakeTilesheetPNGAndAtlas(tm, layer_num, outputDir);
       //DO SOMETHING WITH LAYER_ATLAS? I guess don't really need to just yet but could; maketilesheetpngandatlas emits file
       // - and actually it would be better to build the json here from the atlas
       //need to make legal json key somehow
       //THIS NEEDS TO BE THE SAME AS THE PNG NAME but for packer number then we can use the key to load the png
-      std::string layer_atlas_name = "Tileset_" + tm->layers[layer_num]->layer_name;
-      std::string layer_metadata_name = "Layer_" + tm->layers[layer_num]->layer_name;
 
-      // lets see what this does - it'll make an array, huh
-      //json_map[layer_metadata_name].push_back(std::make_pair<std::string,tilemaplayer_type>("type",
-      //  tm->layers[layer_num]->type))
-      // do this kind of thing instead
+      //if we were to emit json at this level - 
+      // std::string layer_atlas_name = "Tileset_" + tm->layers[layer_num]->layer_name;
+      // std::string layer_metadata_name = "Layer_" + tm->layers[layer_num]->layer_name;
       //json_map[layer_metadata_name]["type"] = tm->layers[layer_num]->type;
-      tm->layers[layer_num]->add_to_json(json_map,layer_metadata_name);
-
-
+      //tm->layers[layer_num]->add_to_json(json_map,layer_metadata_name);
       // tileset atlas add to map json 
-      for(auto atrec: layer_atlas) atrec.second.add_to_json(json_map, layer_atlas_name);
+      //for(auto atrec: layer_atlas) atrec.second.add_to_json(json_map, layer_atlas_name);
+      //well, instead, let's just put them in the layer
+      tm->layers[layer_num]->layer_atlas = layer_atlas;
     }
 
     // This is great! But misconceived. We don't want Tiled metadata, we want GT metadata, so we need to postprocess Tiled into that.
