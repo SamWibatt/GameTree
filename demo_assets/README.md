@@ -5,9 +5,9 @@ Character spritesheet asset `antifarea3sides.png` renamed by Sean Igo from `redo
 Item asset `spritesheet_16x16.png` is from [Kyrise's Free 16x16 RPG Icon Pack](https://kyrise.itch.io/kyrises-free-16x16-rpg-icon-pack) by [Kyrise](https://kyrise.itch.io/).
 Licensed under a [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/).
 
-Following are from [Ascension Game Dev Intersect Assets](https://github.com/AscensionGameDev/Intersect-Assets) Licensed under a [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/). 
+Following effects and tile assets are from [Ascension Game Dev Intersect Assets](https://github.com/AscensionGameDev/Intersect-Assets) Licensed under a [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/). 
 * `Particles16.png` based on `Particles.png` - Animations by PixelFox. Resized by Sean Igo
-* `Autotiles_Water16.png`, `Autotiles_Ground16.png` based on `Autotiles_Water.png`, `Autotiles_Ground.png` - Credit goes to George (George Bailey), Murdoc (Cordell Carrier), and Zetasis (Jon Collier) for making several extras. Resized by Sean Igo
+* `Autotiles.png` based on `Autotiles_Water.png`, `Autotiles_Ground.png` - Credit goes to George (George Bailey), Murdoc (Cordell Carrier), and Zetasis (Jon Collier) for making several extras. Combined and modified by Sean Igo.
 * `Overworld16.png` based on `Overworld.png` - Tilesets commissioned by Murdoc (Cordell Carrier). Includes, and is based off tiles originally released by George (George Bailey) at AGD. Original Tiles Release: https://www.ascensiongamedev.com/topic/742-16x16-custom-assets/ Resized by Sean Igo.
 
 # upcoming
