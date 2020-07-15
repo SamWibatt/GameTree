@@ -54,7 +54,7 @@ namespace gt {
     for(auto cit = clients.begin(); cit != clients.end(); cit++) {
       if((*cit)->get_id() == client_id) {
         //this might invalidate the iterator, but we're leaving anyway
-        printf("Time found client %u, removing\n",client_id);
+        //printf("Time found client %u, removing\n",client_id);
         clients.erase(cit);
         return true;
       }
@@ -66,17 +66,17 @@ namespace gt {
 
   GTEventEntity::GTEventEntity() {
     clock = nullptr;
-    printf("Creating event entity, id %u\n",id);
+    //printf("Creating event entity, id %u\n",id);
   }
 
   GTEventEntity::~GTEventEntity() {
     //remove from clock's client list
     if(clock != nullptr) {
-      printf("Event entity %u removing itself from clock client list\n",id);
+      //printf("Event entity %u removing itself from clock client list\n",id);
       clock->remove_client(id);
     }
 
-    printf("Destroying event entity, id %u\n",id);
+    //printf("Destroying event entity, id %u\n",id);
   }
 
   void GTEventEntity::handle_events() {
@@ -120,7 +120,7 @@ namespace gt {
   // ACTOR ==========================================================================================
   GTActor::GTActor() {
     // id should be filled in by Entity ctor
-    printf("Creating actor id %u\n",id);
+    //printf("Creating actor id %u\n",id);
     sprite = nullptr;
     current_character = -1;
     current_action = -1;
@@ -130,7 +130,7 @@ namespace gt {
 
   GTActor::~GTActor() {
     //sprite is a smart pointer, just let it go?
-    printf("Destroying GTActor id %u\n",id);
+    //printf("Destroying GTActor id %u\n",id);
   }
 
   // MIGHT ALSO PASS IN WHETHER THE ANIMATION REPEATS
@@ -225,7 +225,7 @@ namespace gt {
     j["image_data"] = encoded_png;
 
     for(auto t : tile_atlas) {
-      t.add_to_json(j["tile_data"]);
+      t.add_to_json(j["tile_atlas"]);
     }
 
     return true;
@@ -235,52 +235,18 @@ namespace gt {
     return false;     //TEMP
   }
 
-  // GTTiledMapLayer -----------------------------------------------------------------------------
-
-  //subclass overrides need to call the base class one to add/get image data and tile atlas
-  bool GTTiledMapLayer::add_to_json(json& j) {
-    json subj;
-
-    if(!GTMapLayer::add_to_json(subj)) return false; 
-
-    // put in a type field so reader knows how to handle - or should we just look for fields we know will be there?
-    // let's make it explicit
-    subj["type"] = "tiled";
-
-    // so for tiled map add the tile map specific stuff
-    subj["layer_tilewid"] = layer_tilewid;
-    subj["layer_tileht"] = layer_tileht;
-    subj["layer_pixwid"] = tile_pixwid;
-    subj["layer_pixht"] = tile_pixht;
-
-    // then emit tile_map;
-    for(auto ti : tile_map) {
-      subj["tiled_map"].push_back(ti);
-    }
-
-    j.push_back(subj);
-
-    return true;
-  }
-
-  bool GTTiledMapLayer::get_from_json(json& jt) {
-    if(!GTMapLayer::get_from_json(jt)) return false; 
-    return false;     //TEMP
-  }
 
   // GTObjectTile --------------------------------------------------------------------------------
 
   GTObjectTile::GTObjectTile() {
   }
 
-  GTObjectTile::GTObjectTile(int t, int ox, int oy, int w, int h, int fx, int fy) {
+  GTObjectTile::GTObjectTile(int t, int ox, int oy, int w, int h) {
     tile = t;
     orx = ox;
     ory = oy;
     wid = w;
     ht = h;
-    offx = fx;
-    offy = fy;
   }
 
   GTObjectTile::~GTObjectTile() {
@@ -293,8 +259,6 @@ namespace gt {
     subj["ory"] = ory;
     subj["wid"] = wid;
     subj["ht"] = ht;
-    subj["offx"] = offx;
-    subj["offy"] = offy;
 
     j.push_back(subj);
 
@@ -328,6 +292,47 @@ namespace gt {
     if(!GTMapLayer::get_from_json(jt)) return false; 
     return false;     //TEMP
   }
+
+    // GTTiledMapLayer -----------------------------------------------------------------------------
+
+  //subclass overrides need to call the base class one to add/get image data and tile atlas
+  bool GTTiledMapLayer::add_to_json(json& j) {
+    json subj;
+
+    if(!GTMapLayer::add_to_json(subj)) return false; 
+
+    // put in a type field so reader knows how to handle - or should we just look for fields we know will be there?
+    // let's make it explicit
+    subj["type"] = "tiled";
+
+    // so for tiled map add the tile map specific stuff
+    subj["layer_tilewid"] = layer_tilewid;
+    subj["layer_tileht"] = layer_tileht;
+    subj["layer_pixwid"] = tile_pixwid;
+    subj["layer_pixht"] = tile_pixht;
+
+    // then emit tile_map;
+    for(auto ti : tile_map) {
+      subj["tile_map"].push_back(ti);
+    }
+
+    //emit tile_objects, if any - if not, json won't have a "tile_objects"
+    if(tile_objects.size() > 0) {
+      for(auto tob : tile_objects) {
+        tob->add_to_json(subj["tile_objects"]);
+      }
+    }
+
+    j.push_back(subj);
+
+    return true;
+  }
+
+  bool GTTiledMapLayer::get_from_json(json& jt) {
+    if(!GTMapLayer::get_from_json(jt)) return false; 
+    return false;     //TEMP
+  }
+
 
   // GTMap ---------------------------------------------------------------------------------------
 

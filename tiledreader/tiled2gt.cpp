@@ -26,18 +26,42 @@ using json = nlohmann::json;
 std::shared_ptr<GTTiledMapLayer> tiled_tile_layer_to_gt_tile_layer(std::shared_ptr<TiledMapLayer> ptl, std::map<tile_index_t,GTtile_index_t>& gidmapping) {
   std::shared_ptr<GTTiledMapLayer> pgtml = std::shared_ptr<GTTiledMapLayer>(new GTTiledMapLayer());
 
-  //ok now step through the mapcells and remap
-  // * scan ptl->mapcells to produce pgtml->tile_map, copying any 0 across to 0, 
-  //   any other number to the map entry for it in the map we built before
-  //   OR could just put gidmapping[0] = 0
-  pgtml->tile_map.resize(ptl->mapcells.size());
-  std::transform(ptl->mapcells.begin(),ptl->mapcells.end(), pgtml->tile_map.begin(), [&gidmapping](tile_index_t i){ return gidmapping[i]; });
-
   //fill in simple data members
   pgtml->layer_tilewid = ptl->layer_w;
   pgtml->layer_tileht = ptl->layer_h;
   pgtml->tile_pixwid = ptl->tile_width;
   pgtml->tile_pixht = ptl->tile_height;
+
+  //ok now step through the mapcells and remap
+  // * scan ptl->mapcells to produce pgtml->tile_map, copying any 0 across to 0, 
+  //   any other number to the map entry for it in the map we built before
+  //   OR could just put gidmapping[0] = 0
+  pgtml->tile_map.resize(ptl->mapcells.size());
+  //was std::transform(ptl->mapcells.begin(),ptl->mapcells.end(), pgtml->tile_map.begin(), [&gidmapping](tile_index_t i){ return gidmapping[i & 0x00FFFFFF]; });
+
+  // HOWEVER: let's handle odd-sized tiles with a tile_objects list. Put a 0 in their tile map spot.
+  pgtml->tile_objects.clear();
+  int ox, oy;
+  for(auto j=0; j< ptl->mapcells.size(); j++) {
+    // if tile's height isn't the regular tile height or width not the same width, make an object for it
+    if(ptl->mapcells[j] != 0) {
+      atlas_record& atrec = (*(ptl->layer_atlas))[ptl->mapcells[j]];
+      if( atrec.ht != ptl->tile_height || atrec.wid != ptl->tile_width) {
+        pgtml->tile_map[j] = 0;
+        //what is the grid coordinate? derive from j & # columns & layer's tile pixel dims
+        ox = ((j % ptl->layer_w) * ptl->tile_width);
+        oy = ((j / ptl->layer_w) * ptl->tile_height);
+        // **** SHEAR OFF ROTATION FLAGS - HOW TO HANDLE THOSE?
+        pgtml->tile_objects.push_back(std::shared_ptr<GTObjectTile>(new GTObjectTile(gidmapping[atrec.gid  & 0x00FFFFFF],
+            ox, oy, atrec.wid, atrec.ht)));
+      } else {
+        // **** SHEAR OFF ROTATION FLAGS - HOW TO HANDLE THOSE?
+        pgtml->tile_map[j] = gidmapping[ptl->mapcells[j]  & 0x00FFFFFF ];
+      }
+    } else {
+      pgtml->tile_map[j] = 0;
+    }
+  }
 
   return pgtml;
 }
@@ -56,12 +80,10 @@ std::shared_ptr<GTObjectsMapLayer> tiled_obj_layer_to_gt_obj_layer(std::shared_p
   pgoml->tile_objects.clear();
 
   // so the remapping here is to replace the original TiledMapObjectTileLocation's gid with its remapped index into tile_atlas.
-  // **************** HOW DO WE GET OFFSET X AND Y? TILED DOESN'T PROVIDE THEM CURRENTLY 
-  int offx = 0;
-  int offy = 0; 
   for(auto tob : ptl->tile_objects) {
     pgoml->tile_objects.push_back(std::shared_ptr<GTObjectTile>(
-      new GTObjectTile(gidmapping[tob->gid], tob->orx, tob->ory, tob->wid, tob->ht, offx, offy))
+      // ****** SHEAR OFF ROTATION FLAGS - HOW TO HANDLE THOSE?
+      new GTObjectTile(gidmapping[tob->gid & 0x00FFFFFF], tob->orx, tob->ory, tob->wid, tob->ht))
     );
   }
 
@@ -83,8 +105,10 @@ std::shared_ptr<GTMapLayer> tiled_layer_to_gt_layer(std::shared_ptr<TiledMap> pt
 
   //drat, layer_atlas is an unordered map. Let's order it all
   std::set<tile_index_t> ordered_gids;
-  for(auto tatl : *(ptl->layer_atlas)) ordered_gids.insert(tatl.first);
-  GTtile_index_t j = 0;
+  // remember to shear off rotation flags!
+  // *********************** TO DO : PUT THEM BACK ON! That'll be handled in the step where tile map / obj list is converted
+  for(auto tatl : *(ptl->layer_atlas)) ordered_gids.insert(tatl.first & 0x00FFFFFF);
+  GTtile_index_t j = 1; //skip 0
   for(auto gid : ordered_gids) if(gid != 0) gidmapping[gid] = j++;
 
   //now for layer-type-specific stuff
@@ -227,7 +251,7 @@ int main(int argc, char *argv[]) {
   // std::shared_ptr<TiledMap> ptm = tr.read_map_file(mappath);
   // ******************************** YAY this is worky on entrapta with
   // /home/sean/dev/cpp/GameTree/build/tiledreader/tiled2gt -i ~/dev/GameNoodles/sfml/hello/assets/tiled_map/singlescreen.tmx -o ~/tmp/tiled2gt/
-  // writes the tileset pngs!
+  // writes the tileset pngs! and map json!
   printf("About to read Tiled file %s...\n",tiled_input_file.c_str());
 
   // maybe rename this method bc it saves pngs out, too

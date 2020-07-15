@@ -189,12 +189,12 @@ namespace gt {
     public:
       void init() { 
         id = get_next_id();
-        printf("- entity init, id %u\n",id); 
+        //printf("- entity init, id %u\n",id); 
       }
       GTEntity() { init(); }
       virtual ~GTEntity() { 
         //does this need to be explicit? kids.clear();
-        printf("Deleting entity id %u\n",id); 
+        //printf("Deleting entity id %u\n",id); 
       }
 
     public:
@@ -485,28 +485,8 @@ namespace gt {
       virtual bool get_from_json(json& jt);
   };
 
+  //tile index type
   typedef uint32_t GTtile_index_t;
-
-  // layer that consists of a square grid of (at least mostly) same-size tiles
-  // may have some odd-sized ones
-  // the defining characteristic is that tile placement is
-  // determined by the grid. 
-  class GTTiledMapLayer : public GTMapLayer {
-    public:
-      int layer_tilewid;   //layer width in tiles
-      int layer_tileht;    //height
-      int tile_pixwid;     //tile grid width in pixels
-      int tile_pixht;      //height
-      
-      //tilemap entries are indices into tile_atlas; 0 means no tile in
-      //that grid location
-      std::vector<GTtile_index_t> tile_map;
-
-    public:
-      // json i/o
-      virtual bool add_to_json(json& j) override;
-      virtual bool get_from_json(json& jt) override;
-  };
 
   //location / extent of a free-floating tile as opposed to TiledMapLayer
   //grid-determined location
@@ -518,12 +498,10 @@ namespace gt {
       int ory;        //origin y
       int wid;        //width 
       int ht;         //height
-      int offx;       //offset from drawing point to origin
-      int offy;       //"
 
     public:
       GTObjectTile(); 
-      GTObjectTile(int t, int ox, int oy, int w, int h, int fx, int fy);
+      GTObjectTile(int t, int ox, int oy, int w, int h);
       virtual ~GTObjectTile(); 
 
     // json i/o
@@ -542,6 +520,31 @@ namespace gt {
       virtual bool add_to_json(json& j) override;
       virtual bool get_from_json(json& jt) override;
   };
+
+  // layer that consists of a square grid of (at least mostly) same-size tiles
+  // may have some odd-sized ones
+  // the defining characteristic is that tile placement is
+  // determined by the grid. 
+  // Though the odd sized ones are handled by tile_objects list.
+  class GTTiledMapLayer : public GTMapLayer {
+    public:
+      int layer_tilewid;   //layer width in tiles
+      int layer_tileht;    //height
+      int tile_pixwid;     //tile grid width in pixels
+      int tile_pixht;      //height
+      
+      //tilemap entries are indices into tile_atlas; 0 means no tile in
+      //that grid location
+      std::vector<GTtile_index_t> tile_map;
+
+      std::vector<std::shared_ptr<GTObjectTile>> tile_objects;
+
+    public:
+      // json i/o
+      virtual bool add_to_json(json& j) override;
+      virtual bool get_from_json(json& jt) override;
+  };
+
 
   class GTMap : public GTEventEntity {
     public:
