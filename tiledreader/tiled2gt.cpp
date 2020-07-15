@@ -262,7 +262,12 @@ int main(int argc, char *argv[]) {
   std::shared_ptr<GTMap> pmap = tiled_map_to_gt_map(ptm, output_dir);
 
   // now emit it!!!!!!!!!!!!!!!!!!
-  std::string json_filename = output_dir + "mapout.json";   //GET A REAL NAME  
+
+  // MAKE THIS NON-UNIX-CHAUVINIST
+  auto const pos=tiled_input_file.find_last_of('/');
+  std::string mapname = tiled_input_file.substr(pos+1,tiled_input_file.size()-1);
+
+  std::string json_filename = output_dir + mapname + ".json";
   printf("Writing json file %s\n",json_filename.c_str());
   json jmap;
   pmap->add_to_json(jmap);
@@ -274,4 +279,23 @@ int main(int argc, char *argv[]) {
     // EMIT HEADER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   }
 
+  //TEST: put a flag on this or just comment out 
+  // read the json back in 
+  printf("VERIFYING: reading json file back in\n");
+  GTMap remap;
+  std::ifstream ifs(json_filename);
+  json jremap;
+  ifs >> jremap;
+  
+  if(remap.get_from_json(jremap) == false) {
+    fprintf(stderr,"FAILED to read json file back in\n");
+    exit(1);
+  }
+
+  std::string json_filename2 = json_filename + "2.json";
+  printf("--- successfully read! writing to %s\n",json_filename2.c_str());
+  std::ofstream json_outstream2(json_filename2);
+  json_outstream2 << std::setw(4) << jremap << std::endl;
+
+  //+ YAY test file diffed identical
 }

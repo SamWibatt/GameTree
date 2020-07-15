@@ -232,7 +232,22 @@ namespace gt {
   }
 
   bool GTMapLayer::get_from_json(json& jt) {
-    return false;     //TEMP
+    if(!jt.contains("image_data") || !jt.contains("tile_atlas")) {
+      fprintf(stderr,"*** ERROR: map layer requires image_data and tile_atlas\n");
+      return false;
+    }
+
+    // get the .png data
+    image_data = base64::decode(std::string(jt["image_data"]));
+    
+    //then the tile atlas!
+    tile_atlas.resize(jt["tile_atlas"].size());
+    for(auto j = 0; j < tile_atlas.size(); j++) {
+      tile_atlas[j].get_from_json(jt["tile_atlas"][j]);
+    }
+
+
+    return true;
   }
 
 
@@ -266,7 +281,19 @@ namespace gt {
   }
 
   bool GTObjectTile::get_from_json(json& jt) {
-    return false; //temp!
+
+    if(!jt.contains("tile") || !jt.contains("orx") || !jt.contains("ory") || !jt.contains("wid") || !jt.contains("ht")) {
+      fprintf(stderr,"*** ERROR: tile object requires all of tile, orx, ory, wid, ht\n");
+      return false;
+    }
+
+    tile = jt["tile"];
+    orx = jt["orx"];
+    ory = jt["ory"];
+    wid = jt["wid"];
+    ht = jt["ht"];
+
+    return true;
   }
 
   // GTObjectsMapLayer ---------------------------------------------------------------------------
@@ -290,7 +317,19 @@ namespace gt {
 
   bool GTObjectsMapLayer::get_from_json(json& jt) {
     if(!GTMapLayer::get_from_json(jt)) return false; 
-    return false;     //TEMP
+
+    if(jt.contains("tile_objects")) {
+      tile_objects.resize(jt["tile_objects"].size());
+      for(auto j = 0; j <  jt["tile_objects"].size(); j++) {
+        tile_objects[j] = std::shared_ptr<GTObjectTile>(new GTObjectTile());
+        tile_objects[j]->get_from_json(jt["tile_objects"][j]);
+      }
+    } else {
+      fprintf(stderr,"*** ERROR: no tile_objects in objects layer\n");
+      return false;
+    }
+
+    return true;
   }
 
     // GTTiledMapLayer -----------------------------------------------------------------------------
@@ -330,7 +369,37 @@ namespace gt {
 
   bool GTTiledMapLayer::get_from_json(json& jt) {
     if(!GTMapLayer::get_from_json(jt)) return false; 
-    return false;     //TEMP
+
+    //sanity check - for now just look for required fields' presence. 
+    if(!jt.contains("layer_tilewid") || !jt.contains("layer_tileht") ||
+        !jt.contains("layer_pixwid") || !jt.contains("layer_pixht") ||
+        !jt.contains("tile_map")) {
+      fprintf(stderr,"*** ERROR: tiled layer requires layer_tilewid, layer_tileht, layer_pixwd, layer_pixht, and tile_map\n");
+      return false;
+    }
+
+    //read the simple ones
+    layer_tilewid = jt["layer_tilewid"];
+    layer_tileht = jt["layer_tileht"];
+    tile_pixwid = jt["layer_pixwid"];
+    tile_pixht = jt["layer_pixht"];
+
+    //then the tile map
+    tile_map.clear();
+    for(auto ind : jt["tile_map"]) {
+      tile_map.push_back(GTtile_index_t(ind));
+    }
+
+    // there might also be a tile_objects
+    if(jt.contains("tile_objects")) {
+      tile_objects.resize(jt["tile_objects"].size());
+      for(auto j = 0; j <  jt["tile_objects"].size(); j++) {
+        tile_objects[j] = std::shared_ptr<GTObjectTile>(new GTObjectTile());
+        tile_objects[j]->get_from_json(jt["tile_objects"][j]);
+      }
+    }
+
+    return true;
   }
 
 
@@ -353,7 +422,43 @@ namespace gt {
   }
 
   bool GTMap::get_from_json(json& j) {
-    return false;       //TEMP!
+    //we expect there to be an array of layers at the top level
+    // or no wait, "layers" : []
+    if(j.contains("layers")) {
+
+      for(json jlyr : j["layers"]) {
+        if(jlyr.contains("type")) {
+          if(jlyr["type"] == "tiled") {
+            auto lyr = std::shared_ptr<GTTiledMapLayer>(new GTTiledMapLayer());
+            if(lyr->get_from_json(jlyr) == true) {
+              layers.push_back(lyr);
+            } else {
+              fprintf(stderr,"*** ERROR: failed to read tiled map layer\n");
+              return false;
+            }
+          } else if(jlyr["type"] == "objects") {
+            auto lyr = std::shared_ptr<GTObjectsMapLayer>(new GTObjectsMapLayer());
+            if(lyr->get_from_json(jlyr) == true) {
+              layers.push_back(lyr);
+            } else {
+              fprintf(stderr,"*** ERROR: failed to read objects map layer\n");
+              return false;
+            }
+          } else {
+            fprintf(stderr,"*** ERROR: unknown layer type %s\n",std::string(jlyr["type"]).c_str());
+            return false;
+          } 
+        } else {
+          fprintf(stderr,"*** ERROR: no layer type given\n");
+          return false;
+        } 
+      }
+
+      return true;
+    }
+
+    fprintf(stderr,"*** ERROR: no 'layers' element at top level\n");
+    return false;       // there was no layers field! Fail!
   }
 
 }
