@@ -11,4 +11,5 @@ CTestTestfile.cmake
 _deps
 build/
 *.tiled-session
+*.json2.json
 

@@ -272,7 +272,9 @@ namespace tiledreader {
       //so we'll do that
       tl = std::shared_ptr<TiledMapLayer>(new TiledMapLayer(TL_ObjectLayer,
         std::stoi(lyrroot.attribute("id").as_string()),
-        lyrroot.name(),0,0));
+        //lyrroot.name(),   //this isn't the name! It just names it objectgroup :P
+        lyrroot.attribute("name").as_string(),
+        0,0));
       /* let us read this as an ogject group layer!
       <objectgroup id="5" name="Ogjects">
         //so - "object" children can be a tile off in a random spot: look for the "gid" attribute

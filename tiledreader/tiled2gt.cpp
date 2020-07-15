@@ -123,7 +123,8 @@ std::shared_ptr<GTMapLayer> tiled_layer_to_gt_layer(std::shared_ptr<TiledMap> pt
     return nullptr;
   }
 
-  //in any case, we need the image
+  // HAVE IMAGE DATA AND TILE ATLAS HERE BE THE LAST THING so if we bail on no-image objects layer, it's ok
+  //in any case, we need the image - OPTIONAL FOR OBJECT LAYERS
   //plyr->image_data is just the entire contents of the png from ptl
   //does ptl record that? no, but see tiledreader do_crunch
   //ASSUMING THERE IS ONLY ONE IMAGE FOR THE TILESET, NAMED LIKE THIS
@@ -132,8 +133,13 @@ std::shared_ptr<GTMapLayer> tiled_layer_to_gt_layer(std::shared_ptr<TiledMap> pt
   FILE * pngfp = std::fopen(png_path.c_str(), "rb");
 
   if(pngfp == nullptr) {
-    fprintf(stderr,"*** ERROR: failed to open png file %s - error %s\n",png_path.c_str(),std::strerror(errno));
-    return nullptr;
+    if(ptl->type == TL_TiledLayer) {
+      fprintf(stderr,"*** ERROR: failed to open png file %s - error %s\n",png_path.c_str(),std::strerror(errno));
+      return nullptr;
+    } else if(ptl->type == TL_ObjectLayer) {
+      fprintf(stderr,"+++ WARNING: layer %s has no imagery - it's an object layer so could be ok\n",ptl->layer_name.c_str());
+      return plyr;
+    }
   }
   //get file size and allocate buffer for it
   std::fseek(pngfp,0,SEEK_END);
@@ -180,36 +186,15 @@ int main(int argc, char *argv[]) {
   //printf("Hello and welcome to Tiled2GT, the tenacious Tiled to Gametree conversion utility.\n");
 
   //parse command line.
-  //WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  // need:
-  // - input map file, tmx (later maybe json too) 
-  // - output directory if we're writing tile sheets and metadata separately
-  // - output format (separate files, glommed metadata & pngs to be read with loadFromMemory or 
-  //   similar)
-  // - whether we want a header file made (or more generally output format - bin, json)
-  // why not use https://github.com/CLIUtils/CLI11
-  // got CLI11.hpp release 1.9.1 from https://github.com/CLIUtils/CLI11/releases
-
-  // Time for arg parsing
   // https://github.com/CLIUtils/CLI11#adding-options
 
   CLI::App app{"Hello and welcome to Tiled2GT, the tenacious Tiled to Gametree conversion utility."};
-
-  // if(argc < 2) {
-  //   fprintf(stderr,"Usage: Tiled2GT [OPTIONS] <Tiled file>\n");
-  //   fprintf(stderr,"need:\n");
-  //   fprintf(stderr,"- input map file, tmx (later maybe json too) \n");
-  //   fprintf(stderr,"- output directory if we're writing tile sheets and metadata separately\n");
-  //   fprintf(stderr,"- output format (separate files, glommed metadata & pngs to be read with loadFromMemory or \n");
-  //   fprintf(stderr,"  similar)\n");
-  //   fprintf(stderr,"- whether we want a header file made (or more generally output format - bin, json)\n");
-  //   exit(1);
-  // }
 
   std::string tiled_input_file;
   std::string output_dir;
   bool emit_header = false;
   std::string header_output_file;
+  bool verify_json = false;
 
   app.add_option("-i,--input", tiled_input_file, "Tiled map file (.tmx, soon .json)")
     ->required()
@@ -279,23 +264,25 @@ int main(int argc, char *argv[]) {
     // EMIT HEADER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   }
 
+
   //TEST: put a flag on this or just comment out 
   // read the json back in 
-  printf("VERIFYING: reading json file back in\n");
-  GTMap remap;
-  std::ifstream ifs(json_filename);
-  json jremap;
-  ifs >> jremap;
-  
-  if(remap.get_from_json(jremap) == false) {
-    fprintf(stderr,"FAILED to read json file back in\n");
-    exit(1);
+  if(verify_json) {
+    printf("VERIFYING: reading json file back in\n");
+    GTMap remap;
+    std::ifstream ifs(json_filename);
+    json jremap;
+    ifs >> jremap;
+    
+    if(remap.get_from_json(jremap) == false) {
+      fprintf(stderr,"FAILED to read json file back in\n");
+      exit(1);
+    }
+
+    std::string json_filename2 = json_filename + "2.json";
+    printf("--- successfully read! writing to %s\n",json_filename2.c_str());
+    std::ofstream json_outstream2(json_filename2);
+    json_outstream2 << std::setw(4) << jremap << std::endl;
+    printf("*** go diff the 2 json files and make sure they're the same\n");
   }
-
-  std::string json_filename2 = json_filename + "2.json";
-  printf("--- successfully read! writing to %s\n",json_filename2.c_str());
-  std::ofstream json_outstream2(json_filename2);
-  json_outstream2 << std::setw(4) << jremap << std::endl;
-
-  //+ YAY test file diffed identical
 }

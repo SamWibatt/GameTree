@@ -220,12 +220,18 @@ namespace gt {
   bool GTMapLayer::add_to_json(json& j) {
     // base class handles image_data and tile_atlas
     // write image data in base64_url - https://github.com/tplgy/cppcodec#base64
-    std::string encoded_png = base64::encode(image_data);
 
-    j["image_data"] = encoded_png;
+    //OBJECT LAYERS MAY NOT HAVE IMAGE DATA! don't emit an image_data or tile_atlas if they don't!
+    if(!image_data.empty()) {
+      std::string encoded_png = base64::encode(image_data);
 
-    for(auto t : tile_atlas) {
-      t.add_to_json(j["tile_atlas"]);
+      j["image_data"] = encoded_png;
+
+      for(auto t : tile_atlas) {
+        t.add_to_json(j["tile_atlas"]);
+      }
+    } else {
+      fprintf(stderr,"+++ WARNING: map layer doesn't have any image data. OK if it's a polygons-only object layer or something\n");
     }
 
     return true;
@@ -233,8 +239,8 @@ namespace gt {
 
   bool GTMapLayer::get_from_json(json& jt) {
     if(!jt.contains("image_data") || !jt.contains("tile_atlas")) {
-      fprintf(stderr,"*** ERROR: map layer requires image_data and tile_atlas\n");
-      return false;
+      fprintf(stderr,"+++ WARNING: map layer has no image_data or tile_atlas - ok if it's an object layer with no imagery\n");
+      return true;
     }
 
     // get the .png data
@@ -325,8 +331,9 @@ namespace gt {
         tile_objects[j]->get_from_json(jt["tile_objects"][j]);
       }
     } else {
-      fprintf(stderr,"*** ERROR: no tile_objects in objects layer\n");
-      return false;
+      // ACTUALLY THIS IS OK - there could just be polygons and stuff that I haven't supported yet
+      //fprintf(stderr,"*** ERROR: no tile_objects in objects layer\n");
+      //return false;
     }
 
     return true;

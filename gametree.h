@@ -514,6 +514,7 @@ namespace gt {
   class GTObjectsMapLayer : public GTMapLayer {
     public:
       std::vector<std::shared_ptr<GTObjectTile>> tile_objects;
+      //LATER THERE WILL BE POLYGONS TOO
 
     public:
       // json i/o
