@@ -1,21 +1,16 @@
 # Acknowledgements
 
-**ACTUALLY MAYBE USE INTERSECT PEOPLE INSTEAD**
-Character asset `Linail-the-High-Priestess.png` is from the [Pixel Champions Character Pack, Micro Edition](https://alexdraws.itch.io/pixel-champions) by [Alexander Smith](https://alexsmithdesign.com/). Used with permission.
+Character spritesheet asset `antifarea3sides.png` renamed by Sean Igo from `redone charset by antifarea 3 sides.png` from [18x20 Characters Walk/Attack/Cast spritesheet](https://opengameart.org/content/18x20-characters-walkattackcast-spritesheet) by Antifarea (Charles Gabriel). Licensed under a [Attribution 3.0 Unported (CC BY 3.0) Licence](https://creativecommons.org/licenses/by/3.0/)
 
-**ACTUALLY MAYBE USE INTERSECT TILES INSTEAD**
-Tileset asset `Tileset.png` is from [Another RPG Tileset (16x16)](https://fikry13.itch.io/another-rpg-tileset) by [fikry13](https://fikry13.itch.io/). Licensed under a [ a Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/).
+Item asset `spritesheet_16x16.png` is from [Kyrise's Free 16x16 RPG Icon Pack](https://kyrise.itch.io/kyrises-free-16x16-rpg-icon-pack) by [Kyrise](https://kyrise.itch.io/).
+Licensed under a [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/).
 
-Item asset `spritesheet_32x32.png` is from [Kyrise's Free 16x16 RPG Icon Pack](https://kyrise.itch.io/kyrises-free-16x16-rpg-icon-pack) by [Kyrise](https://kyrise.itch.io/).
-Licensed under a [ a Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/).
+Following are from [Ascension Game Dev Intersect Assets](https://github.com/AscensionGameDev/Intersect-Assets) Licensed under a [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/). 
+* `Particles16.png` based on `Particles.png` - Animations by PixelFox. Resized by Sean Igo
+* `Autotiles_Water16.png`, `Autotiles_Ground16.png` based on `Autotiles_Water.png`, `Autotiles_Ground.png` - Credit goes to George (George Bailey), Murdoc (Cordell Carrier), and Zetasis (Jon Collier) for making several extras. Resized by Sean Igo
+* `Overworld16.png` based on `Overworld.png` - Tilesets commissioned by Murdoc (Cordell Carrier). Includes, and is based off tiles originally released by George (George Bailey) at AGD. Original Tiles Release: https://www.ascensiongamedev.com/topic/742-16x16-custom-assets/ Resized by Sean Igo.
 
-Following are from [Ascension Game Dev Intersect Assets](https://github.com/AscensionGameDev/Intersect-Assets) Licensed under a [ a Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/). 
-* `Natural_Dog_001.png` - Characters and Monsters from PixelFox. 
-* `Npc_Generic_016.png`, `Npc_Generic_019.png` - Sprites commissioned from Jon Collier (aka Zetasis). Draws from PixelFox's original designs.
-* `Particles.png` - Animations by PixelFox. 
-* `Autotiles_Water.png` - Credit goes to George (George Bailey), Murdoc (Cordell Carrier), and Zetasis (Jon Collier) for making several extras.
-* `Ground.png`, `Terrain.png` - Tileset additions and updates by Zetasis (Jon Collier)!
-
+# upcoming
 **GET SOME SOUNDS IN TOO**
 * Intersect sounds are cc-by or pd and lots of good UI clicks and stuff
 
