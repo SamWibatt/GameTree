@@ -5,6 +5,8 @@
 #include "crunch_main.h"
 #include <fstream>
 #include <iomanip>
+//polygon tesselation, if we do this at this stage - good argument for it is that then the different plat-spec backends don't have to do it
+#include "tesselator.h"
 
 using namespace pugi;
 using json = nlohmann::json;
@@ -293,28 +295,65 @@ namespace tiledreader {
       */
       for(auto kid : lyrroot.children()) {
         if(std::string(kid.name()) == "object") {
-          int gidley = kid.attribute("gid").as_int();
-          if(gidley != 0) {
-            //printf("Hey found ogject with gid %d, will put in mapcells\n",gidley);
-            //oh wait need to make sure we don't do duplicates - or does that matter? The converter to sfml can handle it
-            tl->mapcells.push_back(tile_index_t(gidley));
-            //SAVE OFF THE POSITIONS! bc there isn't a grid to determine it
-            //<object id="10" gid="1479" x="214.426" y="139.214" width="117" height="113"/>
-            tl->tile_objects.push_back(
-              std::shared_ptr<TiledMapObjectTileLocation>(new TiledMapObjectTileLocation(
-                kid.attribute("id").as_int(), 
-                gidley, 
-                kid.attribute("x").as_float(), 
-                kid.attribute("y").as_float(),
-                kid.attribute("width").as_int(), 
-                kid.attribute("height").as_int())));
-            // printf("Saved off tile object: id %d gid %u orx %f ory %f wid %d ht %d\n",
-            //         tl->tile_objects.back()->id,
-            //         tl->tile_objects.back()->gid,
-            //         tl->tile_objects.back()->ory,
-            //         tl->tile_objects.back()->ory,
-            //         tl->tile_objects.back()->wid,
-            //         tl->tile_objects.back()->ht);
+          if(kid.attribute("gid")) {
+            // only tile objects have gids, so this is a tile object
+            int gidley = kid.attribute("gid").as_int();
+            if(gidley != 0) {
+              // tile 0 is no-tile but you also get it if as_int() didn't work, so skip zeros
+              //printf("Hey found tile ogject with gid %d, will put in mapcells\n",gidley);
+              //oh wait need to make sure we don't do duplicates - or does that matter? The converter to sfml can handle it
+              tl->mapcells.push_back(tile_index_t(gidley));
+              //SAVE OFF THE POSITIONS! bc there isn't a grid to determine it
+              //<object id="10" gid="1479" x="214.426" y="139.214" width="117" height="113"/>
+              tl->tile_objects.push_back(
+                std::shared_ptr<TiledMapObjectTileLocation>(new TiledMapObjectTileLocation(
+                  kid.attribute("id").as_int(), 
+                  gidley, 
+                  kid.attribute("x").as_float(), 
+                  kid.attribute("y").as_float(),
+                  kid.attribute("width").as_int(), 
+                  kid.attribute("height").as_int())));
+                  // printf("Saved off tile object: id %d gid %u orx %f ory %f wid %d ht %d\n",
+                  //         tl->tile_objects.back()->id,
+                  //         tl->tile_objects.back()->gid,
+                  //         tl->tile_objects.back()->ory,
+                  //         tl->tile_objects.back()->ory,
+                  //         tl->tile_objects.back()->wid,
+                  //         tl->tile_objects.back()->ht);
+            } //else warn got a tile 0?
+          } else if(kid.attribute("type")) {
+            // polygon / rect / ellipse spotter
+            // all objects should have a bounding box... but all polygons and rectangles do (rectangles have nothing else!)
+            // we're looking for *meaningful* shapes here, which I'm going to determine by "type" - DOCUMENT THAT!
+            // are there illegal values for these we can sanity check?
+            float bbox_x = kid.attribute("x").as_float();
+            float bbox_y = kid.attribute("y").as_float();
+            float bbox_w = kid.attribute("w").as_float();
+            float bbox_h = kid.attribute("h").as_float();
+            std::string area_type = std::string(kid.attribute("type").as_string());
+            std::string area_name = std::string(kid.attribute("name").as_string());   //not required, things like triggers might use
+
+            //determine what we're dealing with - 
+            if(kid.child("point")) {
+              //point object has a point child
+              printf("- Warning: point objects not yet supported\n");
+              continue;
+            } else if(kid.child("text")) {
+              //text object has a text child
+              printf("- Warning: text objects not yet supported\n");
+              continue;
+            } else if(kid.child("ellipse")) {
+              //ellipse object has an ellipse child
+              printf("- Found an ellipse of type %s, name \"%s\", id %d!\n",area_type.c_str(), area_name.c_str(), kid.attribute("id").as_int());
+            } else if(kid.child("polygon")) {
+              //polygon object has a polygon child
+              printf("- Found a polygon of type %s, name \"%s\", id %d!\n",area_type.c_str(), area_name.c_str(), kid.attribute("id").as_int());
+            } else {
+              //assume it's a rectangle!
+              printf("- Found a rectangle of type %s, name \"%s\", id %d!\n",area_type.c_str(), area_name.c_str(), kid.attribute("id").as_int());
+            }
+          } else {
+            printf("- found a non-tile object, id %d first child (%s) without a type, skipping\n",kid.attribute("id").as_int(),kid.first_child().name());
           }
         }
       }
