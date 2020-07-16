@@ -324,6 +324,7 @@ namespace tiledreader {
           } else if(kid.attribute("type")) {
             // polygon / rect / ellipse spotter
             // all objects should have a bounding box... but all polygons and rectangles do (rectangles have nothing else!)
+            // no, wait, polygons don't
             // we're looking for *meaningful* shapes here, which I'm going to determine by "type" - DOCUMENT THAT!
             // are there illegal values for these we can sanity check?
             float bbox_x = kid.attribute("x").as_float();
@@ -336,11 +337,12 @@ namespace tiledreader {
             //determine what we're dealing with - 
             if(kid.child("point")) {
               //point object has a point child
-              printf("- Warning: point objects not yet supported\n");
+              // We SHOULD handle it - type "start_point" could be where the character spawns into the level
+              printf("- Found a point of type %s, name \"%s\", id %d!\n",area_type.c_str(), area_name.c_str(), kid.attribute("id").as_int());
               continue;
             } else if(kid.child("text")) {
               //text object has a text child
-              printf("- Warning: text objects not yet supported\n");
+              printf("- Warning: text objects not yet supported - type %s, name \"%s\", id %d\n",area_type.c_str(), area_name.c_str(), kid.attribute("id").as_int());
               continue;
             } else if(kid.child("ellipse")) {
               //ellipse object has an ellipse child
@@ -348,12 +350,37 @@ namespace tiledreader {
             } else if(kid.child("polygon")) {
               //polygon object has a polygon child
               printf("- Found a polygon of type %s, name \"%s\", id %d!\n",area_type.c_str(), area_name.c_str(), kid.attribute("id").as_int());
+              if(kid.child("polygon").attribute("points")) {
+                // polygons look like this:
+                // <polygon points="0,0 0,69.3333 19.6667,68.3333 34.6667,87.3333 57.6667,87"/>
+                // break it up into tokens by spaces
+                std::istringstream iss(kid.child("polygon").attribute("points").as_string());
+                std::string token;
+                while (std::getline(iss, token, ' ')) {
+                  //then split token over comma and take the resulting numbers as x, y
+                  auto commapos = token.find_first_of(',');
+                  if(commapos == std::string::npos) {
+                    printf("- WARNING: found a polygon with point coordinates with no comma \"%s\", skipping, id %d, name \"%s\"\n",token.c_str(),
+                      kid.attribute("id").as_int(),kid.attribute("name").as_string());
+                  }
+                  float ptx = std::stof(token.substr(0,commapos));
+                  float pty = std::stof(token.substr(commapos+1,token.length()));
+                  printf("  point: \"%s\" -> %f, %f\n",token.c_str(), ptx, pty);      //debug
+                  //NOW DO SOMETHING WITH THEM!!!!!!!!!!!!!!!!!!!!!!
+                  //add ptx to bbox_x to get absolute point, mm pty and bbox_y
+                  //will need to recalculate bounding box
+                }
+              } else {
+                printf("- WARNING: found a polygon with no points attribute, skipping, id %d, name \"%s\"\n", kid.attribute("id").as_int(),
+                  kid.attribute("name").as_string());
+              }
             } else {
               //assume it's a rectangle!
               printf("- Found a rectangle of type %s, name \"%s\", id %d!\n",area_type.c_str(), area_name.c_str(), kid.attribute("id").as_int());
             }
           } else {
-            printf("- found a non-tile object, id %d first child (%s) without a type, skipping\n",kid.attribute("id").as_int(),kid.first_child().name());
+            printf("- Warning: found a non-tile object, id %d first child (%s) name \"%s\" without a type, skipping\n",kid.attribute("id").as_int(),
+              kid.first_child().name(), kid.attribute("name").as_string());
           }
         }
       }

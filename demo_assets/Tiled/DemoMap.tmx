@@ -176,7 +176,7 @@
   <object id="4" type="nogo" x="79" y="354" width="33" height="16"/>
   <object id="5" type="nogo" x="54.75" y="448" width="50.5" height="16.5"/>
   <object id="7" type="nogo" x="111" y="431.5" width="33.5" height="32.5"/>
-  <object id="8" type="nogo" x="19" y="176" width="24.5" height="16"/>
+  <object id="8" type="nogo" x="19" y="176" width="24.5" height="18.9038"/>
   <object id="9" type="nogo" x="431" y="431.75" width="16.75" height="17.5"/>
   <object id="11" type="nogo" x="368.5" y="495" width="126" height="18"/>
   <object id="12" type="nogo" x="271.5" y="193" width="17" height="14"/>
@@ -221,7 +221,7 @@
   <object id="71" type="warning" x="353.313" y="350" width="108.375" height="19">
    <text fontfamily="Sans Serif" pixelsize="11" wrap="1">Don't steal veggies</text>
   </object>
-  <object id="72" type="waypoint" x="198" y="409.5">
+  <object id="72" name="character_start" type="start_point" x="198" y="409.5">
    <point/>
   </object>
   <object id="73" name="meaningless_ellpse" x="284.5" y="470" width="44.5" height="26.5">
