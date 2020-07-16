@@ -126,6 +126,64 @@ namespace tiledreader {
     TL_Unknown
   } tilemaplayer_type;
 
+  //shape subclass for containing shape objects: point, polygon, rectangle, ellipse
+  typedef enum : int {
+    TOS_Point,
+    TOS_Polygon,
+    TOS_Rectangle,
+    TOS_Ellipse,
+    TOS_Unknown
+  } tileobjshape_type;
+
+  class TiledObjectTriangle {
+    public: 
+      float ax, ay, bx, by, cx, cy;
+
+    public:
+      TiledObjectTriangle() {
+        ax = ay = bx = by = cx = cy = 0.0;
+      }
+      TiledObjectTriangle(float x1, float y1, float x2, float y2, float x3, float y3) {
+        ax = x1; ay = y1;
+        bx = x2; by = y2;
+        cx = x3; cy = y3;
+      }
+      ~TiledObjectTriangle() {}
+  };
+
+  class TiledObjectShape {
+    public:
+      tileobjshape_type shape_type;
+      float bbox_x, bbox_y, bbox_w, bbox_h;           //bounding box; points have h = w = 0
+      std::string name;
+      std::string type;       // assigned in Tiled in object properties when shape is highlighted, meaning assigned by game
+      std::vector<TiledObjectTriangle> triangles;     // result of tesselating polygons
+
+    public:
+      TiledObjectShape() {
+        type = TOS_Unknown;
+        bbox_x = bbox_y = bbox_w = bbox_h = 0.0;
+        triangles.clear();
+      }
+
+      TiledObjectShape(tileobjshape_type sty, float bbx, float bby, float bbw, float bbh, std::string& nm, std::string& ty) {
+        shape_type = sty;
+        bbox_x = bbx;
+        bbox_y = bby;
+        bbox_w = (sty == TOS_Point) ? 0.0 : bbw;     //force points to have 0 w/h
+        bbox_h = (sty == TOS_Point) ? 0.0 : bbh;
+        name = nm; 
+        type = ty;
+        triangles.clear();
+      }
+
+      ~TiledObjectShape() {}
+
+      void add_triangle(float x1, float y1, float x2, float y2, float x3, float y3) {
+        triangles.push_back(TiledObjectTriangle(x1,y1,x2,y2,x3,y3));
+      }
+  };
+
   //location of a tile listed in an object layer, e.g.
   //  <object id="3" gid="86" x="196.859" y="120.71" width="16" height="16"/>
   class TiledMapObjectTileLocation {
@@ -164,6 +222,7 @@ namespace tiledreader {
       // here's the tile atlas recording where the post-crunch texture vertices are per tile
       std::shared_ptr<std::unordered_map<tile_index_t, atlas_record>> layer_atlas;
       //need something for shapes like circles and polygons
+      std::vector<TiledObjectShape> shapes;
 
 
     public:
@@ -177,6 +236,7 @@ namespace tiledreader {
       }
 
     public:
+
       void add_to_json(json& j, std::string layer_metadata_name) {
         j[layer_metadata_name]["layer_id"] = layer_id;
         j[layer_metadata_name]["layer_name"] = layer_name;
@@ -281,6 +341,7 @@ namespace tiledreader {
       ~TiledReaderLayerReader() {}
 
     public:
+      TiledObjectShape MakePolygon(pugi::xml_node& polyroot, float origin_x, float origin_y, std::string area_name, std::string area_type);
       //hand in root node of a <layer> and this returns a smart pointer to our layer object
       //parent file is the path to the tmx file this is reading from (with filename still on it)
       std::shared_ptr<TiledMapLayer> handle(pugi::xml_node &lyrroot, std::string parentfile);

@@ -225,6 +225,123 @@ namespace tiledreader {
 
   // TILEDREADERLAYERREADER ==============================================================================
 
+  TiledObjectShape TiledReaderLayerReader::MakePolygon(pugi::xml_node& polyroot, float origin_x, float origin_y, std::string area_name, std::string area_type) {
+    // polygons look like this:
+    // <object id="1" type="nogo" x="1.33333" y="27">
+    //    <polygon points="-1,0 6.66667,7.33333 6.66667,13.3333 19.3333,19.3333 20.3333,38.3333 53.75,71.4167 53.5417,88.9167 62.3333,98.7917 79.7083,99.5833 113.833,134.083 112.875,62.625 91,63 87,53.6667 87.6667,39.6667 56.6667,11 55.6667,-5.33333 36.6667,-25.6667 -0.666667,-26"/>
+    // </object>
+    // polyroot is pointing at the polygon object
+    TiledObjectShape poly;
+
+    poly.shape_type = TOS_Polygon;      //maybe we should have a better name for a list of triangles
+    poly.name = area_name;
+    poly.type = area_type;
+
+    // <polygon points="0,0 0,69.3333 19.6667,68.3333 34.6667,87.3333 57.6667,87"/>
+    // break it up into tokens by spaces
+    std::istringstream iss(polyroot.child("polygon").attribute("points").as_string());
+    std::string token;
+    std::vector<float> verts;     //flat vector where element i*2 is point i's x, (i*2)+1 is i's y
+    while (std::getline(iss, token, ' ')) {
+      //then split token over comma and take the resulting numbers as x, y
+      auto commapos = token.find_first_of(',');
+      if(commapos == std::string::npos) {
+        printf("- WARNING: found a polygon with point coordinates with no comma \"%s\", skipping, id %d, name \"%s\"\n",token.c_str(),
+          polyroot.attribute("id").as_int(),polyroot.attribute("name").as_string());
+      }
+      float ptx = std::stof(token.substr(0,commapos));
+      float pty = std::stof(token.substr(commapos+1,token.length()));
+      printf("  point: \"%s\" -> %f, %f\n",token.c_str(), ptx, pty);      //debug
+      //NOW DO SOMETHING WITH THEM!!!!!!!!!!!!!!!!!!!!!!
+      //add ptx to bbox_x to get absolute point, mm pty and bbox_y... do we need to do that? Yes
+      //that way, it will be consistent with other shapes that they're relative to bounding box upper left
+      // BUILD AN ARRAY SUITABLE FOR TESSELATING HERE
+      // + I think there is an implicit segment connecting last point to first to close the polygon
+      // does the tesselator need that?
+      verts.push_back(origin_x + ptx);
+      verts.push_back(origin_y + pty);
+    }
+
+    //HERE add the first point back on the end if we need to - let's first try not
+    // verts.push_back(verts[0]);
+    // verts.push_back(verts[1]);
+
+    // do the tesselation! see http://www.glprogramming.com/red/chapter11.html for some details, tesselator.h for others
+    printf("About to do tesselation...\n");
+
+    TESStesselator* tess = tessNewTess(nullptr);
+
+    //SET OPTIONS
+    //output type:
+    //I want TESS_POLYGONS? possibly connected polygons, but I think disconnected triangles is ok for this bc these are about collision detection
+    //- that's set down in the tesselation step
+    // tessSetOption() - Toggles optional tessellation parameters
+    // Parameters:
+    //  option - one of TessOption
+    //  value - 1 if enabled, 0 if disabled.
+    //void tessSetOption( TESStesselator *tess, int option, int value );
+    // I think the defaults are ok
+
+    //HAND IN OUR POLYGON - 
+    // tessAddContour() - Adds a contour to be tesselated.
+    // The type of the vertex coordinates is assumed to be TESSreal.
+    // Parameters:
+    //   tess - pointer to tesselator object.
+    //   size - number of coordinates per vertex. Must be 2 or 3. - 2, bc 2d
+    //   pointer - pointer to the first coordinate of the first vertex in the array. - verts.data()
+    //   stride - defines offset in bytes between consecutive vertices. - ??? libtess example uses sizeof(float)*2 and so will I
+    //   count - number of vertices in contour. - verts.size() - still dunno if I need to add the first one on the end again
+    //void tessAddContour( TESStesselator *tess, int size, const void* pointer, int stride, int count );
+    // we'll only have one contour, which is our polygon outline. But this can handle much cleverer things
+    tessAddContour(tess,2,verts.data(),sizeof(float)*2,verts.size());
+    
+
+    //DO THE TESSELATION!
+    // tessTesselate() - tesselate contours.
+    // Parameters:
+    //   tess - pointer to tesselator object.
+    //   windingRule - winding rules used for tesselation, must be one of TessWindingRule. - TESS_WINDING_ODD?
+    //   elementType - defines the tesselation result element type, must be one of TessElementType. - TESS_POLYGONS
+    //   polySize - defines maximum vertices per polygons if output is polygons. - I WILL USE 3 bc I want triangles
+    //   vertexSize - defines the number of coordinates in tesselation result vertex, must be 2 or 3. - I WILL USE 2 bc 2-dimensional
+    //   normal - defines the normal of the input contours, of null the normal is calculated automatically. - not sure what this is for, I'll use null
+    // Returns:
+    //   1 if succeed, 0 if failed.
+    // int tessTesselate( TESStesselator *tess, int windingRule, int elementType, int polySize, int vertexSize, const TESSreal* normal );
+    int tessResult = tessTesselate(tess, TESS_WINDING_ODD, TESS_POLYGONS, 3, 2, nullptr);
+    if(tessResult != 0) {
+      printf("Tesselation successful! Created %d triangles\n", tessGetElementCount(tess));
+    } else {
+      printf("*** ERROR: tesselation failed\n");
+      poly = TiledObjectShape();    //inits to unknown and empty, that's our error
+      return poly;
+    }
+
+    //TURN THE RESULTING TESSELATION INTO TiledObjectTriangle objects and stuff them into poly's triangle list
+    printf("About to convert the resulting triangles into tiledreader format...\n");
+    const float* tess_verts = tessGetVertices(tess);
+    const int* tess_vinds = tessGetVertexIndices(tess);
+    const int* tess_elems = tessGetElements(tess);
+    const int tess_nverts = tessGetVertexCount(tess);
+    const int tess_nelems = tessGetElementCount(tess);
+    for(auto i = 0; i < tessGetElementCount(tess); i++) {
+      //so, each element is three vertices into tess_verts corresponding to a triangle.
+      //or rather, multiply the index by 2 to get 
+      //************************ WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    }
+
+
+    //clean up the tesselator and that's the end of our visit to 1990s C-land!
+    tessDeleteTess(tess);
+
+
+    //work out the bounding box - it'll look something like this
+    //float bbox_ulx = std::min_element(v.begin(), v.end());
+    //then set it up in poly
+
+    return poly;
+  }
+
   std::shared_ptr<TiledMapLayer> TiledReaderLayerReader::handle(pugi::xml_node &lyrroot, 
       std::string parentfile) {
 
@@ -323,14 +440,11 @@ namespace tiledreader {
             } //else warn got a tile 0?
           } else if(kid.attribute("type")) {
             // polygon / rect / ellipse spotter
-            // all objects should have a bounding box... but all polygons and rectangles do (rectangles have nothing else!)
-            // no, wait, polygons don't
+            // all objects have x and y, can have type, name, width, height
             // we're looking for *meaningful* shapes here, which I'm going to determine by "type" - DOCUMENT THAT!
             // are there illegal values for these we can sanity check?
-            float bbox_x = kid.attribute("x").as_float();
-            float bbox_y = kid.attribute("y").as_float();
-            float bbox_w = kid.attribute("w").as_float();
-            float bbox_h = kid.attribute("h").as_float();
+            float origin_x = kid.attribute("x").as_float();
+            float origin_y = kid.attribute("y").as_float();
             std::string area_type = std::string(kid.attribute("type").as_string());
             std::string area_name = std::string(kid.attribute("name").as_string());   //not required, things like triggers might use
 
@@ -339,7 +453,7 @@ namespace tiledreader {
               //point object has a point child
               // We SHOULD handle it - type "start_point" could be where the character spawns into the level
               printf("- Found a point of type %s, name \"%s\", id %d!\n",area_type.c_str(), area_name.c_str(), kid.attribute("id").as_int());
-              continue;
+              tl->shapes.push_back(TiledObjectShape(TOS_Point,origin_x,origin_y,0.0,0.0,area_name,area_type));
             } else if(kid.child("text")) {
               //text object has a text child
               printf("- Warning: text objects not yet supported - type %s, name \"%s\", id %d\n",area_type.c_str(), area_name.c_str(), kid.attribute("id").as_int());
@@ -347,28 +461,18 @@ namespace tiledreader {
             } else if(kid.child("ellipse")) {
               //ellipse object has an ellipse child
               printf("- Found an ellipse of type %s, name \"%s\", id %d!\n",area_type.c_str(), area_name.c_str(), kid.attribute("id").as_int());
+              tl->shapes.push_back(TiledObjectShape(TOS_Ellipse,origin_x,origin_y,kid.attribute("width").as_float(),
+                                                    kid.attribute("height").as_float(),area_name,area_type));
             } else if(kid.child("polygon")) {
               //polygon object has a polygon child
               printf("- Found a polygon of type %s, name \"%s\", id %d!\n",area_type.c_str(), area_name.c_str(), kid.attribute("id").as_int());
               if(kid.child("polygon").attribute("points")) {
-                // polygons look like this:
-                // <polygon points="0,0 0,69.3333 19.6667,68.3333 34.6667,87.3333 57.6667,87"/>
-                // break it up into tokens by spaces
-                std::istringstream iss(kid.child("polygon").attribute("points").as_string());
-                std::string token;
-                while (std::getline(iss, token, ' ')) {
-                  //then split token over comma and take the resulting numbers as x, y
-                  auto commapos = token.find_first_of(',');
-                  if(commapos == std::string::npos) {
-                    printf("- WARNING: found a polygon with point coordinates with no comma \"%s\", skipping, id %d, name \"%s\"\n",token.c_str(),
-                      kid.attribute("id").as_int(),kid.attribute("name").as_string());
-                  }
-                  float ptx = std::stof(token.substr(0,commapos));
-                  float pty = std::stof(token.substr(commapos+1,token.length()));
-                  printf("  point: \"%s\" -> %f, %f\n",token.c_str(), ptx, pty);      //debug
-                  //NOW DO SOMETHING WITH THEM!!!!!!!!!!!!!!!!!!!!!!
-                  //add ptx to bbox_x to get absolute point, mm pty and bbox_y
-                  //will need to recalculate bounding box
+                TiledObjectShape poly = MakePolygon(kid,origin_x,origin_y,area_name,area_type);
+                if(poly.shape_type == TOS_Polygon) {
+                  tl->shapes.push_back(poly);
+                } else {
+                  printf("*** ERROR: polygon creation failed\n");
+                  return nullptr;
                 }
               } else {
                 printf("- WARNING: found a polygon with no points attribute, skipping, id %d, name \"%s\"\n", kid.attribute("id").as_int(),
@@ -377,6 +481,8 @@ namespace tiledreader {
             } else {
               //assume it's a rectangle!
               printf("- Found a rectangle of type %s, name \"%s\", id %d!\n",area_type.c_str(), area_name.c_str(), kid.attribute("id").as_int());
+              tl->shapes.push_back(TiledObjectShape(TOS_Rectangle,origin_x,origin_y,kid.attribute("width").as_float(),
+                                                    kid.attribute("height").as_float(),area_name,area_type));
             }
           } else {
             printf("- Warning: found a non-tile object, id %d first child (%s) name \"%s\" without a type, skipping\n",kid.attribute("id").as_int(),
