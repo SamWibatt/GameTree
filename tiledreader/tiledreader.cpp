@@ -242,6 +242,7 @@ namespace tiledreader {
     std::istringstream iss(polyroot.child("polygon").attribute("points").as_string());
     std::string token;
     std::vector<float> verts;     //flat vector where element i*2 is point i's x, (i*2)+1 is i's y
+    printf("std::vector<std::vector<float>> polyverts = {\n");
     while (std::getline(iss, token, ' ')) {
       //then split token over comma and take the resulting numbers as x, y
       auto commapos = token.find_first_of(',');
@@ -251,16 +252,21 @@ namespace tiledreader {
       }
       float ptx = std::stof(token.substr(0,commapos));
       float pty = std::stof(token.substr(commapos+1,token.length()));
-      printf("  point: \"%s\" -> %f, %f\n",token.c_str(), ptx, pty);      //debug
+      printf("  { %f, %f }, \n", ptx, pty);      //debug
       //NOW DO SOMETHING WITH THEM!!!!!!!!!!!!!!!!!!!!!!
       //add ptx to bbox_x to get absolute point, mm pty and bbox_y... do we need to do that? Yes
       //that way, it will be consistent with other shapes that they're relative to bounding box upper left
       // BUILD AN ARRAY SUITABLE FOR TESSELATING HERE
       // + I think there is an implicit segment connecting last point to first to close the polygon
       // does the tesselator need that?
-      verts.push_back(origin_x + ptx);
-      verts.push_back(origin_y + pty);
+      // wait, let's not make them absolute coords - we would like to draw relative to the origin...???
+      //verts.push_back(origin_x + ptx);
+      //verts.push_back(origin_y + pty);
+      verts.push_back(ptx);
+      verts.push_back(pty);
     }
+    printf("};\n");
+    printf("//polygon has %lu verts\n",verts.size()/2);
 
 
     // a couple of cases:
@@ -275,127 +281,158 @@ namespace tiledreader {
       printf("Single triangle case!\n");
       poly.add_triangle(verts[0],verts[1],verts[2],verts[3],verts[4],verts[5]);
     } else {
-      //HERE add the first point back on the end if we need to - let's first try not
-      // verts.push_back(verts[0]);
-      // verts.push_back(verts[1]);
+      // //HERE add the first point back on the end if we need to - let's first try not
+      // // verts.push_back(verts[0]);
+      // // verts.push_back(verts[1]);
 
-      // do the tesselation! see http://www.glprogramming.com/red/chapter11.html for some details, tesselator.h for others
-      printf("About to do tesselation...\n");
+      // // do the tesselation! see http://www.glprogramming.com/red/chapter11.html for some details, tesselator.h for others
+      // printf("About to do tesselation...\n");
 
-      TESStesselator* tess = tessNewTess(nullptr);
+      // TESStesselator* tess = tessNewTess(nullptr);
 
-      //SET OPTIONS
-      //output type:
-      //I want TESS_POLYGONS? possibly connected polygons, but I think disconnected triangles is ok for this bc these are about collision detection
-      //- that's set down in the tesselation step
-      // tessSetOption() - Toggles optional tessellation parameters
-      // Parameters:
-      //  option - one of TessOption
-      //  value - 1 if enabled, 0 if disabled.
-      //void tessSetOption( TESStesselator *tess, int option, int value );
-      // I think the defaults are ok - getting some sorta weird results, so let me try the delaunay thing
-      // doesn't seem to make a difference
-      //tessSetOption(tess, TESS_CONSTRAINED_DELAUNAY_TRIANGULATION, 1);
+      // //SET OPTIONS
+      // //output type:
+      // //I want TESS_POLYGONS? possibly connected polygons, but I think disconnected triangles is ok for this bc these are about collision detection
+      // //- that's set down in the tesselation step
+      // // tessSetOption() - Toggles optional tessellation parameters
+      // // Parameters:
+      // //  option - one of TessOption
+      // //  value - 1 if enabled, 0 if disabled.
+      // //void tessSetOption( TESStesselator *tess, int option, int value );
+      // // I think the defaults are ok - getting some sorta weird results, so let me try the delaunay thing
+      // // doesn't seem to make a difference
+      // //tessSetOption(tess, TESS_CONSTRAINED_DELAUNAY_TRIANGULATION, 1);
 
-      //HAND IN OUR POLYGON - 
-      // tessAddContour() - Adds a contour to be tesselated.
-      // The type of the vertex coordinates is assumed to be TESSreal.
-      // Parameters:
-      //   tess - pointer to tesselator object.
-      //   size - number of coordinates per vertex. Must be 2 or 3. - 2, bc 2d
-      //   pointer - pointer to the first coordinate of the first vertex in the array. - verts.data()
-      //   stride - defines offset in bytes between consecutive vertices. - ??? libtess example uses sizeof(float)*2 and so will I
-      //   count - number of vertices in contour. - verts.size() - still dunno if I need to add the first one on the end again
-      //void tessAddContour( TESStesselator *tess, int size, const void* pointer, int stride, int count );
-      // we'll only have one contour, which is our polygon outline. But this can handle much cleverer things
-      tessAddContour(tess,2,verts.data(),sizeof(float)*2,verts.size());
+      // //HAND IN OUR POLYGON - 
+      // // tessAddContour() - Adds a contour to be tesselated.
+      // // The type of the vertex coordinates is assumed to be TESSreal.
+      // // Parameters:
+      // //   tess - pointer to tesselator object.
+      // //   size - number of coordinates per vertex. Must be 2 or 3. - 2, bc 2d
+      // //   pointer - pointer to the first coordinate of the first vertex in the array. - verts.data()
+      // //   stride - defines offset in bytes between consecutive vertices. - ??? libtess example uses sizeof(float)*2 and so will I
+      // //   count - number of vertices in contour. - verts.size() - still dunno if I need to add the first one on the end again
+      // //void tessAddContour( TESStesselator *tess, int size, const void* pointer, int stride, int count );
+      // // we'll only have one contour, which is our polygon outline. But this can handle much cleverer things
+      // tessAddContour(tess,2,verts.data(),sizeof(float)*2,verts.size());
       
 
-      //DO THE TESSELATION!
-      // tessTesselate() - tesselate contours.
-      // Parameters:
-      //   tess - pointer to tesselator object.
-      //   windingRule - winding rules used for tesselation, must be one of TessWindingRule. - TESS_WINDING_ODD?
-      //   elementType - defines the tesselation result element type, must be one of TessElementType. - TESS_POLYGONS
-      //   polySize - defines maximum vertices per polygons if output is polygons. - I WILL USE 3 bc I want triangles
-      //   vertexSize - defines the number of coordinates in tesselation result vertex, must be 2 or 3. - I WILL USE 2 bc 2-dimensional
-      //   normal - defines the normal of the input contours, of null the normal is calculated automatically. - not sure what this is for, I'll use null
-      // Returns:
-      //   1 if succeed, 0 if failed.
-      // int tessTesselate( TESStesselator *tess, int windingRule, int elementType, int polySize, int vertexSize, const TESSreal* normal );
-      int tessResult = tessTesselate(tess, TESS_WINDING_ODD, TESS_POLYGONS, 3, 2, nullptr);
-      if(tessResult != 0) {
-        printf("Tesselation successful! Created %d triangles\n", tessGetElementCount(tess));
-      } else {
-        printf("*** ERROR: tesselation failed\n");
-        tessDeleteTess(tess);
-        poly = TiledObjectShape();    //inits to unknown and empty, that's our error
-        return poly;
-      }
+      // //DO THE TESSELATION!
+      // // tessTesselate() - tesselate contours.
+      // // Parameters:
+      // //   tess - pointer to tesselator object.
+      // //   windingRule - winding rules used for tesselation, must be one of TessWindingRule. - TESS_WINDING_ODD?
+      // //   elementType - defines the tesselation result element type, must be one of TessElementType. - TESS_POLYGONS
+      // //      hm, maybe TESS_CONNECTED_POLYGONS would avoid the degenerate triangles problem?
+      // //   polySize - defines maximum vertices per polygons if output is polygons. - I WILL USE 3 bc I want triangles
+      // //   vertexSize - defines the number of coordinates in tesselation result vertex, must be 2 or 3. - I WILL USE 2 bc 2-dimensional
+      // //   normal - defines the normal of the input contours, of null the normal is calculated automatically. - not sure what this is for, I'll use null
+      // // Returns:
+      // //   1 if succeed, 0 if failed.
+      // // int tessTesselate( TESStesselator *tess, int windingRule, int elementType, int polySize, int vertexSize, const TESSreal* normal );
+      // //int tessResult = tessTesselate(tess, TESS_WINDING_ODD, TESS_POLYGONS, 3, 2, nullptr);
+      // int tessResult = tessTesselate(tess, TESS_WINDING_POSITIVE, TESS_POLYGONS, 3, 2, nullptr);
+      // if(tessResult != 0) {
+      //   printf("Tesselation successful! Created %d triangles\n", tessGetElementCount(tess));
+      // } else {
+      //   printf("*** ERROR: tesselation failed\n");
+      //   tessDeleteTess(tess);
+      //   poly = TiledObjectShape();    //inits to unknown and empty, that's our error
+      //   return poly;
+      // }
 
-      //TURN THE RESULTING TESSELATION INTO TiledObjectTriangle objects and stuff them into poly's triangle list
-      printf("About to convert the resulting triangles into tiledreader format...\n");
-      const float* tess_verts = tessGetVertices(tess);
-      const int* tess_elems = tessGetElements(tess);
-      const int tess_nverts = tessGetVertexCount(tess);
-      const int tess_nelems = tessGetElementCount(tess);
-      printf("Tess_nelems: %d tess_nverts: %d\n",tess_nelems, tess_nverts);
-      for(auto i = 0; i < tess_nelems; i++) {
-        //so, each element is three vertices into tess_verts corresponding to a triangle.
-        //or rather, multiply the index by 2 to get the index of the x coordinate in verts,
-        //then 2*index + 1 is index of y vert in verts, yes?
-        // example code steps through a elems like this:
-        // int nvp = 3;   //triangles
-        // for (i = 0; i < nelems; ++i)
-        //     {
-        //       const int* p = &elems[i*nvp];
-        //       glBegin(GL_TRIANGLE_FAN);
-        //       for (j = 0; j < nvp && p[j] != TESS_UNDEF; ++j)
-        //         glVertex2f(verts[p[j]*2], verts[p[j]*2+1]);
-        //       glEnd();
-        //     }    
-        // Don't worry about the TESS_UNDEF case bc it's only for polygons that have fewer than nvp points, which shouldn't be
-        // happening with triangles.
-        printf("  %d...",i);
-        fflush(stdout);
-        const int* p = &tess_elems[i*3];             //pointer to vertices for i-th triangle
-        // not sure if this is bc I did something wrong, but we're getting a lot of tiny triangles around the origin.
-        // let's discard any triangle with any points whose distance is < epsilon, like 0.001 or so
-        bool degenerate = false;
-        float epsilon = 0.001;
-        for(int j = 0; j < 2; j++) {
-          for(int k = j+1; k < 3; k++) {
-            // sqrt((xk - xj)^2 + (yk - yj)^2)
-            float xj = tess_verts[p[j]*2];
-            float yj = tess_verts[(p[j]*2)+1];
-            float xk = tess_verts[p[k]*2];
-            float yk = tess_verts[(p[k]*2)+1];
-            float dist = std::sqrt( ((xk-xj) * (xk - xj)) + ((yk-yj) * (yk - yj)) );
-            if(dist < epsilon) {
-              printf("- eep points %d and %d of elems %d are too close together (dist = %f) - degenerate!\n",j,k,i,dist);
-              degenerate = true;
-            }
-          }
-        }
+      // //TURN THE RESULTING TESSELATION INTO TiledObjectTriangle objects and stuff them into poly's triangle list
+      // printf("About to convert the resulting triangles into tiledreader format...\n");
+      // const float* tess_verts = tessGetVertices(tess);
+      // const int* tess_elems = tessGetElements(tess);
+      // const int tess_nverts = tessGetVertexCount(tess);
+      // const int tess_nelems = tessGetElementCount(tess);
+      // printf("Tess_nelems: %d tess_nverts: %d\n",tess_nelems, tess_nverts);
+      // for(auto i = 0; i < tess_nelems; i++) {
+      //   //so, each element is three vertices into tess_verts corresponding to a triangle.
+      //   //or rather, multiply the index by 2 to get the index of the x coordinate in verts,
+      //   //then 2*index + 1 is index of y vert in verts, yes?
+      //   // example code steps through a elems like this:
+      //   // int nvp = 3;   //triangles
+      //   // for (i = 0; i < nelems; ++i)
+      //   //     {
+      //   //       const int* p = &elems[i*nvp];
+      //   //       glBegin(GL_TRIANGLE_FAN);
+      //   //       for (j = 0; j < nvp && p[j] != TESS_UNDEF; ++j)
+      //   //         glVertex2f(verts[p[j]*2], verts[p[j]*2+1]);
+      //   //       glEnd();
+      //   //     }    
+      //   // Don't worry about the TESS_UNDEF case bc it's only for polygons that have fewer than nvp points, which shouldn't be
+      //   // happening with triangles.
+      //   printf("  %d...",i);
+      //   fflush(stdout);
+      //   const int* p = &tess_elems[i*3];             //pointer to vertices for i-th triangle
+      //   // not sure if this is bc I did something wrong, but we're getting a lot of tiny triangles around the origin.
+      //   // let's discard any triangle with any points whose distance is < epsilon, like 0.001 or so
+      //   bool degenerate = false;
+      //   //float epsilon = 0.1;
+      //   // for(int j = 0; j < 2; j++) {
+      //   //   for(int k = j+1; k < 3; k++) {
+      //   //     // sqrt((xk - xj)^2 + (yk - yj)^2)
+      //   //     float xj = tess_verts[p[j]*2];
+      //   //     float yj = tess_verts[(p[j]*2)+1];
+      //   //     float xk = tess_verts[p[k]*2];
+      //   //     float yk = tess_verts[(p[k]*2)+1];
+      //   //     float dist = std::sqrt( ((xk-xj) * (xk - xj)) + ((yk-yj) * (yk - yj)) );
+      //   //     if(dist < epsilon) {
+      //   //       printf("- eep points %d and %d of elems %d are too close together (dist = %f) - degenerate!\n",j,k,i,dist);
+      //   //       degenerate = true;
+      //   //     }
+      //   //   }
+      //   // }
+      //   // that got rid of the tiny triangles but left some long splinters
+      //   //instead of that, try area or height
+      //   // method 2 from here https://www.wikihow.com/Calculate-the-Area-of-a-Triangle
+      //   // where s is half the sum of the lengths of the sides
+      //   // a, b, c are the lengths of the sides
+      //   // area = sqrt( s * (s-a) * (s-b) * (s-c)  )
+      //   float sl[3];
+      //   float too_small_area = 20.0;    //maybe too big, maybe not?
+      //   int sidenum = 0;
+      //   for(int j = 0; j < 2; j++) {
+      //     for(int k = j+1; k < 3; k++) {
+      //       // sqrt((xk - xj)^2 + (yk - yj)^2)
+      //       float xj = tess_verts[p[j]*2];
+      //       float yj = tess_verts[(p[j]*2)+1];
+      //       float xk = tess_verts[p[k]*2];
+      //       float yk = tess_verts[(p[k]*2)+1];
+      //       sl[sidenum++] = std::sqrt( ((xk-xj) * (xk - xj)) + ((yk-yj) * (yk - yj)) );
+      //     }
+      //   }
+      //   float s = (sl[0] + sl[1] + sl[2]) / 2.0;
+      //   float area = std::sqrt(s * (s-sl[0]) * (s-sl[1]) * (s-sl[2]));
+      //   printf("-- triangle area = %f\n",area);
+      //   if(area < too_small_area || isnan(area)) {
+      //     printf("- eep triangle area is %f, degenerate\n",area);
+      //     degenerate = true;
+      //   }
 
-        if(!degenerate) {
-          poly.add_triangle(tess_verts[p[0]*2],tess_verts[(p[0]*2)+1],
-                            tess_verts[p[1]*2],tess_verts[(p[1]*2)+1],
-                            tess_verts[p[2]*2],tess_verts[(p[2]*2)+1]);
-        }
+      //   if(!degenerate) {
+      //     poly.add_triangle(tess_verts[p[0]*2],tess_verts[(p[0]*2)+1],
+      //                       tess_verts[p[1]*2],tess_verts[(p[1]*2)+1],
+      //                       tess_verts[p[2]*2],tess_verts[(p[2]*2)+1]);
+      //   }
+      // }
+      // //  printf("\n");
+
+      // //clean up the tesselator and that's the end of our visit to 1990s C-land!
+      // tessDeleteTess(tess);
     }
-      printf("\n");
 
-      //clean up the tesselator and that's the end of our visit to 1990s C-land!
-      tessDeleteTess(tess);
-    }
-
-    //debug - we seem to be getting a lot of very, very small triangles near the origin. wtf?
-    printf("Our triangles! ==================\n");
-    for(auto j = 0; j < poly.triangles.size(); j++) {
-      printf("- %d: (%f, %f) (%f, %f) (%f, %f)\n",j,poly.triangles[j].ax, poly.triangles[j].ay, 
-          poly.triangles[j].bx, poly.triangles[j].by, poly.triangles[j].cx, poly.triangles[j].cy);
-    }
+    // //debug - we seem to be getting a lot of very, very small triangles near the origin. wtf?
+    // //k now filtered degenerates, let's write this out as something we can initialize vectors with and see what it looks like
+    // //in the demo with copy - n - paste
+    // printf("//Our triangles! ==================\nstd::vector<std::vector<std::pair<float,float>>> triverts = {\n");
+    // for(auto j = 0; j < poly.triangles.size(); j++) {
+    //   printf("    { {%f, %f}, {%f, %f}, {%f, %f} },\n",poly.triangles[j].ax, poly.triangles[j].ay, 
+    //       poly.triangles[j].bx, poly.triangles[j].by, poly.triangles[j].cx, poly.triangles[j].cy);
+    // }
+    // printf("};\n");
 
     //work out the bounding box - it'll look something like this
     //float bbox_ulx = std::min_element(v.begin(), v.end());
