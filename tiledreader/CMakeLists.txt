@@ -12,11 +12,6 @@ add_subdirectory("crunch_modified")
 target_include_directories(tiledreader PUBLIC "crunch_modified")
 target_link_directories(tiledreader PUBLIC "crunch_modified")
 
-# emits liblibtess2.a :P
-add_subdirectory("libtess2_modified")
-target_include_directories(tiledreader PUBLIC "libtess2_modified")
-target_link_directories(tiledreader PUBLIC "libtess2_modified")
-
 # for conversion to gametree - THIS IS GROSS
 target_include_directories(tiledreader PUBLIC "..")
 target_link_directories(tiledreader PUBLIC "..")
@@ -28,11 +23,9 @@ set(JSON_BuildTests OFF CACHE INTERNAL "")
 #add_subdirectory("../asepritereader/json")
 target_include_directories(tiledreader PUBLIC "../asepritereader/json/single_include") 
 
-target_link_libraries(tiledreader pugixml-static crunch libtess2)
+target_link_libraries(tiledreader pugixml-static crunch)
 
 add_executable(tiled2gt tiled2gt.cpp)
 target_include_directories(tiled2gt PUBLIC "../cppcodec")
 target_include_directories(tiled2gt PUBLIC "pugixml/src") 
-target_include_directories(tiled2gt PUBLIC "libtess2_modified")
-target_link_directories(tiled2gt PUBLIC "libtess2_modified")
-target_link_libraries(tiled2gt tiledreader gametree libtess2)
+target_link_libraries(tiled2gt tiledreader gametree)
