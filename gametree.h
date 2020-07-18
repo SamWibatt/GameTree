@@ -107,7 +107,7 @@ namespace gt {
       //data members
       int ulx, uly;         //texture coordinates, pixels, within sprite sheet texture
       int wid, ht;          //extents of rectangle within sprite sheet texture
-      float offx, offy;     //offsets to give to sprite.setOrigin(sf::Vector2f(offx, offy));
+      int offx, offy;     //offsets to give to sprite.setOrigin(sf::Vector2f(offx, offy));
       int dur;              //duration, millis
 
     public:

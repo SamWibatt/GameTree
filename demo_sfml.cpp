@@ -285,7 +285,7 @@ int main()
 
 
     printf("ThePoint is at %f, %f\n",the_point.x, the_point.y);
-    printf("TheBBox is top %f left %f width %f height %f\n",the_bbox.top, the_bbox.left, the_bbox.width, the_bbox.height);
+    printf("TheBBox is top %d left %d width %d height %d\n",the_bbox.top, the_bbox.left, the_bbox.width, the_bbox.height);
 
     float point_velocity = 1.0;
 
