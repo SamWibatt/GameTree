@@ -17,15 +17,15 @@
 
 
 typedef struct {
-   float x,y;
+   int32_t x,y;
 } GTPoint;
 
 //adapted from Paul Bourke, http://www.eecs.umich.edu/courses/eecs380/HANDOUTS/PROJ2/InsidePoly.html
 bool InsidePolygon(std::vector<GTPoint>& polygon, GTPoint p)
 {
-  int counter = 0;
-  int i;
-  float xinters;
+  int32_t counter = 0;
+  int32_t i;
+  int32_t xinters;      //should be float - originally was, see if works w/int - so far so good!
   GTPoint p1,p2;
 
   p1 = polygon[0];
@@ -52,7 +52,7 @@ bool InsidePolygon(std::vector<GTPoint>& polygon, GTPoint p)
 }
 
 // bounding box check
-int bbox_check(sf::Vector2f& the_point, sf::Rect<float>& the_bbox) {
+int bbox_check(sf::Vector2f& the_point, sf::Rect<int>& the_bbox) {
     if(the_point.x < the_bbox.left || the_point.y < the_bbox.top) return 0;
     if(the_point.x > the_bbox.left + the_bbox.width || the_point.y > the_bbox.top + the_bbox.height) return 0;
     return 1;
@@ -137,26 +137,26 @@ int main()
     // - Found a polygon of type nogo, name "", id 1!
     // min_x 0.333330 min_y 1.000000 max_x 115.166328 max_y 161.082993
     // // origin 0.333330 1.000000 bounding box w 114.833000 h 160.082993
-    std::vector<std::vector<float>> polyverts = {
-    { 0.000000, 26.000000 }, 
-    { 7.666670, 33.333328 }, 
-    { 7.666670, 39.333298 }, 
-    { 20.333300, 45.333298 }, 
-    { 21.333300, 64.333298 }, 
-    { 54.750000, 97.416702 }, 
-    { 54.541698, 114.916702 }, 
-    { 63.333302, 124.791702 }, 
-    { 80.708298, 125.583298 }, 
-    { 114.833000, 160.082993 }, 
-    { 113.875000, 88.625000 }, 
-    { 92.000000, 89.000000 }, 
-    { 88.000000, 79.666702 }, 
-    { 88.666702, 65.666702 }, 
-    { 57.666698, 37.000000 }, 
-    { 56.666698, 20.666670 }, 
-    { 37.666698, 0.333300 }, 
-    { 0.333333, 0.000000 }, 
-    };
+    // std::vector<std::vector<float>> polyverts = {
+    // { 0.000000, 26.000000 }, 
+    // { 7.666670, 33.333328 }, 
+    // { 7.666670, 39.333298 }, 
+    // { 20.333300, 45.333298 }, 
+    // { 21.333300, 64.333298 }, 
+    // { 54.750000, 97.416702 }, 
+    // { 54.541698, 114.916702 }, 
+    // { 63.333302, 124.791702 }, 
+    // { 80.708298, 125.583298 }, 
+    // { 114.833000, 160.082993 }, 
+    // { 113.875000, 88.625000 }, 
+    // { 92.000000, 89.000000 }, 
+    // { 88.000000, 79.666702 }, 
+    // { 88.666702, 65.666702 }, 
+    // { 57.666698, 37.000000 }, 
+    // { 56.666698, 20.666670 }, 
+    // { 37.666698, 0.333300 }, 
+    // { 0.333333, 0.000000 }, 
+    // };
 
     // - Found a polygon of type nogo, name "", id 2!
     // min_x 125.000000 min_y 76.000000 max_x 269.333008 max_y 304.666687
@@ -193,29 +193,43 @@ int main()
     // - Found a polygon of type nogo, name "", id 3!
     // min_x 194.625000 min_y 351.443176 max_x 315.000000 max_y 512.750000
     // // origin 194.625000 351.443176 bounding box w 120.375000 h 161.306824
+    std::vector<std::vector<float>> polyverts = {
+    { 15.284088, 0.000000 }, 
+    { 105.647705, 0.102264 }, 
+    { 105.829498, 23.284119 }, 
+    { 120.375000, 32.556824 }, 
+    { 118.375000, 57.056824 }, 
+    { 105.375000, 62.556824 }, 
+    { 106.375000, 81.556824 }, 
+    { 78.875000, 110.556824 }, 
+    { 57.875000, 111.306824 }, 
+    { 57.000000, 133.306824 }, 
+    { 42.125000, 143.806824 }, 
+    { 41.625000, 161.306824 }, 
+    { 0.000000, 161.056824 }, 
+    { 0.375000, 115.056824 }, 
+    { 16.500000, 101.556824 }, 
+    { 17.750000, 78.681824 }, 
+    { 64.375000, 57.056824 }, 
+    { 65.625000, 31.931824 }, 
+    { 48.375000, 15.056824 }, 
+    { 28.750000, 14.806824 }, 
+    };
+
+    // - Found a polygon of type nogo, name "treepoly", id 75!
+    // min_x 367.994995 min_y 255.914505 max_x 400.000000 max_y 277.502197
+    // origin 367.994995 255.914505 bounding box w 32.005005 h 21.587692
     // std::vector<std::vector<float>> polyverts = {
-    // { 15.284088, 0.000000 }, 
-    // { 105.647705, 0.102264 }, 
-    // { 105.829498, 23.284119 }, 
-    // { 120.375000, 32.556824 }, 
-    // { 118.375000, 57.056824 }, 
-    // { 105.375000, 62.556824 }, 
-    // { 106.375000, 81.556824 }, 
-    // { 78.875000, 110.556824 }, 
-    // { 57.875000, 111.306824 }, 
-    // { 57.000000, 133.306824 }, 
-    // { 42.125000, 143.806824 }, 
-    // { 41.625000, 161.306824 }, 
-    // { 0.000000, 161.056824 }, 
-    // { 0.375000, 115.056824 }, 
-    // { 16.500000, 101.556824 }, 
-    // { 17.750000, 78.681824 }, 
-    // { 64.375000, 57.056824 }, 
-    // { 65.625000, 31.931824 }, 
-    // { 48.375000, 15.056824 }, 
-    // { 28.750000, 14.806824 }, 
+    // { 0.000000, 0.125504 }, 
+    // { 31.879486, 0.000000 }, 
+    // { 32.005005, 15.563217 }, 
+    // { 21.713196, 20.960098 }, 
+    // { 16.190796, 21.587692 }, 
+    // { 8.158142, 19.705002 }, 
+    // { 0.125519, 15.563217 }, 
     // };
-    // floats for the other routine
+
+    // representation for pt-in-poly
     std::vector<GTPoint> d_polyverts(polyverts.size()+1);
 
     int polygonOffsetX = 50;
@@ -223,8 +237,8 @@ int main()
 
     std::transform(polyverts.begin(), polyverts.end(),d_polyverts.begin(), 
             [globalScaleX, globalScaleY, polygonOffsetX, polygonOffsetY]
-            (std::vector<float> pt){ GTPoint p; p.x = float(pt[0] + polygonOffsetX); 
-                                        p.y = float(pt[1] + polygonOffsetY); return p; });
+            (std::vector<float> pt){ GTPoint p; p.x = int((pt[0] + 0.5) + polygonOffsetX); 
+                                        p.y = int((pt[1] + 0.5) + polygonOffsetY); return p; });
 
     d_polyverts[polyverts.size()] = d_polyverts[0];         //close the polygon  - damn, that made it worse for 3rd river, better for 1st                            
 
@@ -251,13 +265,13 @@ int main()
     // for bad pt-in-poly test
     sf::Vector2f the_point = sf::Vector2f(0.0, 0.0);
 
-    sf::Rect<float> the_bbox;
+    sf::Rect<int> the_bbox;
 
     //let's derive the bounding box
-    float min_x = MAXFLOAT;
-    float min_y = MAXFLOAT;
-    float max_x = -MAXFLOAT;
-    float max_y = -MAXFLOAT;
+    int min_x = 999999;
+    int min_y = 999999;
+    int max_x = -999999;
+    int max_y = -999999;
     for(auto pt: d_polyverts) {
       if (pt.x < min_x) min_x = pt.x;
       if (pt.y < min_y) min_y = pt.y;
