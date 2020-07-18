@@ -87,6 +87,30 @@ std::shared_ptr<GTObjectsMapLayer> tiled_obj_layer_to_gt_obj_layer(std::shared_p
     );
   }
 
+  // then do the shapes
+  for(auto shap : ptl->shapes) {
+    if(shap.shape_type == TOS_Rectangle) {
+      // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
+      // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
+      // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
+    } else if(shap.shape_type == TOS_Ellipse) {
+      // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
+      // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
+      // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
+    } else if(shap.shape_type == TOS_Point) {
+      // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
+      // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
+      // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
+    } else if(shap.shape_type == TOS_Polygon) {
+      // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
+      // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
+      // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
+    } else {
+      printf("*** ERROR: unknown shape type %d found for shape with name \"%s\", type \"%s\"\n",
+        shap.shape_type, shap.name.c_str(), shap.type.c_str());
+    }
+  }
+
   return pgoml;
 }
 
@@ -123,8 +147,7 @@ std::shared_ptr<GTMapLayer> tiled_layer_to_gt_layer(std::shared_ptr<TiledMap> pt
     return nullptr;
   }
 
-  // HAVE IMAGE DATA AND TILE ATLAS HERE BE THE LAST THING so if we bail on no-image objects layer, it's ok
-  //in any case, we need the image - OPTIONAL FOR OBJECT LAYERS
+  //read image - OPTIONAL FOR OBJECT LAYERS
   //plyr->image_data is just the entire contents of the png from ptl
   //does ptl record that? no, but see tiledreader do_crunch
   //ASSUMING THERE IS ONLY ONE IMAGE FOR THE TILESET, NAMED LIKE THIS
@@ -136,27 +159,29 @@ std::shared_ptr<GTMapLayer> tiled_layer_to_gt_layer(std::shared_ptr<TiledMap> pt
     if(ptl->type == TL_TiledLayer) {
       fprintf(stderr,"*** ERROR: failed to open png file %s - error %s\n",png_path.c_str(),std::strerror(errno));
       return nullptr;
-    } else if(ptl->type == TL_ObjectLayer) {
-      fprintf(stderr,"+++ WARNING: layer %s has no imagery - it's an object layer so could be ok\n",ptl->layer_name.c_str());
-      return plyr;
+    } else if(ptl->type == TL_ObjectLayer && ptl->shapes.empty()) {
+      fprintf(stderr,"+++ ERROR: object layer %s has no imagery or shapes\n",ptl->layer_name.c_str());
+      return nullptr;
     }
-  }
-  //get file size and allocate buffer for it
-  std::fseek(pngfp,0,SEEK_END);
-  auto pngsiz = std::ftell(pngfp);
-  std::fseek(pngfp,0,SEEK_SET);
-  plyr->image_data.resize(pngsiz);    //see if this works; I think we want resize and not reserve
-  std::fread(plyr->image_data.data(), sizeof(uint8_t), plyr->image_data.size(), pngfp);
-  fclose(pngfp);
+  } else {
+    //get tilesheet png file size and allocate buffer for it
+    std::fseek(pngfp,0,SEEK_END);
+    auto pngsiz = std::ftell(pngfp);
+    std::fseek(pngfp,0,SEEK_SET);
+    plyr->image_data.resize(pngsiz);    //see if this works; I think we want resize and not reserve
+    std::fread(plyr->image_data.data(), sizeof(uint8_t), plyr->image_data.size(), pngfp);
+    fclose(pngfp);
 
-  // now build the contiguous vector pgtml->tile_atlas. pre-insert 0, iterate over ordered_gids as before, get the same ordering.
-  plyr->tile_atlas.clear();
-  plyr->tile_atlas.push_back(GTTile(0,0,0,0));         // put in no-tile in index 0
-  for(auto gid : ordered_gids) 
-    if(gid != 0) {
-      atlas_record &ar = (*(ptl->layer_atlas))[gid];
-      plyr->tile_atlas.push_back(GTTile(ar.ulx, ar.uly, ar.wid, ar.ht));
-    }
+    // layer with no image has no tile atlas, yes?  
+    // now build the contiguous vector pgtml->tile_atlas. pre-insert 0, iterate over ordered_gids as before, get the same ordering.
+    plyr->tile_atlas.clear();
+    plyr->tile_atlas.push_back(GTTile(0,0,0,0));         // put in no-tile in index 0
+    for(auto gid : ordered_gids) 
+      if(gid != 0) {
+        atlas_record &ar = (*(ptl->layer_atlas))[gid];
+        plyr->tile_atlas.push_back(GTTile(ar.ulx, ar.uly, ar.wid, ar.ht));
+      }
+  }
 
   return plyr;
 }
