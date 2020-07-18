@@ -12,15 +12,14 @@
 // using base64 = cppcodec::base64_url;
 // end temp!
 
-// nother point in poly auld ===========================================================================================================
-// http://www.eecs.umich.edu/courses/eecs380/HANDOUTS/PROJ2/InsidePoly.html
-
 
 typedef struct {
    int32_t x,y;
 } GTPoint;
 
-//adapted from Paul Bourke, http://www.eecs.umich.edu/courses/eecs380/HANDOUTS/PROJ2/InsidePoly.html
+//adapted from Paul Bourke, http://paulbourke.net/geometry/polygonmesh/
+//Copyright notice on home page http://www.paulbourke.net/ reads
+//"Any source code found here may be freely used provided credits are given to the author."
 bool InsidePolygon(std::vector<GTPoint>& polygon, GTPoint p)
 {
   int32_t counter = 0;
