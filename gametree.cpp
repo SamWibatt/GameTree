@@ -10,8 +10,8 @@ namespace gt {
   // GLOBALS ========================================================================================
   //global var (will need to threadsafe it somehow)
   //init to 1 at run time so id 0 always means uninitialized
-  id_t g_next_id = 1;
-  id_t get_next_id() { return g_next_id++; }
+  GTid_t g_next_id = 1;
+  GTid_t get_next_id() { return g_next_id++; }
 
   // TIME ========================================================================================
 
@@ -20,7 +20,7 @@ namespace gt {
   // *****************************************************************************************
   // ADVANCE GLOBAL TIME
 
-  void GTTime::advance_time(timestamp_t delta) {
+  void GTTime::advance_time(GTdur_t delta) {
 
     //if we're paused, bail
     if(paused) return;
@@ -50,7 +50,7 @@ namespace gt {
   }
 
   
-  bool GTTime::remove_client(id_t client_id) {
+  bool GTTime::remove_client(GTid_t client_id) {
     for(auto cit = clients.begin(); cit != clients.end(); cit++) {
       if((*cit)->get_id() == client_id) {
         //this might invalidate the iterator, but we're leaving anyway
@@ -91,8 +91,8 @@ namespace gt {
     }
 
     // so let's go through our map 
-    // now we have things that amount to calls to int() functions
-    int evres;
+    // now we have things that amount to calls to GTres_t() functions
+    GTres_t evres;
 
     for (auto it = ev_map.cbegin(), next_it = it; it != ev_map.cend(); it = next_it)
     {
@@ -134,9 +134,9 @@ namespace gt {
   }
 
   // MIGHT ALSO PASS IN WHETHER THE ANIMATION REPEATS
-  int GTActor::set_action(std::string actname) {
+  GTres_t GTActor::set_action(std::string actname) {
     if(sprite == nullptr) return -1;
-    int actind = sprite->info.get_index_for_action(actname);
+    GTindex_t actind = sprite->info.get_index_for_action(actname);
     if(actind == -1) return -1;
     if(actind == current_action) return 1;   //already in this action!
     current_action = actind;
@@ -146,9 +146,9 @@ namespace gt {
   }
 
   // MIGHT ALSO PASS IN WHETHER THE ANIMATION REPEATS
-  int GTActor::set_direction(std::string dirname) {
+  GTres_t GTActor::set_direction(std::string dirname) {
     if(sprite == nullptr) return -1;
-    int dirind = sprite->info.get_index_for_direction(dirname);
+    GTindex_t dirind = sprite->info.get_index_for_direction(dirname);
     if(dirind == -1) return -1;
     if(dirind == current_direction) return 1;   //already in this direction!
     current_direction = dirind;
@@ -157,7 +157,7 @@ namespace gt {
     return set_frame(0);
   }
 
-  int GTActor::set_frame(int fr) {
+  GTres_t GTActor::set_frame(GTindex_t fr) {
     // bail if duplicate? not necessarily, is this only called by set_action and set_direction?
     // if that's so, and we happen to be on the same frame they want to set, upcoming events could be wrong
     // needs a better name
@@ -188,7 +188,7 @@ namespace gt {
   // default implementation adds 1 to frame, mods by # frames in current action/direction
   // returns number of millis to wait until next frame, 0 if the animation is ending
   // NOT ANYMORE does like others and returns -1 on error, 1 on success
-  int GTActor::advance_frame_event(timestamp_t lts) {
+  GTres_t GTActor::advance_frame_event(GTdur_t lts) {
 
     //RIDICULOUSLY VERBOSE DEBUG
     //printf("advance_frame_event at %lu called at %lu\n",lts,clock->get_current_time());
@@ -206,7 +206,6 @@ namespace gt {
     // CURRENTLY ALWAYS CYCLES put in a flag about this - in aseprite or elsewhere
     // next frame should be fram->dur after the event that called this - which is what?
     // handed in as lts.
-    // std::function<int(virtbindkid *)> rpvkn = &virtbindkid::narg;
     event_func_t nuev = std::bind(&GTActor::advance_frame_event, this, _1);
     add_event(lts + fram->dur, nuev);
 
@@ -262,7 +261,7 @@ namespace gt {
   GTObjectTile::GTObjectTile() {
   }
 
-  GTObjectTile::GTObjectTile(int t, int ox, int oy, int w, int h) {
+  GTObjectTile::GTObjectTile(GTtile_index_t t, GTcoord_t ox, GTcoord_t oy, GTcoord_t w, GTcoord_t h) {
     tile = t;
     orx = ox;
     ory = oy;

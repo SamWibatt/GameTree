@@ -22,16 +22,37 @@ namespace gt {
 
   // GLOBALS AND TYPEDEFS ===========================================================================
 
+  // type for array indices & similar
+  typedef int32_t GTindex_t;
+
+  //tile index type - i.e., in tile maps.
+  //CUT THIS DOWN as possible, Tiled uses 32 bit, I'm targeting smaller.
+  //256 tiles seems too few to allow for, in real games...?
+  typedef uint16_t GTtile_index_t;
+
+  // type for millisecond durations
+  typedef uint32_t GTdur_t;
+
+  // type for integer results, esp. event callbacks
+  typedef int32_t GTres_t;
+
+  // integer coordinate type
+  typedef int32_t GTcoord_t;
+
+  typedef struct {
+    GTcoord_t x,y;
+  } GTPoint;
+
   // unique ID for every GameTree instance
-  typedef uint32_t id_t;
+  typedef uint32_t GTid_t;
 
   // function for getting next ID globally (put a mutex around this or something)
-  id_t get_next_id();
+  GTid_t get_next_id();
 
   // 64 bit millisecond counter for timestamps.
   // 32 bit rolls over in 49.7 days, which is probably sufficient, and in Win9x times
   // there was no danger of any machine staying up that long without a restart. Now, though.
-  typedef uint64_t timestamp_t;
+  typedef uint64_t GTtimestamp_t;
 
   class GTEvent;
   class GTEntity;
@@ -39,7 +60,7 @@ namespace gt {
 
   class GTTime {
     public:
-      timestamp_t current_time;
+      GTtimestamp_t current_time;
 
       // global pause flags - bitfield - if a bit is set, that pause group is paused
       // starts out with everything paused
@@ -50,7 +71,7 @@ namespace gt {
       // TEST: relocating this to EventEntity - so each entity will have an event list
       // should make it easier to manage their upcoming events
       // event list, ordered by timestamp
-      //std::map<timestamp_t, std::shared_ptr<Event>> ev_list;
+      //std::map<GTtimestamp_t, std::shared_ptr<Event>> ev_list;
 
       // instead, here are the entities registered against this Time
       std::vector<GTEventEntity *> clients;
@@ -74,18 +95,18 @@ namespace gt {
       //*** TO DO: Pause and Unpause
 
       // per-loop time advance that triggers all events 
-      void advance_time(timestamp_t delta);
-      timestamp_t get_current_time() { return current_time; }
+      void advance_time(GTdur_t delta);
+      GTtimestamp_t get_current_time() { return current_time; }
 
       // managing clients
       bool add_client(GTEventEntity  *cli); 
-      bool remove_client(id_t client_id);
+      bool remove_client(GTid_t client_id);
 
 
       // *** TO DO: Event list functions
       // - pause: have pause groups so some things can keep going while other stuff is paused - bitfield
       //   when unpaused, all the timestamps need to be updated
-      //void update_timestamps_for_pause(timestamp_t delta);
+      //void update_timestamps_for_pause(GTtimestamp_t delta);
 
     // *****************************************************************************************
     // *****************************************************************************************
@@ -105,14 +126,14 @@ namespace gt {
   class GTSpriteFrame {
     public:
       //data members
-      int ulx, uly;         //texture coordinates, pixels, within sprite sheet texture
-      int wid, ht;          //extents of rectangle within sprite sheet texture
-      int offx, offy;     //offsets to give to sprite.setOrigin(sf::Vector2f(offx, offy));
-      int dur;              //duration, millis
+      GTcoord_t ulx, uly;         //texture coordinates, pixels, within sprite sheet texture
+      GTcoord_t wid, ht;          //extents of rectangle within sprite sheet texture
+      GTcoord_t offx, offy;     //offsets to give to sprite.setOrigin(sf::Vector2f(offx, offy));
+      GTdur_t dur;              //duration, millis
 
     public:
       GTSpriteFrame() {}
-      GTSpriteFrame(int ux, int uy, int w, int h, int ox, int oy, int dr) {
+      GTSpriteFrame(GTcoord_t ux, GTcoord_t uy, GTcoord_t w, GTcoord_t h, GTcoord_t ox, GTcoord_t oy, GTdur_t dr) {
         ulx = ux; 
         uly = uy;
         wid = w;
@@ -131,9 +152,9 @@ namespace gt {
     public:
       //data members
       // these map character name, action name, direction name to indices into frame map below
-      std::map<std::string,int> character_to_index;
-      std::map<std::string,int> action_to_index;
-      std::map<std::string,int> direction_to_index;
+      std::map<std::string,GTindex_t> character_to_index;
+      std::map<std::string,GTindex_t> action_to_index;
+      std::map<std::string,GTindex_t> direction_to_index;
 
     public:
       GTSpriteInfo(){}
@@ -141,17 +162,17 @@ namespace gt {
 
     public:
       //member functions
-      int get_index_for_character(std::string chname) {
+      GTindex_t get_index_for_character(std::string chname) {
         auto it = character_to_index.find(chname);
         if(it == character_to_index.end()) return -1;
         return it->second;
       }
-      int get_index_for_action(std::string actname) {
+      GTindex_t get_index_for_action(std::string actname) {
         auto it = action_to_index.find(actname);
         if(it == action_to_index.end()) return -1;
         return it->second;
       }
-      int get_index_for_direction(std::string dirname) {
+      GTindex_t get_index_for_direction(std::string dirname) {
         auto it = direction_to_index.find(dirname);
         if(it == direction_to_index.end()) return -1;
         return it->second;
@@ -163,7 +184,7 @@ namespace gt {
     public:
       //data members
       GTSpriteInfo info;
-      std::map<int, std::map<int, std::map<int, std::vector<GTSpriteFrame>>>> frames;
+      std::map<GTindex_t, std::map<GTindex_t, std::map<GTindex_t, std::vector<GTSpriteFrame>>>> frames;
 
     public:
       GTSprite() {}
@@ -181,7 +202,7 @@ namespace gt {
   class GTEntity {
     //data members
     protected:
-      id_t id;
+      GTid_t id;
       // pointers to avoid object slicing, smart pointers to avoid memory allocation hassles
       // do we need this?
       // std::vector<std::shared_ptr<GTEntity>> kids;
@@ -198,17 +219,17 @@ namespace gt {
       }
 
     public:
-      id_t get_id() { return id; }
-      void set_id(id_t i) { id = i; }
+      GTid_t get_id() { return id; }
+      void set_id(GTid_t i) { id = i; }
 
       // revive if we're going to have child pointers
       // std::vector<std::shared_ptr<GTEntity>> &get_kids() { return kids; }
       // void add_kid(std::shared_ptr<GTEntity> ent) { kids.push_back(ent); }
-      // std::shared_ptr<GTEntity> get_kid_by_index(int i) {
+      // std::shared_ptr<GTEntity> get_kid_by_index(GTindex_t i) {
       //   if(kids.size() <= i) return nullptr;
       //   return kids[i];
       // }
-      // std::shared_ptr<GTEntity> get_kid_by_id(id_t i) {
+      // std::shared_ptr<GTEntity> get_kid_by_id(GTid_t i) {
       //   for(auto kid: kids) {
       //     if(kid->get_id() == i) return kid;
       //   }
@@ -246,7 +267,7 @@ namespace gt {
   // or a shared_ptr<>.get()
 
   // std::function<int(virtbindkid *)> rpvkn = &virtbindkid::narg;
-  // int res = rpvkn(rpvk);
+  // GTres_t res = rpvkn(rpvk);
   // std::function<int(virtbindkid *)> rpvkns = std::bind(&virtbindkid::strarg, rpvk, "raw_fiddle");
   // res = rpvkns(rpvk);
 
@@ -281,8 +302,8 @@ namespace gt {
   // printf("result of rpvf2(pvk,\"chunkbunk\") was %d\n",res);
 
 
-  //was typedef std::function<int(EventEntity *, timestamp_t)> event_func_t;
-  typedef std::function<int(timestamp_t)> event_func_t;
+  //was typedef std::function<GTres_t(EventEntity *, GTtimestamp_t)> event_func_t;
+  typedef std::function<GTres_t(GTtimestamp_t)> event_func_t;
 
   class GTEventEntity : public GTEntity {
     public:
@@ -292,11 +313,11 @@ namespace gt {
       GTTime *clock;
       // event list, ordered by timestamp
       // this works(ish), but it's complicated and gross
-      //std::map<timestamp_t, std::shared_ptr<Event>> ev_list;
-      //let's use a std::function instead. Default signature int(), can change later;
+      //std::map<GTtimestamp_t, std::shared_ptr<Event>> ev_list;
+      //let's use a std::function instead. Default signature GTres_t(), can change later;
       //remember we can use std::bind to have this call into functions that have more params - ?
       // YES YOU CAN DO THAT
-      std::map<timestamp_t,event_func_t> ev_map;
+      std::map<GTtimestamp_t,event_func_t> ev_map;
 
       // active means it's getting updated?
       bool active;
@@ -316,7 +337,7 @@ namespace gt {
       // I think it's safe to use std::function here... it amounts to a pointer, yes? could be bad if it points
       // to a function in an object that has been deleted, hm, so don't do that
       // what's the return value?
-      virtual int add_event(timestamp_t ts, event_func_t evf) {
+      virtual GTres_t add_event(GTtimestamp_t ts, event_func_t evf) {
         ev_map[ts] = evf;
         return 0;
       }
@@ -332,10 +353,10 @@ namespace gt {
     public:
       //data members
       std::shared_ptr<GTSprite> sprite;
-      int current_character;
-      int current_direction;
-      int current_action;
-      int current_frame;
+      GTindex_t current_character;
+      GTindex_t current_direction;
+      GTindex_t current_action;
+      GTindex_t current_frame;
 
       // visible means it's drawn - can be active but not visible. Can it be visible but not active?
       bool visible;
@@ -359,18 +380,18 @@ namespace gt {
       }
 
     public:
-      // member functions: returning int bc can use std::bind to hand in params such as timestamp, so long as return type is right!
+      // member functions: returning GTres_t bc can use std::bind to hand in params such as timestamp, so long as return type is right!
       // ... will have to think re, might need wrappers
       // see above with declaration of event_func_t
-      virtual int set_action(std::string actname);
-      virtual int set_direction(std::string dirname);
-      virtual int set_frame(int fr);
+      virtual GTres_t set_action(std::string actname);
+      virtual GTres_t set_direction(std::string dirname);
+      virtual GTres_t set_frame(GTindex_t fr);
 
-      // functions intended to be called by ev_map - signature is int(), maybe with bind we can 
+      // functions intended to be called by ev_map - signature is GTRes_t(), maybe with bind we can 
       // overrideable, default implementation just does current_frame +1 mod # frames in current action
       // returns number of millis to wait until next frame, 0 if the animation is ending, -1 on error
       // let's say we add _event to functions intended to be called as events
-      virtual int advance_frame_event(timestamp_t lts);
+      virtual GTres_t advance_frame_event(GTdur_t lts);
 
   };
 
@@ -381,14 +402,14 @@ namespace gt {
   // GTTile is the texture vertex info for a tile in a given tile sheet
   class GTTile {
     public:
-      int ulx;
-      int uly; 
-      int wid;
-      int ht;
+      GTcoord_t ulx;
+      GTcoord_t uly; 
+      GTcoord_t wid;
+      GTcoord_t ht;
 
     public:
       GTTile() {}
-      GTTile(int ux, int uy, int w, int h) {
+      GTTile(GTcoord_t ux, GTcoord_t uy, GTcoord_t w, GTcoord_t h) {
         ulx = ux;
         uly = uy;
         wid = w;
@@ -400,7 +421,7 @@ namespace gt {
       // assuming that e.g. j[layer_atlas_name] is a json and we hand in that
       public:
         virtual bool add_to_json(json& j) {
-          j.push_back(std::map<std::string, int>{
+          j.push_back(std::map<std::string, GTcoord_t>{
             {"ulx", ulx},
             {"uly", uly},
             {"wid", wid},
@@ -426,6 +447,100 @@ namespace gt {
           return true;
         }
   };
+
+  //base class for shaped regions on map, for things like terrain type, triggers, etc.
+  //strings are fairly expensive, 32 bytes on entrapta (intel core i5/64 bit linux)
+  //16 bytes for a smart pointer, which makes sense - pointer + ref count + maybe other little stuff
+  //would be nice to build app-specific lookup table for names, then could use an index value
+  //how many of these do we want to keep around?
+  typedef enum : GTindex_t {
+    GTAT_Unknown = 0,
+    GTAT_NoGo,
+    GTAT_Slow,
+    GTAT_Trigger
+  } GTArea_type;
+
+
+  class GTShape {
+    public:
+      // data members
+      GTArea_type purpose;
+      GTindex_t name_index;     // indexes into a list of strings; probably not have lots of same names but few shapes will have names and this is smaller than a string
+      GTPoint position;         // we may want to move these around
+      GTPoint bbox_ul;          // bounding box upper left, relative to position
+      GTPoint bbox_lr;          // bounding box lower right, ""
+
+    public:
+      GTShape() {
+        purpose = GTAT_Unknown;
+        name_index = -1;
+        position = {0,0};
+        bbox_ul = {0,0};
+        bbox_lr = {-1,-1};
+      }
+      // HEY MAKE A DETAILED CTOR
+      virtual ~GTShape() {}
+
+    public:
+      //member functions
+      // say bbox_check is end-exclusive in both dimensions?
+      inline bool bbox_check(GTPoint pt) {
+        return(pt.x >= bbox_ul.x + position.x && pt.x < bbox_lr.x + position.x && 
+                pt.y >= bbox_ul.y + position.y && pt.y < bbox_lr.y + position.y);
+      }
+      virtual bool inside_shape_if_inside_bbox(GTPoint pt) = 0;      //each shape must define; doesn't do bbox check, inside() does
+      bool inside(GTPoint pt) {
+        return bbox_check(pt) && inside_shape_if_inside_bbox(pt);
+      }
+  };
+
+  class GTRectangle : public GTShape {
+    public:
+      //no data members other than base class
+
+    public:
+      GTRectangle() {}
+      virtual ~GTRectangle() {}
+
+    public:
+      //trivial: if pt is inside bbox, it's inside the rectangle.
+      virtual bool inside_shape_if_inside_bbox(GTPoint pt) { return true; }
+  };
+
+  class GTEllipse : public GTShape {
+    public:
+      //no data members other than base class
+
+    public:
+      GTEllipse() {}
+      virtual ~GTEllipse() {}
+
+    public:
+      //remember to allow for "position"
+      virtual bool inside_shape_if_inside_bbox(GTPoint pt) { 
+        return false;     //TEMP
+      }
+  };
+
+  //assumed to be a simple polygon!
+  class GTPolygon : public GTShape {
+    public:
+      std::vector<GTPoint> points;
+
+    public:
+      GTPolygon() {}
+      virtual ~GTPolygon() {}
+
+    public:
+      //remember to allow for "position"
+      // HERE USE BOURKE'S ROUTINE AND CREDIT IT
+      virtual bool inside_shape_if_inside_bbox(GTPoint pt) { 
+        return false;     //TEMP
+      }
+  };
+
+
+
 
   //**********************************************************************************************
   //**********************************************************************************************
@@ -485,23 +600,21 @@ namespace gt {
       virtual bool get_from_json(json& jt);
   };
 
-  //tile index type
-  typedef uint32_t GTtile_index_t;
 
   //location / extent of a free-floating tile as opposed to TiledMapLayer
   //grid-determined location
   //It's not an event entity but subclasses might be, consider
   class GTObjectTile {
     public:
-      int tile;       //index into tile_atlas
-      int orx;        //origin x
-      int ory;        //origin y
-      int wid;        //width 
-      int ht;         //height
+      GTtile_index_t tile;       //index into tile_atlas
+      GTcoord_t orx;        //origin x
+      GTcoord_t ory;        //origin y
+      GTcoord_t wid;        //width 
+      GTcoord_t ht;         //height
 
     public:
       GTObjectTile(); 
-      GTObjectTile(int t, int ox, int oy, int w, int h);
+      GTObjectTile(GTtile_index_t t, GTcoord_t ox, GTcoord_t oy, GTcoord_t w, GTcoord_t h);
       virtual ~GTObjectTile(); 
 
     // json i/o
@@ -529,10 +642,10 @@ namespace gt {
   // Though the odd sized ones are handled by tile_objects list.
   class GTTiledMapLayer : public GTMapLayer {
     public:
-      int layer_tilewid;   //layer width in tiles
-      int layer_tileht;    //height
-      int tile_pixwid;     //tile grid width in pixels
-      int tile_pixht;      //height
+      GTcoord_t layer_tilewid;   //layer width in tiles
+      GTcoord_t layer_tileht;    //height
+      GTcoord_t tile_pixwid;     //tile grid width in pixels
+      GTcoord_t tile_pixht;      //height
       
       //tilemap entries are indices into tile_atlas; 0 means no tile in
       //that grid location

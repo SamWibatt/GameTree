@@ -12,10 +12,7 @@
 // using base64 = cppcodec::base64_url;
 // end temp!
 
-
-typedef struct {
-   int32_t x,y;
-} GTPoint;
+using namespace gt;
 
 //adapted from Paul Bourke, http://paulbourke.net/geometry/polygonmesh/
 //Copyright notice on home page http://www.paulbourke.net/ reads
@@ -60,6 +57,19 @@ int bbox_check(sf::Vector2f& the_point, sf::Rect<int>& the_bbox) {
 
 int main()
 {
+    //really dumb little test - how big is an empty string? yikes, 32 bytes
+    std::string s;
+    printf("sizeof empty std::string is %lu or %lu\n",sizeof(std::string), sizeof(s));
+
+    s = "Jorkpork!";
+    printf("sizeof nonempty std::string is %lu or %lu\n",sizeof(std::string), sizeof(s));
+
+    std::shared_ptr<std::string> ps = nullptr;
+    printf("sizeof nullptr std::shared_ptr<std::string> is %lu or %lu\n",sizeof(std::shared_ptr<std::string>), sizeof(ps));
+
+    ps = std::shared_ptr<std::string>(new std::string("Jorkpork!"));
+    printf("sizeof non-nullptr std::shared_ptr<std::string> is %lu or %lu\n",sizeof(std::shared_ptr<std::string>), sizeof(ps));
+
     // //quick test of base64 stuff - let's do a little pnglet
     // std::string png_path = "/home/sean/dev/GameNoodles/sfml/hello/assets/8BIT_CanariPack_TopDown/SPRITES/ITEMS/item8BIT_heart.png";
     // std::vector<uint8_t> image_data;
