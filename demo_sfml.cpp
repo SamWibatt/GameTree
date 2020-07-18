@@ -15,28 +15,25 @@
 // nother point in poly auld ===========================================================================================================
 // http://www.eecs.umich.edu/courses/eecs380/HANDOUTS/PROJ2/InsidePoly.html
 
-#define MIN(x,y) (x < y ? x : y)
-#define MAX(x,y) (x > y ? x : y)
-#define INSIDE 0
-#define OUTSIDE 1
 
 typedef struct {
-   double x,y;
-} dPoint;
+   float x,y;
+} GTPoint;
 
-int InsidePolygon(dPoint *polygon,int N, dPoint p)
+//adapted from Paul Bourke, http://www.eecs.umich.edu/courses/eecs380/HANDOUTS/PROJ2/InsidePoly.html
+bool InsidePolygon(std::vector<GTPoint>& polygon, GTPoint p)
 {
   int counter = 0;
   int i;
-  double xinters;
-  dPoint p1,p2;
+  float xinters;
+  GTPoint p1,p2;
 
   p1 = polygon[0];
-  for (i=1;i<=N;i++) {
-    p2 = polygon[i % N];
-    if (p.y > MIN(p1.y,p2.y)) {
-      if (p.y <= MAX(p1.y,p2.y)) {
-        if (p.x <= MAX(p1.x,p2.x)) {
+  for (i=1;i<=polygon.size();i++) {
+    p2 = polygon[i % polygon.size()];
+    if (p.y > std::min(p1.y,p2.y)) {
+      if (p.y <= std::max(p1.y,p2.y)) {
+        if (p.x <= std::max(p1.x,p2.x)) {
           if (p1.y != p2.y) {
             xinters = (p.y-p1.y)*(p2.x-p1.x)/(p2.y-p1.y)+p1.x;
             if (p1.x == p2.x || p.x <= xinters)
@@ -49,9 +46,9 @@ int InsidePolygon(dPoint *polygon,int N, dPoint p)
   }
 
   if (counter % 2 == 0)
-    return(OUTSIDE);
+    return(false);
   else
-    return(INSIDE);
+    return(true);
 }
 
 // bounding box check
@@ -61,7 +58,6 @@ int bbox_check(sf::Vector2f& the_point, sf::Rect<float>& the_bbox) {
     return 1;
 }
 
-// end point-in-poly from auld website ===============================================================================================================================
 
 int main()
 {
@@ -138,21 +134,9 @@ int main()
     // circy->setOrigin(0,0);
     // scene_objects.push_back(circy);
 
-
-//     // verify we read polygon right
-//     // lil tree poly
-//     // std::vector<std::vector<float>> polyverts = {
-//     // { 0.000000, 0.000000 }, 
-//     // { 31.879499, -0.125510 }, 
-//     // { 32.005001, 15.437700 }, 
-//     // { 21.713200, 20.834600 }, 
-//     // { 16.190800, 21.462200 }, 
-//     // { 8.158140, 19.579500 }, 
-//     // { 0.125510, 15.437700 }, 
-//     // };
-
-    // //first river, normalized - ccl - DOES NOT WORK EITHER DIRECTION
-    // worky with bbox check! worky 2nd algo even wo bbox!
+    // - Found a polygon of type nogo, name "", id 1!
+    // min_x 0.333330 min_y 1.000000 max_x 115.166328 max_y 161.082993
+    // // origin 0.333330 1.000000 bounding box w 114.833000 h 160.082993
     std::vector<std::vector<float>> polyverts = {
     { 0.000000, 26.000000 }, 
     { 7.666670, 33.333328 }, 
@@ -172,70 +156,11 @@ int main()
     { 56.666698, 20.666670 }, 
     { 37.666698, 0.333300 }, 
     { 0.333333, 0.000000 }, 
-    };    
+    };
 
-    //last river, non-normalized - seems worky - haven't tried post-test
-    // std::vector<std::vector<float>> polyverts = {
-    // { -6.090910, -2.056820 }, 
-    // { 84.272697, -1.954550 }, 
-    // { 84.454498, 21.227301 }, 
-    // { 99.000000, 30.500000 }, 
-    // { 97.000000, 55.000000 }, 
-    // { 84.000000, 60.500000 }, 
-    // { 85.000000, 79.500000 }, 
-    // { 57.500000, 108.500000 }, 
-    // { 36.500000, 109.250000 }, 
-    // { 35.625000, 131.250000 }, 
-    // { 20.750000, 141.750000 }, 
-    // { 20.250000, 159.250000 }, 
-    // { -21.375000, 159.000000 }, 
-    // { -21.000000, 113.000000 }, 
-    // { -4.875000, 99.500000 }, 
-    // { -3.625000, 76.625000 }, 
-    // { 43.000000, 55.000000 }, 
-    // { 44.250000, 29.875000 }, 
-    // { 27.000000, 13.000000 }, 
-    // { 7.375000, 12.750000 }, 
-    // };   
-
-    //last river, normalized - also has a problem with the upper left of the screen in poly test mode! I wonder if it's bc the poly isn't closed
-    //nope, but works with bbox check
-    // std::vector<std::vector<float>> polyverts = {
-    // { 15.284088, 0.000000 }, 
-    // { 105.647705, 0.102264 }, 
-    // { 105.829498, 23.284119 }, 
-    // { 120.375000, 32.556824 }, 
-    // { 118.375000, 57.056824 }, 
-    // { 105.375000, 62.556824 }, 
-    // { 106.375000, 81.556824 }, 
-    // { 78.875000, 110.556824 }, 
-    // { 57.875000, 111.306824 }, 
-    // { 57.000000, 133.306824 }, 
-    // { 42.125000, 143.806824 }, 
-    // { 41.625000, 161.306824 }, 
-    // { 0.000000, 161.056824 }, 
-    // { 0.375000, 115.056824 }, 
-    // { 16.500000, 101.556824 }, 
-    // { 17.750000, 78.681824 }, 
-    // { 64.375000, 57.056824 }, 
-    // { 65.625000, 31.931824 }, 
-    // { 48.375000, 15.056824 }, 
-    // { 28.750000, 14.806824 }, 
-    // };    
-
-    //lil tree polygon - works with bbox check - worky with second algorithm
-    // std::vector<std::vector<float>> polyverts = {
-    // { 0.000000, 0.125504 }, 
-    // { 31.879486, 0.000000 }, 
-    // { 32.005005, 15.563217 }, 
-    // { 21.713196, 20.960098 }, 
-    // { 16.190796, 21.587692 }, 
-    // { 8.158142, 19.705002 }, 
-    // { 0.125519, 15.563217 }, 
-    // };    
-
-    //second river normalized - drat, its error zone has some inside the bbox
-    //worky with second algorithm
+    // - Found a polygon of type nogo, name "", id 2!
+    // min_x 125.000000 min_y 76.000000 max_x 269.333008 max_y 304.666687
+    // // origin 125.000000 76.000000 bounding box w 144.333008 h 228.666687
     // std::vector<std::vector<float>> polyverts = {
     // { 0.000000, 11.666702 }, 
     // { 0.000000, 81.000000 }, 
@@ -263,32 +188,43 @@ int main()
     // { 65.000000, 0.000000 }, 
     // { 29.000000, 0.000000 }, 
     // { 24.333298, 15.333374 }, 
-    // };    
+    // };
 
-    // FOR CCL FIRST RIVER TEMP! turn it backwards & see if it fixes troubles
-    //std::reverse(polyverts.begin(),polyverts.end());
-    //printf("Reversed polyverts! first vert is now %f, %f\n",polyverts[0][0], polyverts[0][1]);
-
-    //let's convert those to ints, rounding, to test out the point-in-poly thing I have above
-    //std::vector<Point> i_polyverts(polyverts.size()+1);         //let's see if closing the polygon makes it work! was just size()
-
-    // doubles for the other routine
-    std::vector<dPoint> d_polyverts(polyverts.size()+1);
+    // - Found a polygon of type nogo, name "", id 3!
+    // min_x 194.625000 min_y 351.443176 max_x 315.000000 max_y 512.750000
+    // // origin 194.625000 351.443176 bounding box w 120.375000 h 161.306824
+    // std::vector<std::vector<float>> polyverts = {
+    // { 15.284088, 0.000000 }, 
+    // { 105.647705, 0.102264 }, 
+    // { 105.829498, 23.284119 }, 
+    // { 120.375000, 32.556824 }, 
+    // { 118.375000, 57.056824 }, 
+    // { 105.375000, 62.556824 }, 
+    // { 106.375000, 81.556824 }, 
+    // { 78.875000, 110.556824 }, 
+    // { 57.875000, 111.306824 }, 
+    // { 57.000000, 133.306824 }, 
+    // { 42.125000, 143.806824 }, 
+    // { 41.625000, 161.306824 }, 
+    // { 0.000000, 161.056824 }, 
+    // { 0.375000, 115.056824 }, 
+    // { 16.500000, 101.556824 }, 
+    // { 17.750000, 78.681824 }, 
+    // { 64.375000, 57.056824 }, 
+    // { 65.625000, 31.931824 }, 
+    // { 48.375000, 15.056824 }, 
+    // { 28.750000, 14.806824 }, 
+    // };
+    // floats for the other routine
+    std::vector<GTPoint> d_polyverts(polyverts.size()+1);
 
     int polygonOffsetX = 50;
     int polygonOffsetY = 50;
 
-    // std::transform(polyverts.begin(), polyverts.end(),i_polyverts.begin(), 
-    //         [globalScaleX, globalScaleY, polygonOffsetX, polygonOffsetY]
-    //         (std::vector<float> pt){ Point p; p.x = int((pt[0] + 0.5) + polygonOffsetX); 
-    //                                     p.y = int((pt[1]+0.5) + polygonOffsetY); return p; });
-
-    // i_polyverts[polyverts.size()] = i_polyverts[0];         //close the polygon  - damn, that made it worse for 3rd river, better for 1st                            
-
     std::transform(polyverts.begin(), polyverts.end(),d_polyverts.begin(), 
             [globalScaleX, globalScaleY, polygonOffsetX, polygonOffsetY]
-            (std::vector<float> pt){ dPoint p; p.x = double(pt[0] + polygonOffsetX); 
-                                        p.y = double(pt[1] + polygonOffsetY); return p; });
+            (std::vector<float> pt){ GTPoint p; p.x = float(pt[0] + polygonOffsetX); 
+                                        p.y = float(pt[1] + polygonOffsetY); return p; });
 
     d_polyverts[polyverts.size()] = d_polyverts[0];         //close the polygon  - damn, that made it worse for 3rd river, better for 1st                            
 
@@ -442,13 +378,13 @@ int main()
         // intpoint.x = int(the_point.x + 0.5);       //need to do our own scaling bc it doesn't get xformed ... no we don't
         // intpoint.y = int(the_point.y + 0.5);
 
-        dPoint dpoint;
-        dpoint.x = double(the_point.x);
-        dpoint.y = double(the_point.y);
+        GTPoint gtPoint;
+        gtPoint.x = the_point.x;
+        gtPoint.y = the_point.y;
 
         //you know what, let's add a bounding box check 
 
-        if(!bbox_check(the_point, the_bbox) || InsidePolygon(d_polyverts.data(), d_polyverts.size(), dpoint) == OUTSIDE) {
+        if(!bbox_check(the_point, the_bbox) || !InsidePolygon(d_polyverts, gtPoint)) {
             //outside!
             window.draw(*outliney);
             window.draw(*punto_out,globalTransform);
@@ -457,22 +393,6 @@ int main()
             window.draw(*inliney);
             window.draw(*punto_in,globalTransform);
         }
-
-
-        // if(!bbox_check(the_point, the_bbox) || !wn_PnPoly(intpoint, i_polyverts.data(), i_polyverts.size())) {
-        //     //outside!
-        //     window.draw(*outliney);
-        //     window.draw(*punto_out,globalTransform);
-        //     //punto->setFillColor(sf::Color(128,0,255,0));
-        // } else {
-        //     //inside!
-        //     window.draw(*inliney);
-        //     window.draw(*punto_in,globalTransform);
-        //     //punto->setFillColor(sf::Color(255,255,255,0));
-        // }
-
-
-
 
         // end the current frame
         window.display();
