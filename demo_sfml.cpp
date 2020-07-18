@@ -12,89 +12,46 @@
 // using base64 = cppcodec::base64_url;
 // end temp!
 
-// point-in-poly from auld website ===================================================================================================================================
-// https://web.archive.org/web/20150301001957/http://geomalgorithms.com/a03-_inclusion.html
-// has both crossing number and winding number tests!
+// nother point in poly auld ===========================================================================================================
+// http://www.eecs.umich.edu/courses/eecs380/HANDOUTS/PROJ2/InsidePoly.html
+
+#define MIN(x,y) (x < y ? x : y)
+#define MAX(x,y) (x > y ? x : y)
+#define INSIDE 0
+#define OUTSIDE 1
 
 typedef struct {
-    int x, y;
-} Point;
+   double x,y;
+} dPoint;
 
-// Copyright 2000 softSurfer, 2012 Dan Sunday
-// This code may be freely used and modified for any purpose
-// providing that this copyright notice is included with it.
-// SoftSurfer makes no warranty for this code, and cannot be held
-// liable for any real or imagined damage resulting from its use.
-// Users of this code must verify correctness for their application.
- 
-
-// a Point is defined by its coordinates {int x, y;}
-//===================================================================
- 
-
-// isLeft(): tests if a point is Left|On|Right of an infinite line.
-//    Input:  three points P0, P1, and P2
-//    Return: >0 for P2 left of the line through P0 and P1
-//            =0 for P2  on the line
-//            <0 for P2  right of the line
-//    See: Algorithm 1 "Area of Triangles and Polygons"
-inline int
-isLeft( Point P0, Point P1, Point P2 )
+int InsidePolygon(dPoint *polygon,int N, dPoint p)
 {
-    return ( (P1.x - P0.x) * (P2.y - P0.y)
-            - (P2.x -  P0.x) * (P1.y - P0.y) );
-}
-//===================================================================
+  int counter = 0;
+  int i;
+  double xinters;
+  dPoint p1,p2;
 
-// cn_PnPoly(): crossing number test for a point in a polygon
-//      Input:   P = a point,
-//               V[] = vertex points of a polygon V[n+1] with V[n]=V[0]
-//      Return:  0 = outside, 1 = inside
-// This code is patterned after [Franklin, 2000]
-int
-cn_PnPoly( Point P, Point* V, int n )
-{
-    int    cn = 0;    // the  crossing number counter
-
-    // loop through all edges of the polygon
-    for (int i=0; i<n; i++) {    // edge from V[i]  to V[i+1]
-       if (((V[i].y <= P.y) && (V[i+1].y > P.y))     // an upward crossing
-        || ((V[i].y > P.y) && (V[i+1].y <=  P.y))) { // a downward crossing
-            // compute  the actual edge-ray intersect x-coordinate
-            float vt = (float)(P.y  - V[i].y) / (V[i+1].y - V[i].y);
-            if (P.x <  V[i].x + vt * (V[i+1].x - V[i].x)) // P.x < intersect
-                 ++cn;   // a valid crossing of y=P.y right of P.x
+  p1 = polygon[0];
+  for (i=1;i<=N;i++) {
+    p2 = polygon[i % N];
+    if (p.y > MIN(p1.y,p2.y)) {
+      if (p.y <= MAX(p1.y,p2.y)) {
+        if (p.x <= MAX(p1.x,p2.x)) {
+          if (p1.y != p2.y) {
+            xinters = (p.y-p1.y)*(p2.x-p1.x)/(p2.y-p1.y)+p1.x;
+            if (p1.x == p2.x || p.x <= xinters)
+              counter++;
+          }
         }
+      }
     }
-    return (cn&1);    // 0 if even (out), and 1 if  odd (in)
+    p1 = p2;
+  }
 
-}
-//===================================================================
-
-
-// wn_PnPoly(): winding number test for a point in a polygon
-//      Input:   P = a point,
-//               V[] = vertex points of a polygon V[n+1] with V[n]=V[0]
-//      Return:  wn = the winding number (=0 only when P is outside)
-int
-wn_PnPoly( Point P, Point* V, int n )
-{
-    int    wn = 0;    // the  winding number counter
-
-    // loop through all edges of the polygon
-    for (int i=0; i<n; i++) {   // edge from V[i] to  V[i+1]
-        if (V[i].y <= P.y) {          // start y <= P.y
-            if (V[i+1].y  > P.y)      // an upward crossing
-                 if (isLeft( V[i], V[i+1], P) > 0)  // P left of  edge
-                     ++wn;            // have  a valid up intersect
-        }
-        else {                        // start y > P.y (no test needed)
-            if (V[i+1].y  <= P.y)     // a downward crossing
-                 if (isLeft( V[i], V[i+1], P) < 0)  // P right of  edge
-                     --wn;            // have  a valid down intersect
-        }
-    }
-    return wn;
+  if (counter % 2 == 0)
+    return(OUTSIDE);
+  else
+    return(INSIDE);
 }
 
 // bounding box check
@@ -156,11 +113,11 @@ int main()
     // look into https://www.sfml-dev.org/tutorials/2.5/graphics-transform.php#object-hierarchies-scene-graph
     // for how to have a global scale factor; that's for a bit later
     //should be sf::VideoMode screenMode = sf::VideoMode(720, 400);
-    sf::VideoMode screenMode = sf::VideoMode(600, 768);
+    sf::VideoMode screenMode = sf::VideoMode(600, 600);
 
     sf::Transform globalTransform = sf::Transform();
-    float globalScaleX = 3.0;
-    float globalScaleY = 3.0;
+    float globalScaleX = 2.0;
+    float globalScaleY = 2.0;
     globalTransform.scale(sf::Vector2f(globalScaleX,globalScaleY));
     bool fullscreen = false;         // can derive from whether any valid mode was found, etc.
 
@@ -195,27 +152,27 @@ int main()
 //     // };
 
     // //first river, normalized - ccl - DOES NOT WORK EITHER DIRECTION
-    // worky with bbox check!
-    // std::vector<std::vector<float>> polyverts = {
-    // { 0.000000, 26.000000 }, 
-    // { 7.666670, 33.333328 }, 
-    // { 7.666670, 39.333298 }, 
-    // { 20.333300, 45.333298 }, 
-    // { 21.333300, 64.333298 }, 
-    // { 54.750000, 97.416702 }, 
-    // { 54.541698, 114.916702 }, 
-    // { 63.333302, 124.791702 }, 
-    // { 80.708298, 125.583298 }, 
-    // { 114.833000, 160.082993 }, 
-    // { 113.875000, 88.625000 }, 
-    // { 92.000000, 89.000000 }, 
-    // { 88.000000, 79.666702 }, 
-    // { 88.666702, 65.666702 }, 
-    // { 57.666698, 37.000000 }, 
-    // { 56.666698, 20.666670 }, 
-    // { 37.666698, 0.333300 }, 
-    // { 0.333333, 0.000000 }, 
-    // };    
+    // worky with bbox check! worky 2nd algo even wo bbox!
+    std::vector<std::vector<float>> polyverts = {
+    { 0.000000, 26.000000 }, 
+    { 7.666670, 33.333328 }, 
+    { 7.666670, 39.333298 }, 
+    { 20.333300, 45.333298 }, 
+    { 21.333300, 64.333298 }, 
+    { 54.750000, 97.416702 }, 
+    { 54.541698, 114.916702 }, 
+    { 63.333302, 124.791702 }, 
+    { 80.708298, 125.583298 }, 
+    { 114.833000, 160.082993 }, 
+    { 113.875000, 88.625000 }, 
+    { 92.000000, 89.000000 }, 
+    { 88.000000, 79.666702 }, 
+    { 88.666702, 65.666702 }, 
+    { 57.666698, 37.000000 }, 
+    { 56.666698, 20.666670 }, 
+    { 37.666698, 0.333300 }, 
+    { 0.333333, 0.000000 }, 
+    };    
 
     //last river, non-normalized - seems worky - haven't tried post-test
     // std::vector<std::vector<float>> polyverts = {
@@ -266,7 +223,7 @@ int main()
     // { 28.750000, 14.806824 }, 
     // };    
 
-    //lil tree polygon - works with bbox check
+    //lil tree polygon - works with bbox check - worky with second algorithm
     // std::vector<std::vector<float>> polyverts = {
     // { 0.000000, 0.125504 }, 
     // { 31.879486, 0.000000 }, 
@@ -278,57 +235,68 @@ int main()
     // };    
 
     //second river normalized - drat, its error zone has some inside the bbox
-    std::vector<std::vector<float>> polyverts = {
-    { 0.000000, 11.666702 }, 
-    { 0.000000, 81.000000 }, 
-    { 19.666702, 80.000000 }, 
-    { 34.666702, 99.000000 }, 
-    { 57.666702, 98.666702 }, 
-    { 57.333298, 123.666702 }, 
-    { 42.333298, 132.333710 }, 
-    { 40.333298, 140.999695 }, 
-    { 28.333298, 148.999695 }, 
-    { 23.333298, 156.666702 }, 
-    { 9.000000, 166.666702 }, 
-    { 9.000000, 198.333710 }, 
-    { 35.666702, 228.333710 }, 
-    { 129.000000, 228.666687 }, 
-    { 125.666992, 208.666687 }, 
-    { 144.333008, 201.333710 }, 
-    { 140.333008, 172.666702 }, 
-    { 97.666702, 172.666702 }, 
-    { 93.000000, 147.999695 }, 
-    { 123.666992, 117.999695 }, 
-    { 121.666992, 69.333405 }, 
-    { 105.666992, 59.333405 }, 
-    { 107.000000, 35.333405 }, 
-    { 65.000000, 0.000000 }, 
-    { 29.000000, 0.000000 }, 
-    { 24.333298, 15.333374 }, 
-    };    
+    //worky with second algorithm
+    // std::vector<std::vector<float>> polyverts = {
+    // { 0.000000, 11.666702 }, 
+    // { 0.000000, 81.000000 }, 
+    // { 19.666702, 80.000000 }, 
+    // { 34.666702, 99.000000 }, 
+    // { 57.666702, 98.666702 }, 
+    // { 57.333298, 123.666702 }, 
+    // { 42.333298, 132.333710 }, 
+    // { 40.333298, 140.999695 }, 
+    // { 28.333298, 148.999695 }, 
+    // { 23.333298, 156.666702 }, 
+    // { 9.000000, 166.666702 }, 
+    // { 9.000000, 198.333710 }, 
+    // { 35.666702, 228.333710 }, 
+    // { 129.000000, 228.666687 }, 
+    // { 125.666992, 208.666687 }, 
+    // { 144.333008, 201.333710 }, 
+    // { 140.333008, 172.666702 }, 
+    // { 97.666702, 172.666702 }, 
+    // { 93.000000, 147.999695 }, 
+    // { 123.666992, 117.999695 }, 
+    // { 121.666992, 69.333405 }, 
+    // { 105.666992, 59.333405 }, 
+    // { 107.000000, 35.333405 }, 
+    // { 65.000000, 0.000000 }, 
+    // { 29.000000, 0.000000 }, 
+    // { 24.333298, 15.333374 }, 
+    // };    
 
     // FOR CCL FIRST RIVER TEMP! turn it backwards & see if it fixes troubles
     //std::reverse(polyverts.begin(),polyverts.end());
     //printf("Reversed polyverts! first vert is now %f, %f\n",polyverts[0][0], polyverts[0][1]);
 
     //let's convert those to ints, rounding, to test out the point-in-poly thing I have above
-    std::vector<Point> i_polyverts(polyverts.size()+1);         //let's see if closing the polygon makes it work! was just size()
+    //std::vector<Point> i_polyverts(polyverts.size()+1);         //let's see if closing the polygon makes it work! was just size()
+
+    // doubles for the other routine
+    std::vector<dPoint> d_polyverts(polyverts.size()+1);
 
     int polygonOffsetX = 50;
     int polygonOffsetY = 50;
 
-    std::transform(polyverts.begin(), polyverts.end(),i_polyverts.begin(), 
-            [globalScaleX, globalScaleY, polygonOffsetX, polygonOffsetY]
-            (std::vector<float> pt){ Point p; p.x = int((pt[0] + 0.5) + polygonOffsetX); 
-                                        p.y = int((pt[1]+0.5) + polygonOffsetY); return p; });
+    // std::transform(polyverts.begin(), polyverts.end(),i_polyverts.begin(), 
+    //         [globalScaleX, globalScaleY, polygonOffsetX, polygonOffsetY]
+    //         (std::vector<float> pt){ Point p; p.x = int((pt[0] + 0.5) + polygonOffsetX); 
+    //                                     p.y = int((pt[1]+0.5) + polygonOffsetY); return p; });
 
-    i_polyverts[polyverts.size()] = i_polyverts[0];         //close the polygon  - damn, that made it worse for 3rd river, better for 1st                            
-    
+    // i_polyverts[polyverts.size()] = i_polyverts[0];         //close the polygon  - damn, that made it worse for 3rd river, better for 1st                            
+
+    std::transform(polyverts.begin(), polyverts.end(),d_polyverts.begin(), 
+            [globalScaleX, globalScaleY, polygonOffsetX, polygonOffsetY]
+            (std::vector<float> pt){ dPoint p; p.x = double(pt[0] + polygonOffsetX); 
+                                        p.y = double(pt[1] + polygonOffsetY); return p; });
+
+    d_polyverts[polyverts.size()] = d_polyverts[0];         //close the polygon  - damn, that made it worse for 3rd river, better for 1st                            
+
 
     //purple outline for when point is outside the outline
     std::shared_ptr<sf::VertexArray> outliney = std::shared_ptr<sf::VertexArray>(new sf::VertexArray(sf::LineStrip,polyverts.size()+1));
     for(auto j=0;j<polyverts.size();j++) {
-        (*outliney)[j] = sf::Vertex(sf::Vector2f(i_polyverts[j].x * globalScaleX, i_polyverts[j].y * globalScaleY),sf::Color(128,0,255));
+        (*outliney)[j] = sf::Vertex(sf::Vector2f(d_polyverts[j].x * globalScaleX, d_polyverts[j].y * globalScaleY),sf::Color(128,0,255));
     }
     (*outliney)[polyverts.size()] = (*outliney)[0];     //extra segment to close the polyline
     //not always drawing it scene_objects.push_back(outliney);
@@ -336,7 +304,7 @@ int main()
     //white outline for when point is inside the outline
     std::shared_ptr<sf::VertexArray> inliney = std::shared_ptr<sf::VertexArray>(new sf::VertexArray(sf::LineStrip,polyverts.size()+1));
     for(auto j=0;j<polyverts.size();j++) {
-        (*inliney)[j] = sf::Vertex(sf::Vector2f(i_polyverts[j].x * globalScaleX, i_polyverts[j].y * globalScaleY),sf::Color(255,255,255));
+        (*inliney)[j] = sf::Vertex(sf::Vector2f(d_polyverts[j].x * globalScaleX, d_polyverts[j].y * globalScaleY),sf::Color(255,255,255));
     }
     (*inliney)[polyverts.size()] = (*inliney)[0];     //extra segment to close the polyline
     // not always drawing it scene_objects.push_back(outliney);
@@ -354,7 +322,7 @@ int main()
     float min_y = MAXFLOAT;
     float max_x = -MAXFLOAT;
     float max_y = -MAXFLOAT;
-    for(auto pt: i_polyverts) {
+    for(auto pt: d_polyverts) {
       if (pt.x < min_x) min_x = pt.x;
       if (pt.y < min_y) min_y = pt.y;
       if (pt.x > max_x) max_x = pt.x;
@@ -470,23 +438,38 @@ int main()
         }
 
         //if point is inside polygon, draw inliney, else outliney
-        Point intpoint;
-        intpoint.x = int(the_point.x + 0.5);       //need to do our own scaling bc it doesn't get xformed ... no we don't
-        intpoint.y = int(the_point.y + 0.5);
+        // Point intpoint;
+        // intpoint.x = int(the_point.x + 0.5);       //need to do our own scaling bc it doesn't get xformed ... no we don't
+        // intpoint.y = int(the_point.y + 0.5);
+
+        dPoint dpoint;
+        dpoint.x = double(the_point.x);
+        dpoint.y = double(the_point.y);
 
         //you know what, let's add a bounding box check 
 
-        if(!bbox_check(the_point, the_bbox) || !wn_PnPoly(intpoint, i_polyverts.data(), i_polyverts.size())) {
+        if(!bbox_check(the_point, the_bbox) || InsidePolygon(d_polyverts.data(), d_polyverts.size(), dpoint) == OUTSIDE) {
             //outside!
             window.draw(*outliney);
             window.draw(*punto_out,globalTransform);
-            //punto->setFillColor(sf::Color(128,0,255,0));
         } else {
             //inside!
             window.draw(*inliney);
             window.draw(*punto_in,globalTransform);
-            //punto->setFillColor(sf::Color(255,255,255,0));
         }
+
+
+        // if(!bbox_check(the_point, the_bbox) || !wn_PnPoly(intpoint, i_polyverts.data(), i_polyverts.size())) {
+        //     //outside!
+        //     window.draw(*outliney);
+        //     window.draw(*punto_out,globalTransform);
+        //     //punto->setFillColor(sf::Color(128,0,255,0));
+        // } else {
+        //     //inside!
+        //     window.draw(*inliney);
+        //     window.draw(*punto_in,globalTransform);
+        //     //punto->setFillColor(sf::Color(255,255,255,0));
+        // }
 
 
 
