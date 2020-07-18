@@ -139,7 +139,8 @@ namespace tiledreader {
     public:
       tileobjshape_type shape_type;
       float origin_x, origin_y;
-      float bbox_w, bbox_h;           //bounding box; points have h = w = 0
+      float bbox_ulx, bbox_uly;
+      float bbox_lrx, bbox_lry;
       std::string name;
       std::string type;       // assigned in Tiled in object properties when shape is highlighted, meaning assigned by game
       std::vector<std::pair<float,float>> polypoints;     // polygon points for polygons
@@ -148,16 +149,18 @@ namespace tiledreader {
       TiledObjectShape() {
         type = TOS_Unknown;
         origin_x = origin_y = 0.0;
-        bbox_w = bbox_h = 0.0;
+        bbox_ulx = bbox_uly = bbox_lrx = bbox_lry = 0.0;
         polypoints.clear();
       }
 
-      TiledObjectShape(tileobjshape_type sty, float orx, float ory, float bbw, float bbh, std::string& nm, std::string& ty) {
+      TiledObjectShape(tileobjshape_type sty, float orx, float ory, float bbulx, float bbuly, float bblrx, float bblry, std::string& nm, std::string& ty) {
         shape_type = sty;
         origin_x = orx;
         origin_y = ory;
-        bbox_w = (sty == TOS_Point) ? 0.0 : bbw;     //force points to have 0 w/h
-        bbox_h = (sty == TOS_Point) ? 0.0 : bbh;
+        bbox_ulx = bbulx;
+        bbox_uly = bbuly;
+        bbox_lrx = (sty == TOS_Point) ? bbox_ulx : bblrx;     //force points to have 0 w/h
+        bbox_lry = (sty == TOS_Point) ? bbox_uly : bblry;
         name = nm; 
         type = ty;
         polypoints.clear();

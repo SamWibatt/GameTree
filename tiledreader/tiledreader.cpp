@@ -251,7 +251,9 @@ namespace tiledreader {
       }
       float ptx = std::stof(token.substr(0,commapos));
       float pty = std::stof(token.substr(commapos+1,token.length()));
-      poly.add_polypoint(ptx+origin_x,pty+origin_y);    // get absolute location of points
+      //poly.add_polypoint(ptx+origin_x,pty+origin_y);    // get absolute location of points
+      //let's go back to just ptx and pty, non-absoluted, bc that's how GTPolygon will want it?
+      poly.add_polypoint(ptx,pty);
     }
 
     //work out the bounding box - it'll look something like this
@@ -271,29 +273,19 @@ namespace tiledreader {
     printf("min_x %f min_y %f max_x %f max_y %f\n",min_x,min_y,max_x,max_y);
 
     //then set it bbox in poly
-    poly.bbox_w = max_x - min_x;
-    poly.bbox_h = max_y - min_y;
-
-
+    poly.bbox_ulx = min_x;
+    poly.bbox_uly = min_y;
+    poly.bbox_lrx = max_x;
+    poly.bbox_lry = max_y;
 
     //so I have some confusion when the origin is not the same as the top left of the bounding box.
     //as is the case with First River. oh hey and it's entered ccl and last point is in upper left of image!
     // I guess we could just leave the origin and points alone - but then the bounding box is kind of wrong? We do know its
     // width and height but not how to position it.
-    //poly.origin_x = origin_x;     //not sure, might be -this - ???
-    //poly.origin_y = origin_y;     //not sure, might be -this
-    // no, what we want is for the "origin" to be the upper left of the bounding box, yes?
-    // so that all the points are drawn with respect to it? thus, origin is minx, miny!
-    poly.origin_x = min_x;
-    poly.origin_y = min_y;
+    poly.origin_x = origin_x;
+    poly.origin_y = origin_y;
 
-    printf("// origin %f %f bounding box w %f h %f\n",poly.origin_x,poly.origin_y,poly.bbox_w,poly.bbox_h);
-
-    //so we DO want to normalize the points against min_x and min_y - 
-    for(auto& pt:poly.polypoints) {
-      pt.first -= min_x;
-      pt.second -= min_y;
-    }
+    printf("// origin %f %f bounding box %f,%f - %f,%f\n",poly.origin_x,poly.origin_y,poly.bbox_ulx,poly.bbox_uly,poly.bbox_lrx,poly.bbox_lry);
 
     // pre-normalize points debug
     printf("std::vector<std::vector<float>> polyverts = {\n");      
@@ -301,52 +293,6 @@ namespace tiledreader {
       printf("  { %f, %f }, \n", pt.first, pt.second);
     printf("};\n");
     printf("//polygon has %lu verts\n",poly.polypoints.size());
-
-    // here is First River in absolute coords:
-    // std::vector<std::vector<float>> polyverts = {
-    //   { 0.333330, 27.000000 }, 
-    //   { 8.000000, 34.333328 }, 
-    //   { 8.000000, 40.333298 }, 
-    //   { 20.666630, 46.333298 }, 
-    //   { 21.666630, 65.333298 }, 
-    //   { 55.083328, 98.416702 }, 
-    //   { 54.875027, 115.916702 }, 
-    //   { 63.666630, 125.791702 }, 
-    //   { 81.041626, 126.583298 }, 
-    //   { 115.166328, 161.082993 }, 
-    //   { 114.208328, 89.625000 }, 
-    //   { 92.333328, 90.000000 }, 
-    //   { 88.333328, 80.666702 }, 
-    //   { 89.000031, 66.666702 }, 
-    //   { 58.000027, 38.000000 }, 
-    //   { 57.000027, 21.666670 }, 
-    //   { 38.000027, 1.333300 }, 
-    //   { 0.666663, 1.000000 }, 
-    // };    
-
-
-
-    // //debug
-    // min_x = MAXFLOAT;
-    // min_y = MAXFLOAT;
-    // max_x = -MAXFLOAT;
-    // max_y = -MAXFLOAT;
-    // for(auto pt:poly.polypoints) {
-    //   if (pt.first < min_x) min_x = pt.first;
-    //   if (pt.second < min_y) min_y = pt.second;
-    //   if (pt.first > max_x) max_x = pt.first;
-    //   if (pt.second > max_y) max_y = pt.second;
-    // }
-    // printf("post-normalize min_x %f min_y %f max_x %f max_y %f\n",min_x,min_y,max_x,max_y);
-
-
-    // //debug print to put in demo for testing
-    // printf("std::vector<std::vector<float>> polyverts = {\n");      
-    // for(auto pt: poly.polypoints) 
-    //   printf("  { %f, %f }, \n", pt.first, pt.second);
-    // printf("};\n");
-    // printf("//polygon has %lu verts\n",poly.polypoints.size());
-    // printf("// origin %f %f bounding box w %f h %f\n",poly.origin_x,poly.origin_y,poly.bbox_w,poly.bbox_h);
 
     return poly;
   }
@@ -462,7 +408,7 @@ namespace tiledreader {
               //point object has a point child
               // We SHOULD handle it - type "start_point" could be where the character spawns into the level
               printf("- Found a point of type %s, name \"%s\", id %d!\n",area_type.c_str(), area_name.c_str(), kid.attribute("id").as_int());
-              tl->shapes.push_back(TiledObjectShape(TOS_Point,origin_x,origin_y,0.0,0.0,area_name,area_type));
+              tl->shapes.push_back(TiledObjectShape(TOS_Point,origin_x,origin_y,origin_x,origin_y,origin_x,origin_y,area_name,area_type));
             } else if(kid.child("text")) {
               //text object has a text child
               printf("- Warning: text objects not yet supported - type %s, name \"%s\", id %d\n",area_type.c_str(), area_name.c_str(), kid.attribute("id").as_int());
@@ -470,8 +416,10 @@ namespace tiledreader {
             } else if(kid.child("ellipse")) {
               //ellipse object has an ellipse child
               printf("- Found an ellipse of type %s, name \"%s\", id %d!\n",area_type.c_str(), area_name.c_str(), kid.attribute("id").as_int());
-              tl->shapes.push_back(TiledObjectShape(TOS_Ellipse,origin_x,origin_y,kid.attribute("width").as_float(),
-                                                    kid.attribute("height").as_float(),area_name,area_type));
+              tl->shapes.push_back(TiledObjectShape(TOS_Ellipse,origin_x,origin_y,origin_x,origin_y,
+                                                    origin_x + kid.attribute("width").as_float(),
+                                                    origin_y + kid.attribute("height").as_float(),
+                                                    area_name,area_type));
             } else if(kid.child("polygon")) {
               //polygon object has a polygon child
               printf("- Found a polygon of type %s, name \"%s\", id %d!\n",area_type.c_str(), area_name.c_str(), kid.attribute("id").as_int());
@@ -490,8 +438,10 @@ namespace tiledreader {
             } else {
               //assume it's a rectangle!
               printf("- Found a rectangle of type %s, name \"%s\", id %d!\n",area_type.c_str(), area_name.c_str(), kid.attribute("id").as_int());
-              tl->shapes.push_back(TiledObjectShape(TOS_Rectangle,origin_x,origin_y,kid.attribute("width").as_float(),
-                                                    kid.attribute("height").as_float(),area_name,area_type));
+              tl->shapes.push_back(TiledObjectShape(TOS_Rectangle,origin_x,origin_y,origin_x,origin_y,
+                                                    origin_x + kid.attribute("width").as_float(),
+                                                    origin_y + kid.attribute("height").as_float(),
+                                                    area_name,area_type));
             }
           } else {
             printf("- Warning: found a non-tile object, id %d first child (%s) name \"%s\" without a type, skipping\n",kid.attribute("id").as_int(),

@@ -504,7 +504,7 @@ namespace gt {
 
     public:
       //trivial: if pt is inside bbox, it's inside the rectangle.
-      virtual bool inside_shape_if_inside_bbox(GTPoint pt) { return true; }
+      virtual bool inside_shape_if_inside_bbox(GTPoint pt) override { return true; }
   };
 
   class GTEllipse : public GTShape {
@@ -517,12 +517,12 @@ namespace gt {
 
     public:
       //remember to allow for "position"
-      virtual bool inside_shape_if_inside_bbox(GTPoint pt) { 
+      virtual bool inside_shape_if_inside_bbox(GTPoint pt) override { 
         return false;     //TEMP
       }
   };
 
-  //assumed to be a simple polygon!
+  //assumed to be a simple polygon! I think it's ok if there isn't a duplicate first point after last
   class GTPolygon : public GTShape {
     public:
       std::vector<GTPoint> points;
@@ -534,9 +534,7 @@ namespace gt {
     public:
       //remember to allow for "position"
       // HERE USE BOURKE'S ROUTINE AND CREDIT IT
-      virtual bool inside_shape_if_inside_bbox(GTPoint pt) { 
-        return false;     //TEMP
-      }
+      virtual bool inside_shape_if_inside_bbox(GTPoint pt) override;
   };
 
 

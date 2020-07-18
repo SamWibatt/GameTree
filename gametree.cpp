@@ -301,6 +301,48 @@ namespace gt {
     return true;
   }
 
+  // GTShape and subclasses ----------------------------------------------------------------------
+
+  //adapted from Paul Bourke, http://paulbourke.net/geometry/polygonmesh/
+//Copyright notice on home page http://www.paulbourke.net/ reads
+//"Any source code found here may be freely used provided credits are given to the author."
+//bool InsidePolygon(std::vector<GTPoint>& polygon, GTPoint p)
+
+bool GTPolygon::inside_shape_if_inside_bbox(GTPoint pt)
+{
+  int32_t counter = 0;
+  int32_t i;
+  int32_t xinters;      //should be float - originally was, see if works w/int - so far so good!
+  GTPoint p1,p2;
+
+  p1 = points[0];
+  p1.x += position.x;     //need to adjust for position
+  p1.y += position.y;
+  for (i=1;i<=points.size();i++) {
+    p2 = points[i % points.size()];
+    p2.x += position.x;
+    p2.y += position.y;
+    if (pt.y > std::min(p1.y,p2.y)) {
+      if (pt.y <= std::max(p1.y,p2.y)) {
+        if (pt.x <= std::max(p1.x,p2.x)) {
+          if (p1.y != p2.y) {
+            xinters = (pt.y-p1.y)*(p2.x-p1.x)/(p2.y-p1.y)+p1.x;
+            if (p1.x == p2.x || pt.x <= xinters)
+              counter++;
+          }
+        }
+      }
+    }
+    p1 = p2;
+  }
+
+  if (counter % 2 == 0)
+    return(false);
+  else
+    return(true);
+}
+
+
   // GTObjectsMapLayer ---------------------------------------------------------------------------
 
   bool GTObjectsMapLayer::add_to_json(json& j) {

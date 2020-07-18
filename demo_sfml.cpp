@@ -14,61 +14,20 @@
 
 using namespace gt;
 
-//adapted from Paul Bourke, http://paulbourke.net/geometry/polygonmesh/
-//Copyright notice on home page http://www.paulbourke.net/ reads
-//"Any source code found here may be freely used provided credits are given to the author."
-bool InsidePolygon(std::vector<GTPoint>& polygon, GTPoint p)
-{
-  int32_t counter = 0;
-  int32_t i;
-  int32_t xinters;      //should be float - originally was, see if works w/int - so far so good!
-  GTPoint p1,p2;
-
-  p1 = polygon[0];
-  for (i=1;i<=polygon.size();i++) {
-    p2 = polygon[i % polygon.size()];
-    if (p.y > std::min(p1.y,p2.y)) {
-      if (p.y <= std::max(p1.y,p2.y)) {
-        if (p.x <= std::max(p1.x,p2.x)) {
-          if (p1.y != p2.y) {
-            xinters = (p.y-p1.y)*(p2.x-p1.x)/(p2.y-p1.y)+p1.x;
-            if (p1.x == p2.x || p.x <= xinters)
-              counter++;
-          }
-        }
-      }
-    }
-    p1 = p2;
-  }
-
-  if (counter % 2 == 0)
-    return(false);
-  else
-    return(true);
-}
-
-// bounding box check
-int bbox_check(sf::Vector2f& the_point, sf::Rect<int>& the_bbox) {
-    if(the_point.x < the_bbox.left || the_point.y < the_bbox.top) return 0;
-    if(the_point.x > the_bbox.left + the_bbox.width || the_point.y > the_bbox.top + the_bbox.height) return 0;
-    return 1;
-}
-
-
 int main()
 {
     //really dumb little test - how big is an empty string? yikes, 32 bytes
-    std::string s;
-    printf("sizeof empty std::string is %lu or %lu\n",sizeof(std::string), sizeof(s));
+    // std::string s;
+    // printf("sizeof empty std::string is %lu or %lu\n",sizeof(std::string), sizeof(s));
 
-    s = "Jorkpork!";
-    printf("sizeof nonempty std::string is %lu or %lu\n",sizeof(std::string), sizeof(s));
+    // s = "Jorkpork!";
+    // printf("sizeof nonempty std::string is %lu or %lu\n",sizeof(std::string), sizeof(s));
 
-    std::shared_ptr<std::string> ps = nullptr;
-    printf("sizeof nullptr std::shared_ptr<std::string> is %lu or %lu\n",sizeof(std::shared_ptr<std::string>), sizeof(ps));
+    // std::shared_ptr<std::string> ps = nullptr;
+    // printf("sizeof nullptr std::shared_ptr<std::string> is %lu or %lu\n",sizeof(std::shared_ptr<std::string>), sizeof(ps));
 
-    ps = std::shared_ptr<std::string>(new std::string("Jorkpork!"));
-    printf("sizeof non-nullptr std::shared_ptr<std::string> is %lu or %lu\n",sizeof(std::shared_ptr<std::string>), sizeof(ps));
+    // ps = std::shared_ptr<std::string>(new std::string("Jorkpork!"));
+    // printf("sizeof non-nullptr std::shared_ptr<std::string> is %lu or %lu\n",sizeof(std::shared_ptr<std::string>), sizeof(ps));
 
     // //quick test of base64 stuff - let's do a little pnglet
     // std::string png_path = "/home/sean/dev/GameNoodles/sfml/hello/assets/8BIT_CanariPack_TopDown/SPRITES/ITEMS/item8BIT_heart.png";
@@ -170,60 +129,60 @@ int main()
     // - Found a polygon of type nogo, name "", id 2!
     // min_x 125.000000 min_y 76.000000 max_x 269.333008 max_y 304.666687
     // // origin 125.000000 76.000000 bounding box w 144.333008 h 228.666687
-    // std::vector<std::vector<float>> polyverts = {
-    // { 0.000000, 11.666702 }, 
-    // { 0.000000, 81.000000 }, 
-    // { 19.666702, 80.000000 }, 
-    // { 34.666702, 99.000000 }, 
-    // { 57.666702, 98.666702 }, 
-    // { 57.333298, 123.666702 }, 
-    // { 42.333298, 132.333710 }, 
-    // { 40.333298, 140.999695 }, 
-    // { 28.333298, 148.999695 }, 
-    // { 23.333298, 156.666702 }, 
-    // { 9.000000, 166.666702 }, 
-    // { 9.000000, 198.333710 }, 
-    // { 35.666702, 228.333710 }, 
-    // { 129.000000, 228.666687 }, 
-    // { 125.666992, 208.666687 }, 
-    // { 144.333008, 201.333710 }, 
-    // { 140.333008, 172.666702 }, 
-    // { 97.666702, 172.666702 }, 
-    // { 93.000000, 147.999695 }, 
-    // { 123.666992, 117.999695 }, 
-    // { 121.666992, 69.333405 }, 
-    // { 105.666992, 59.333405 }, 
-    // { 107.000000, 35.333405 }, 
-    // { 65.000000, 0.000000 }, 
-    // { 29.000000, 0.000000 }, 
-    // { 24.333298, 15.333374 }, 
-    // };
+    std::vector<std::vector<float>> polyverts = {
+    { 0.000000, 11.666702 }, 
+    { 0.000000, 81.000000 }, 
+    { 19.666702, 80.000000 }, 
+    { 34.666702, 99.000000 }, 
+    { 57.666702, 98.666702 }, 
+    { 57.333298, 123.666702 }, 
+    { 42.333298, 132.333710 }, 
+    { 40.333298, 140.999695 }, 
+    { 28.333298, 148.999695 }, 
+    { 23.333298, 156.666702 }, 
+    { 9.000000, 166.666702 }, 
+    { 9.000000, 198.333710 }, 
+    { 35.666702, 228.333710 }, 
+    { 129.000000, 228.666687 }, 
+    { 125.666992, 208.666687 }, 
+    { 144.333008, 201.333710 }, 
+    { 140.333008, 172.666702 }, 
+    { 97.666702, 172.666702 }, 
+    { 93.000000, 147.999695 }, 
+    { 123.666992, 117.999695 }, 
+    { 121.666992, 69.333405 }, 
+    { 105.666992, 59.333405 }, 
+    { 107.000000, 35.333405 }, 
+    { 65.000000, 0.000000 }, 
+    { 29.000000, 0.000000 }, 
+    { 24.333298, 15.333374 }, 
+    };
 
     // - Found a polygon of type nogo, name "", id 3!
     // min_x 194.625000 min_y 351.443176 max_x 315.000000 max_y 512.750000
     // // origin 194.625000 351.443176 bounding box w 120.375000 h 161.306824
-    std::vector<std::vector<float>> polyverts = {
-    { 15.284088, 0.000000 }, 
-    { 105.647705, 0.102264 }, 
-    { 105.829498, 23.284119 }, 
-    { 120.375000, 32.556824 }, 
-    { 118.375000, 57.056824 }, 
-    { 105.375000, 62.556824 }, 
-    { 106.375000, 81.556824 }, 
-    { 78.875000, 110.556824 }, 
-    { 57.875000, 111.306824 }, 
-    { 57.000000, 133.306824 }, 
-    { 42.125000, 143.806824 }, 
-    { 41.625000, 161.306824 }, 
-    { 0.000000, 161.056824 }, 
-    { 0.375000, 115.056824 }, 
-    { 16.500000, 101.556824 }, 
-    { 17.750000, 78.681824 }, 
-    { 64.375000, 57.056824 }, 
-    { 65.625000, 31.931824 }, 
-    { 48.375000, 15.056824 }, 
-    { 28.750000, 14.806824 }, 
-    };
+    // std::vector<std::vector<float>> polyverts = {
+    // { 15.284088, 0.000000 }, 
+    // { 105.647705, 0.102264 }, 
+    // { 105.829498, 23.284119 }, 
+    // { 120.375000, 32.556824 }, 
+    // { 118.375000, 57.056824 }, 
+    // { 105.375000, 62.556824 }, 
+    // { 106.375000, 81.556824 }, 
+    // { 78.875000, 110.556824 }, 
+    // { 57.875000, 111.306824 }, 
+    // { 57.000000, 133.306824 }, 
+    // { 42.125000, 143.806824 }, 
+    // { 41.625000, 161.306824 }, 
+    // { 0.000000, 161.056824 }, 
+    // { 0.375000, 115.056824 }, 
+    // { 16.500000, 101.556824 }, 
+    // { 17.750000, 78.681824 }, 
+    // { 64.375000, 57.056824 }, 
+    // { 65.625000, 31.931824 }, 
+    // { 48.375000, 15.056824 }, 
+    // { 28.750000, 14.806824 }, 
+    // };
 
     // - Found a polygon of type nogo, name "treepoly", id 75!
     // min_x 367.994995 min_y 255.914505 max_x 400.000000 max_y 277.502197
@@ -238,35 +197,44 @@ int main()
     // { 0.125519, 15.563217 }, 
     // };
 
-    // representation for pt-in-poly
-    std::vector<GTPoint> d_polyverts(polyverts.size()+1);
 
-    int polygonOffsetX = 50;
-    int polygonOffsetY = 50;
+    GTPolygon poly;
+    poly.position = { 50, 50 };
 
-    std::transform(polyverts.begin(), polyverts.end(),d_polyverts.begin(), 
-            [globalScaleX, globalScaleY, polygonOffsetX, polygonOffsetY]
-            (std::vector<float> pt){ GTPoint p; p.x = int((pt[0] + 0.5) + polygonOffsetX); 
-                                        p.y = int((pt[1] + 0.5) + polygonOffsetY); return p; });
-
-    d_polyverts[polyverts.size()] = d_polyverts[0];         //close the polygon  - damn, that made it worse for 3rd river, better for 1st                            
+    // COME UP WITH A WAY TO DO THIS BETTER
+    // like a setpoints
+    poly.points.resize(polyverts.size());       
+    std::transform(polyverts.begin(), polyverts.end(),poly.points.begin(), 
+            [](std::vector<float> pt){ GTPoint p; p.x = int(pt[0] + 0.5); p.y = int(pt[1] + 0.5); return p; });
+    //let's derive the bounding box - THIS SHOULD BE ADDED TO GTPolygon
+    int min_x = 999999;
+    int min_y = 999999;
+    int max_x = -999999;
+    int max_y = -999999;
+    for(auto pt: poly.points) {
+      if (pt.x < min_x) min_x = pt.x;
+      if (pt.y < min_y) min_y = pt.y;
+      if (pt.x > max_x) max_x = pt.x;
+      if (pt.y > max_y) max_y = pt.y;
+    }
+    poly.bbox_ul = {0,0};           //VERIFY
+    poly.bbox_lr = { poly.bbox_ul.x + (max_x - min_x), poly.bbox_ul.y + (max_y - min_y) };
+    // END COME UP WITH A WAY TO DO THIS BETTER
 
 
     //purple outline for when point is outside the outline
     std::shared_ptr<sf::VertexArray> outliney = std::shared_ptr<sf::VertexArray>(new sf::VertexArray(sf::LineStrip,polyverts.size()+1));
-    for(auto j=0;j<polyverts.size();j++) {
-        (*outliney)[j] = sf::Vertex(sf::Vector2f(d_polyverts[j].x * globalScaleX, d_polyverts[j].y * globalScaleY),sf::Color(128,0,255));
-    }
-    (*outliney)[polyverts.size()] = (*outliney)[0];     //extra segment to close the polyline
-    //not always drawing it scene_objects.push_back(outliney);
-
     //white outline for when point is inside the outline
     std::shared_ptr<sf::VertexArray> inliney = std::shared_ptr<sf::VertexArray>(new sf::VertexArray(sf::LineStrip,polyverts.size()+1));
     for(auto j=0;j<polyverts.size();j++) {
-        (*inliney)[j] = sf::Vertex(sf::Vector2f(d_polyverts[j].x * globalScaleX, d_polyverts[j].y * globalScaleY),sf::Color(255,255,255));
+        (*outliney)[j] = sf::Vertex(sf::Vector2f((poly.points[j].x + poly.position.x) * globalScaleX, 
+                                                  (poly.points[j].y + poly.position.y) * globalScaleY),sf::Color(128,0,255));
+        (*inliney)[j] = sf::Vertex(sf::Vector2f((poly.points[j].x + poly.position.x) * globalScaleX, 
+                                                  (poly.points[j].y + poly.position.y) * globalScaleY),sf::Color(255,255,255));
     }
+    (*outliney)[polyverts.size()] = (*outliney)[0];     //extra segment to close the polyline
     (*inliney)[polyverts.size()] = (*inliney)[0];     //extra segment to close the polyline
-    // not always drawing it scene_objects.push_back(outliney);
+    // not always drawing them so don't add to scene_objects
 
     // location of the point we want to test for inside the polygon
     // window size given in absolute pixels so account for global scale
@@ -274,27 +242,10 @@ int main()
     // for bad pt-in-poly test
     sf::Vector2f the_point = sf::Vector2f(0.0, 0.0);
 
-    sf::Rect<int> the_bbox;
-
-    //let's derive the bounding box
-    int min_x = 999999;
-    int min_y = 999999;
-    int max_x = -999999;
-    int max_y = -999999;
-    for(auto pt: d_polyverts) {
-      if (pt.x < min_x) min_x = pt.x;
-      if (pt.y < min_y) min_y = pt.y;
-      if (pt.x > max_x) max_x = pt.x;
-      if (pt.y > max_y) max_y = pt.y;
-    }
-    the_bbox.left = min_x;
-    the_bbox.top = min_y;
-    the_bbox.width = (max_x - min_x);
-    the_bbox.height = (max_y - min_y);
 
 
     printf("ThePoint is at %f, %f\n",the_point.x, the_point.y);
-    printf("TheBBox is top %d left %d width %d height %d\n",the_bbox.top, the_bbox.left, the_bbox.width, the_bbox.height);
+    //printf("TheBBox is top %d left %d width %d height %d\n",the_bbox.top, the_bbox.left, the_bbox.width, the_bbox.height);
 
     float point_velocity = 1.0;
 
@@ -407,7 +358,8 @@ int main()
 
         //you know what, let's add a bounding box check 
 
-        if(!bbox_check(the_point, the_bbox) || !InsidePolygon(d_polyverts, gtPoint)) {
+        //if(!bbox_check(the_point, the_bbox) || !InsidePolygon(d_polyverts, gtPoint)) {
+        if(!poly.inside(gtPoint)) {
             //outside!
             window.draw(*outliney);
             window.draw(*punto_out,globalTransform);
