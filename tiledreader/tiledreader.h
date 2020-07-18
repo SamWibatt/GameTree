@@ -135,52 +135,38 @@ namespace tiledreader {
     TOS_Unknown
   } tileobjshape_type;
 
-  class TiledObjectTriangle {
-    public: 
-      float ax, ay, bx, by, cx, cy;
-
-    public:
-      TiledObjectTriangle() {
-        ax = ay = bx = by = cx = cy = 0.0;
-      }
-      TiledObjectTriangle(float x1, float y1, float x2, float y2, float x3, float y3) {
-        ax = x1; ay = y1;
-        bx = x2; by = y2;
-        cx = x3; cy = y3;
-      }
-      ~TiledObjectTriangle() {}
-  };
-
   class TiledObjectShape {
     public:
       tileobjshape_type shape_type;
-      float bbox_x, bbox_y, bbox_w, bbox_h;           //bounding box; points have h = w = 0
+      float origin_x, origin_y;
+      float bbox_w, bbox_h;           //bounding box; points have h = w = 0
       std::string name;
       std::string type;       // assigned in Tiled in object properties when shape is highlighted, meaning assigned by game
-      std::vector<TiledObjectTriangle> triangles;     // result of tesselating polygons
+      std::vector<std::pair<float,float>> polypoints;     // polygon points for polygons
 
     public:
       TiledObjectShape() {
         type = TOS_Unknown;
-        bbox_x = bbox_y = bbox_w = bbox_h = 0.0;
-        triangles.clear();
+        origin_x = origin_y = 0.0;
+        bbox_w = bbox_h = 0.0;
+        polypoints.clear();
       }
 
-      TiledObjectShape(tileobjshape_type sty, float bbx, float bby, float bbw, float bbh, std::string& nm, std::string& ty) {
+      TiledObjectShape(tileobjshape_type sty, float orx, float ory, float bbw, float bbh, std::string& nm, std::string& ty) {
         shape_type = sty;
-        bbox_x = bbx;
-        bbox_y = bby;
+        origin_x = orx;
+        origin_y = ory;
         bbox_w = (sty == TOS_Point) ? 0.0 : bbw;     //force points to have 0 w/h
         bbox_h = (sty == TOS_Point) ? 0.0 : bbh;
         name = nm; 
         type = ty;
-        triangles.clear();
+        polypoints.clear();
       }
 
       ~TiledObjectShape() {}
 
-      void add_triangle(float x1, float y1, float x2, float y2, float x3, float y3) {
-        triangles.push_back(TiledObjectTriangle(x1,y1,x2,y2,x3,y3));
+      void add_polypoint(float x1, float y1) {
+        polypoints.push_back(std::pair<float,float>(x1,y1));
       }
   };
 
