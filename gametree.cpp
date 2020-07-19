@@ -338,10 +338,10 @@ namespace gt {
     perry = jt["position"];
     position.x = perry.first;
     position.y = perry.second;
-    perry = jt["position"];
+    perry = jt["bbox_ul"];
     bbox_ul.x = perry.first;
     bbox_ul.y = perry.second;
-    perry = jt["position"];
+    perry = jt["bbox_lr"];
     bbox_lr.x = perry.first;
     bbox_lr.y = perry.second;
 
@@ -435,8 +435,17 @@ namespace gt {
   bool GTPolygon::get_from_json(json& jt) {
     if(!GTShape::get_from_json(jt)) return false; 
 
-    //THEN DO POINTS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    if(!jt.contains("points")) {
+      printf("*** ERROR: polygon has no points\n");
+      return false;
+    }
 
+    points.clear();
+    for(auto j = 0; j < jt["points"].size(); j++) {
+      std::pair<GTcoord_t, GTcoord_t> perry;
+      perry = jt["points"][j];      //see if works
+      points.push_back(GTPoint(perry.first, perry.second));
+    }
     return true; 
   }
 
