@@ -408,7 +408,7 @@ namespace tiledreader {
               //point object has a point child
               // We SHOULD handle it - type "start_point" could be where the character spawns into the level
               printf("- Found a point of type %s, name \"%s\", id %d!\n",area_type.c_str(), area_name.c_str(), kid.attribute("id").as_int());
-              tl->shapes.push_back(TiledObjectShape(TOS_Point,origin_x,origin_y,origin_x,origin_y,origin_x,origin_y,area_name,area_type));
+              tl->shapes.push_back(TiledObjectShape(TOS_Point,origin_x,origin_y,0.0,0.0,0.0,0.0,area_name,area_type));
             } else if(kid.child("text")) {
               //text object has a text child
               printf("- Warning: text objects not yet supported - type %s, name \"%s\", id %d\n",area_type.c_str(), area_name.c_str(), kid.attribute("id").as_int());
@@ -416,9 +416,9 @@ namespace tiledreader {
             } else if(kid.child("ellipse")) {
               //ellipse object has an ellipse child
               printf("- Found an ellipse of type %s, name \"%s\", id %d!\n",area_type.c_str(), area_name.c_str(), kid.attribute("id").as_int());
-              tl->shapes.push_back(TiledObjectShape(TOS_Ellipse,origin_x,origin_y,origin_x,origin_y,
-                                                    origin_x + kid.attribute("width").as_float(),
-                                                    origin_y + kid.attribute("height").as_float(),
+              tl->shapes.push_back(TiledObjectShape(TOS_Ellipse,origin_x,origin_y,0.0,0.0,
+                                                    kid.attribute("width").as_float(),
+                                                    kid.attribute("height").as_float(),
                                                     area_name,area_type));
             } else if(kid.child("polygon")) {
               //polygon object has a polygon child
@@ -438,9 +438,9 @@ namespace tiledreader {
             } else {
               //assume it's a rectangle!
               printf("- Found a rectangle of type %s, name \"%s\", id %d!\n",area_type.c_str(), area_name.c_str(), kid.attribute("id").as_int());
-              tl->shapes.push_back(TiledObjectShape(TOS_Rectangle,origin_x,origin_y,origin_x,origin_y,
-                                                    origin_x + kid.attribute("width").as_float(),
-                                                    origin_y + kid.attribute("height").as_float(),
+              tl->shapes.push_back(TiledObjectShape(TOS_Rectangle,origin_x,origin_y,0.0,0.0,
+                                                    kid.attribute("width").as_float(),
+                                                    kid.attribute("height").as_float(),
                                                     area_name,area_type));
             }
           } else {

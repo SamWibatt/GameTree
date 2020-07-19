@@ -349,9 +349,11 @@ namespace gt {
   }
 
   bool GTRectangle::add_to_json(json& j) {
+    //printf("--- add rectangle\n");
     json subj;
     if(!GTShape::add_to_json(subj)) return false;
     subj["type"] = "rectangle";
+    j.push_back(subj);
     return true; 
   }
 
@@ -362,9 +364,11 @@ namespace gt {
   }
 
   bool GTEllipse::add_to_json(json& j) {
+    //printf("--- add ellipse\n");
     json subj;
     if(!GTShape::add_to_json(subj)) return false;
     subj["type"] = "ellipse";
+    j.push_back(subj);
     return true; 
   }
 
@@ -414,12 +418,14 @@ namespace gt {
   }
 
   bool GTPolygon::add_to_json(json& j) {
+    //printf("--- add polygon\n");
     json subj;
     if(!GTShape::add_to_json(subj)) return false;
     subj["type"] = "polygon";
 
     //THEN DO POINTS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+    j.push_back(subj);
     return true; 
   }
 
@@ -447,6 +453,7 @@ namespace gt {
     }
 
     // emit shapes
+    printf("---- about to emit shapes\n");
     for(auto shap : shapes) {
       shap->add_to_json(subj["shapes"]);
     }

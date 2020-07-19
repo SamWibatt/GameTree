@@ -5612,7 +5612,688 @@
             "type": "tiled"
         },
         {
-            "shapes": null,
+            "shapes": [
+                {
+                    "bbox_lr": [
+                        114,
+                        134
+                    ],
+                    "bbox_ul": [
+                        -1,
+                        -26
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        1,
+                        27
+                    ],
+                    "purpose": 1,
+                    "type": "polygon"
+                },
+                {
+                    "bbox_lr": [
+                        144,
+                        217
+                    ],
+                    "bbox_ul": [
+                        0,
+                        -12
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        125,
+                        88
+                    ],
+                    "purpose": 1,
+                    "type": "polygon"
+                },
+                {
+                    "bbox_lr": [
+                        99,
+                        159
+                    ],
+                    "bbox_ul": [
+                        -21,
+                        -2
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        216,
+                        354
+                    ],
+                    "purpose": 1,
+                    "type": "polygon"
+                },
+                {
+                    "bbox_lr": [
+                        33,
+                        16
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        79,
+                        354
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        51,
+                        17
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        55,
+                        448
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        34,
+                        33
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        111,
+                        432
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        25,
+                        19
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        19,
+                        176
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        17,
+                        18
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        431,
+                        432
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        126,
+                        18
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        369,
+                        495
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        17,
+                        14
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        272,
+                        193
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        17,
+                        15
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        289,
+                        209
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        14,
+                        16
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        353,
+                        160
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        29,
+                        19
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        337,
+                        224
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        15,
+                        18
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        384,
+                        208
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        15,
+                        16
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        400,
+                        288
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        15,
+                        17
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        432,
+                        288
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        48,
+                        16
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        416,
+                        304
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        16,
+                        16
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        417,
+                        223
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        15,
+                        17
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        432,
+                        240
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        16,
+                        15
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        448,
+                        257
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        16,
+                        16
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        480,
+                        176
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        16,
+                        16
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        497,
+                        192
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        17,
+                        18
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        432,
+                        96
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        32,
+                        18
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        462,
+                        112
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        16,
+                        17
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        480,
+                        64
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        32,
+                        17
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        480,
+                        32
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        16,
+                        18
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        448,
+                        32
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        15,
+                        18
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        336,
+                        17
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        32,
+                        17
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        352,
+                        33
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        15,
+                        17
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        384,
+                        17
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        50,
+                        16
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        152,
+                        33
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        30,
+                        15
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        208,
+                        33
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        117,
+                        102
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        372,
+                        389
+                    ],
+                    "purpose": 2,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        96,
+                        127
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        416,
+                        0
+                    ],
+                    "purpose": 2,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        15,
+                        15
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        336,
+                        145
+                    ],
+                    "purpose": 1,
+                    "type": "ellipse"
+                },
+                {
+                    "bbox_lr": [
+                        12,
+                        15
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        498,
+                        491
+                    ],
+                    "purpose": 3,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        16,
+                        11
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        80,
+                        371
+                    ],
+                    "purpose": 3,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        65,
+                        4
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        154,
+                        351
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        27,
+                        3
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        299,
+                        352
+                    ],
+                    "purpose": 1,
+                    "type": "rectangle"
+                },
+                {
+                    "bbox_lr": [
+                        32,
+                        21
+                    ],
+                    "bbox_ul": [
+                        0,
+                        0
+                    ],
+                    "name_index": -1,
+                    "position": [
+                        368,
+                        256
+                    ],
+                    "purpose": 1,
+                    "type": "polygon"
+                }
+            ],
             "type": "objects"
         }
     ]
