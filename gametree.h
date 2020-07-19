@@ -536,9 +536,7 @@ namespace gt {
 
     public:
       //remember to allow for "position"
-      virtual bool inside_shape_if_inside_bbox(GTPoint pt) override { 
-        return false;     //TEMP
-      }
+      virtual bool inside_shape_if_inside_bbox(GTPoint pt) override;
       virtual bool add_to_json(json& j) override;
       virtual bool get_from_json(json& jt) override;
   };

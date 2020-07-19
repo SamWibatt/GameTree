@@ -364,6 +364,37 @@ namespace gt {
     return true; 
   }
 
+  //https://math.stackexchange.com/questions/76457/check-if-a-point-is-within-an-ellipse
+  // answer by Srivatsan which uses no sqrts
+  // ((((x-h) * (x-h)) / (rx * rx)) + (((y-k) * (y-k)) / (ry * ry))) <= 1
+  // if that is true, x,y is inside the ellipse.
+  // where h, k are center of ellipse
+  // rx = semi-major axis (width?) of ellipse - no, just half of the longer axis, width or height, whichever is larger
+  // ry = semi-minor axis (height?) of ellipse - half of shorter axis
+  // though this looks like it's assuming the rx/ry are half of wid/ht resp
+  // wiki page has the same formula under https://en.wikipedia.org/wiki/Semi-major_and_semi-minor_axes#Ellipse
+  // I think bc I know the bounding box I can just use width or ht /2
+  // so let's try that and see what we get
+  // remember to allow for shape's "position"
+  bool GTEllipse::inside_shape_if_inside_bbox(GTPoint pt) {
+    // should I subtract the position off of the point to check, instead of adding it to bbox?
+    // that way stuff is nearer to the origin and the squaring won't make it overflow?
+    // ASSUME THE BOUNDING BOX UPPER LEFT IS WHERE THE ORIGIN IS
+    GTcoord_t widh = (bbox_lr.x - bbox_ul.x) / 2;
+    GTcoord_t hth = (bbox_lr.y - bbox_ul.y / 2);
+    GTcoord_t h = widh;
+    GTcoord_t k = hth;
+    GTcoord_t rx = (widh > hth) ? widh : hth;
+    GTcoord_t ry = (widh <= hth)? widh : hth;  
+    GTcoord_t x = pt.x - position.x;
+    GTcoord_t y = pt.y - position.y;
+
+    //ick, result of 0..1 so it's all floaty? Well, I see it implemented as all ints here - https://www.geeksforgeeks.org/check-if-a-point-is-inside-outside-or-on-the-ellipse/
+    // so let's try it
+    // NEEDS TESTING
+    return ( ( ((x-h) * (x-h)) / (rx * rx) ) + ( ((y-k) * (y-k)) / (ry * ry) ) ) <= 1;
+  }
+
   bool GTEllipse::add_to_json(json& j) {
     //printf("--- add ellipse\n");
     json subj;
