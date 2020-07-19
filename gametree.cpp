@@ -358,8 +358,9 @@ namespace gt {
   }
 
   bool GTRectangle::get_from_json(json& jt) {
-    if(!GTRectangle::get_from_json(jt)) return false; 
+    if(!GTShape::get_from_json(jt)) return false; 
     // I think that's all we need to do with a rectangle
+    
     return true; 
   }
 
@@ -373,7 +374,7 @@ namespace gt {
   }
 
   bool GTEllipse::get_from_json(json& jt) {
-    if(!GTEllipse::get_from_json(jt)) return false; 
+    if(!GTShape::get_from_json(jt)) return false; 
     // I think that's all we need to do with an ellipse
     return true; 
   }
@@ -432,7 +433,7 @@ namespace gt {
   }
 
   bool GTPolygon::get_from_json(json& jt) {
-    if(!GTPolygon::get_from_json(jt)) return false; 
+    if(!GTShape::get_from_json(jt)) return false; 
 
     //THEN DO POINTS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -468,17 +469,53 @@ namespace gt {
   bool GTObjectsMapLayer::get_from_json(json& jt) {
     if(!GTMapLayer::get_from_json(jt)) return false; 
 
+    //must have at least one of tile_objects or shapes
+    if(!jt.contains("tile_objects") && !jt.contains("shapes")) {
+      printf("*** ERROR: objects layer has no tile objects or shapes\n");
+      return false;
+    }
+
     if(jt.contains("tile_objects")) {
       tile_objects.resize(jt["tile_objects"].size());
       for(auto j = 0; j <  jt["tile_objects"].size(); j++) {
         tile_objects[j] = std::shared_ptr<GTObjectTile>(new GTObjectTile());
-        tile_objects[j]->get_from_json(jt["tile_objects"][j]);
+        if(!tile_objects[j]->get_from_json(jt["tile_objects"][j])) {
+          printf("*** ERROR: failed to read tile object\n");
+          return false;
+        }
       }
-    } else {
-      // ACTUALLY THIS IS OK - there could just be polygons and stuff that I haven't supported yet
-      //fprintf(stderr,"*** ERROR: no tile_objects in objects layer\n");
-      //return false;
-    }
+    } 
+
+    if(jt.contains("shapes")) {
+      shapes.resize(jt["shapes"].size());
+      for(auto j = 0; j <  jt["shapes"].size(); j++) {
+        if(jt["shapes"][j].contains("type")) {
+          if(jt["shapes"][j]["type"] == "rectangle") {
+            shapes[j] = std::shared_ptr<GTRectangle>(new GTRectangle());
+            if(!shapes[j]->get_from_json(jt["shapes"][j])) {
+              printf("*** ERROR: failed to read Rectangle object\n");
+            }
+          } else if(jt["shapes"][j]["type"] == "ellipse") {
+            shapes[j] = std::shared_ptr<GTEllipse>(new GTEllipse());
+            if(!shapes[j]->get_from_json(jt["shapes"][j])) {
+              printf("*** ERROR: failed to read Ellipse object\n");
+            }
+          } else if(jt["shapes"][j]["type"] == "polygon") {
+            shapes[j] = std::shared_ptr<GTPolygon>(new GTPolygon());
+            if(!shapes[j]->get_from_json(jt["shapes"][j])) {
+              printf("*** ERROR: failed to read Polygon object\n");
+            }
+          } else {
+            // HEY HANDLE POINTS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            printf("*** ERROR: unrecognized shape type \"%s\" in shape\n",std::string(jt["shapes"][j]["type"]).c_str());
+          }
+        } else {
+          printf("*** ERROR: shape does not contain a type field\n");
+        }
+        // tile_objects[j] = std::shared_ptr<GTObjectTile>(new GTObjectTile());
+        // tile_objects[j]->get_from_json(jt["tile_objects"][j]);
+      }
+    } 
 
     return true;
   }

@@ -246,7 +246,7 @@ int main(int argc, char *argv[]) {
   std::string output_dir;
   bool emit_header = false;
   std::string header_output_file;
-  bool verify_json = false;
+  bool verify_json = true;
 
   app.add_option("-i,--input", tiled_input_file, "Tiled map file (.tmx, soon .json)")
     ->required()
@@ -335,8 +335,13 @@ int main(int argc, char *argv[]) {
 
     std::string json_filename2 = json_filename + "2.json";
     printf("--- successfully read! writing to %s\n",json_filename2.c_str());
+    // oops, this just writes the same file out again, no wonder it got a match
+    //std::ofstream json_outstream2(json_filename2);
+    //json_outstream2 << std::setw(4) << jremap << std::endl;
+    json outjremap;
+    remap.add_to_json(outjremap);    
     std::ofstream json_outstream2(json_filename2);
-    json_outstream2 << std::setw(4) << jremap << std::endl;
+    json_outstream2 << std::setw(4) << outjremap << std::endl;
     printf("*** go diff the 2 json files and make sure they're the same\n");
   }
 }
