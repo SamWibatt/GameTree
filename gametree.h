@@ -39,9 +39,15 @@ namespace gt {
   // integer coordinate type
   typedef int32_t GTcoord_t;
 
-  typedef struct {
-    GTcoord_t x,y;
-  } GTPoint;
+  class GTPoint {
+    public:
+      GTcoord_t x,y;
+
+    public:
+      GTPoint() { x = y = 0; }
+      GTPoint(int nx, int ny) { x = nx; y = ny; }
+      ~GTPoint() {}
+  };
 
   // unique ID for every GameTree instance
   typedef uint32_t GTid_t;
@@ -478,7 +484,13 @@ namespace gt {
         bbox_ul = {0,0};
         bbox_lr = {-1,-1};
       }
-      // HEY MAKE A DETAILED CTOR
+      GTShape(GTArea_type pur, GTPoint pos, GTPoint bul, GTPoint blr, GTindex_t ni) {
+        purpose = pur;
+        position = pos;
+        bbox_ul = bul;
+        bbox_lr = blr;
+        name_index = ni;
+      }
       virtual ~GTShape() {}
 
     public:
@@ -492,6 +504,9 @@ namespace gt {
       bool inside(GTPoint pt) {
         return bbox_check(pt) && inside_shape_if_inside_bbox(pt);
       }
+
+      virtual bool add_to_json(json& j);
+      virtual bool get_from_json(json& jt);
   };
 
   class GTRectangle : public GTShape {
@@ -500,11 +515,14 @@ namespace gt {
 
     public:
       GTRectangle() {}
+      GTRectangle(GTArea_type pur, GTPoint pos, GTPoint bul, GTPoint blr, GTindex_t ni) : GTShape(pur, pos, bul, blr, ni) {}
       virtual ~GTRectangle() {}
 
     public:
       //trivial: if pt is inside bbox, it's inside the rectangle.
       virtual bool inside_shape_if_inside_bbox(GTPoint pt) override { return true; }
+      virtual bool add_to_json(json& j) override;
+      virtual bool get_from_json(json& jt) override;
   };
 
   class GTEllipse : public GTShape {
@@ -513,6 +531,7 @@ namespace gt {
 
     public:
       GTEllipse() {}
+      GTEllipse(GTArea_type pur, GTPoint pos, GTPoint bul, GTPoint blr, GTindex_t ni) : GTShape(pur, pos, bul, blr, ni) {}
       virtual ~GTEllipse() {}
 
     public:
@@ -520,6 +539,8 @@ namespace gt {
       virtual bool inside_shape_if_inside_bbox(GTPoint pt) override { 
         return false;     //TEMP
       }
+      virtual bool add_to_json(json& j) override;
+      virtual bool get_from_json(json& jt) override;
   };
 
   //assumed to be a simple polygon! I think it's ok if there isn't a duplicate first point after last
@@ -529,12 +550,15 @@ namespace gt {
 
     public:
       GTPolygon() {}
+      GTPolygon(GTArea_type pur, GTPoint pos, GTPoint bul, GTPoint blr, GTindex_t ni) : GTShape(pur, pos, bul, blr, ni) {}
       virtual ~GTPolygon() {}
 
     public:
       //remember to allow for "position"
       // HERE USE BOURKE'S ROUTINE AND CREDIT IT
       virtual bool inside_shape_if_inside_bbox(GTPoint pt) override;
+      virtual bool add_to_json(json& j) override;
+      virtual bool get_from_json(json& jt) override;
   };
 
 
@@ -625,7 +649,7 @@ namespace gt {
   class GTObjectsMapLayer : public GTMapLayer {
     public:
       std::vector<std::shared_ptr<GTObjectTile>> tile_objects;
-      //LATER THERE WILL BE POLYGONS TOO
+      std::vector<std::shared_ptr<GTShape>> shapes;
 
     public:
       // json i/o

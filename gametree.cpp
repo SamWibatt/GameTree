@@ -303,44 +303,133 @@ namespace gt {
 
   // GTShape and subclasses ----------------------------------------------------------------------
 
+  // subclasses call this first, like with MapLayer
+  // so this takes a json that is a sub-json created by one of the subclasses, qv.
+  bool GTShape::add_to_json(json& j) {
+    // base class handles
+    // GTArea_type purpose;
+    // GTindex_t name_index;     // indexes into a list of strings; probably not have lots of same names but few shapes will have names and this is smaller than a string
+    // GTPoint position;         // we may want to move these around
+    // GTPoint bbox_ul;          // bounding box upper left, relative to position
+    // GTPoint bbox_lr;          // bounding box lower right, ""
+
+    j["purpose"] = purpose;           // will show up as a number, not the enum name, wev
+    j["name_index"] = name_index;
+    j["position"] = std::pair<int, int>(position.x, position.y);    //see if this works - doing GTPoint.add_to_json seems excessive
+    j["bbox_ul"] = std::pair<int, int>(bbox_ul.x, bbox_ul.y);
+    j["bbox_lr"] = std::pair<int, int>(bbox_lr.x, bbox_lr.y);
+
+    return true;
+  }
+
+  bool GTShape::get_from_json(json& jt) {
+    // sanity check - for now, presence only
+    if(!jt.contains("purpose") || !jt.contains("name_index") ||
+        !jt.contains("position") || !jt.contains("bbox_ul") ||
+        !jt.contains("bbox_lr")) {
+      fprintf(stderr,"*** ERROR: shape requires purpose, name_index, position, bbox_ul, and bbox_lr\n");
+      return false;
+    }
+
+    // got all the pieces, read them in
+    std::pair<float,float> perry;
+    purpose = jt["purpose"];
+    name_index = jt["name_index"];
+    perry = jt["position"];
+    position.x = perry.first;
+    position.y = perry.second;
+    perry = jt["position"];
+    bbox_ul.x = perry.first;
+    bbox_ul.y = perry.second;
+    perry = jt["position"];
+    bbox_lr.x = perry.first;
+    bbox_lr.y = perry.second;
+
+    return true;
+  }
+
+  bool GTRectangle::add_to_json(json& j) {
+    json subj;
+    if(!GTShape::add_to_json(subj)) return false;
+    subj["type"] = "rectangle";
+    return true; 
+  }
+
+  bool GTRectangle::get_from_json(json& jt) {
+    if(!GTRectangle::get_from_json(jt)) return false; 
+    // I think that's all we need to do with a rectangle
+    return true; 
+  }
+
+  bool GTEllipse::add_to_json(json& j) {
+    json subj;
+    if(!GTShape::add_to_json(subj)) return false;
+    subj["type"] = "ellipse";
+    return true; 
+  }
+
+  bool GTEllipse::get_from_json(json& jt) {
+    if(!GTEllipse::get_from_json(jt)) return false; 
+    // I think that's all we need to do with an ellipse
+    return true; 
+  }
+
   //adapted from Paul Bourke, http://paulbourke.net/geometry/polygonmesh/
-//Copyright notice on home page http://www.paulbourke.net/ reads
-//"Any source code found here may be freely used provided credits are given to the author."
-//bool InsidePolygon(std::vector<GTPoint>& polygon, GTPoint p)
+  //Copyright notice on home page http://www.paulbourke.net/ reads
+  //"Any source code found here may be freely used provided credits are given to the author."
+  //bool InsidePolygon(std::vector<GTPoint>& polygon, GTPoint p)
 
-bool GTPolygon::inside_shape_if_inside_bbox(GTPoint pt)
-{
-  int32_t counter = 0;
-  int32_t i;
-  int32_t xinters;      //should be float - originally was, see if works w/int - so far so good!
-  GTPoint p1,p2;
+  bool GTPolygon::inside_shape_if_inside_bbox(GTPoint pt)
+  {
+    int32_t counter = 0;
+    int32_t i;
+    int32_t xinters;      //should be float - originally was, see if works w/int - so far so good!
+    GTPoint p1,p2;
 
-  p1 = points[0];
-  p1.x += position.x;     //need to adjust for position
-  p1.y += position.y;
-  for (i=1;i<=points.size();i++) {
-    p2 = points[i % points.size()];
-    p2.x += position.x;
-    p2.y += position.y;
-    if (pt.y > std::min(p1.y,p2.y)) {
-      if (pt.y <= std::max(p1.y,p2.y)) {
-        if (pt.x <= std::max(p1.x,p2.x)) {
-          if (p1.y != p2.y) {
-            xinters = (pt.y-p1.y)*(p2.x-p1.x)/(p2.y-p1.y)+p1.x;
-            if (p1.x == p2.x || pt.x <= xinters)
-              counter++;
+    p1 = points[0];
+    p1.x += position.x;     //need to adjust for position
+    p1.y += position.y;
+    for (i=1;i<=points.size();i++) {
+      p2 = points[i % points.size()];
+      p2.x += position.x;
+      p2.y += position.y;
+      if (pt.y > std::min(p1.y,p2.y)) {
+        if (pt.y <= std::max(p1.y,p2.y)) {
+          if (pt.x <= std::max(p1.x,p2.x)) {
+            if (p1.y != p2.y) {
+              xinters = (pt.y-p1.y)*(p2.x-p1.x)/(p2.y-p1.y)+p1.x;
+              if (p1.x == p2.x || pt.x <= xinters)
+                counter++;
+            }
           }
         }
       }
+      p1 = p2;
     }
-    p1 = p2;
+
+    if (counter % 2 == 0)
+      return(false);
+    else
+      return(true);
   }
 
-  if (counter % 2 == 0)
-    return(false);
-  else
-    return(true);
-}
+  bool GTPolygon::add_to_json(json& j) {
+    json subj;
+    if(!GTShape::add_to_json(subj)) return false;
+    subj["type"] = "polygon";
+
+    //THEN DO POINTS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    return true; 
+  }
+
+  bool GTPolygon::get_from_json(json& jt) {
+    if(!GTPolygon::get_from_json(jt)) return false; 
+
+    //THEN DO POINTS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    return true; 
+  }
 
 
   // GTObjectsMapLayer ---------------------------------------------------------------------------
@@ -355,6 +444,11 @@ bool GTPolygon::inside_shape_if_inside_bbox(GTPoint pt)
     //emit tile_objects
     for(auto tob : tile_objects) {
       tob->add_to_json(subj["tile_objects"]);
+    }
+
+    // emit shapes
+    for(auto shap : shapes) {
+      shap->add_to_json(subj["shapes"]);
     }
 
     j.push_back(subj);
@@ -380,7 +474,7 @@ bool GTPolygon::inside_shape_if_inside_bbox(GTPoint pt)
     return true;
   }
 
-    // GTTiledMapLayer -----------------------------------------------------------------------------
+  // GTTiledMapLayer -----------------------------------------------------------------------------
 
   //subclass overrides need to call the base class one to add/get image data and tile atlas
   bool GTTiledMapLayer::add_to_json(json& j) {

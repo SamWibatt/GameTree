@@ -5612,6 +5612,7 @@
             "type": "tiled"
         },
         {
+            "shapes": null,
             "type": "objects"
         }
     ]

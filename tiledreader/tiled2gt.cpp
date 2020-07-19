@@ -89,22 +89,49 @@ std::shared_ptr<GTObjectsMapLayer> tiled_obj_layer_to_gt_obj_layer(std::shared_p
 
   // then do the shapes
   for(auto shap : ptl->shapes) {
+
+    // GTArea_type purpose;
+    // GTindex_t name_index;     // indexes into a list of strings; probably not have lots of same names but few shapes will have names and this is smaller than a string
+    // GTPoint position;         // we may want to move these around
+    // GTPoint bbox_ul;          // bounding box upper left, relative to position
+    // GTPoint bbox_lr;          // bounding box lower right, ""
+    GTPoint bbul = GTPoint(std::round(shap.bbox_ulx), std::round(shap.bbox_uly));
+    GTPoint bblr = GTPoint(std::round(shap.bbox_lrx), std::round(shap.bbox_lry));
+    GTPoint poz = GTPoint(std::round(shap.origin_x), std::round(shap.origin_y));
+    //FIGURE OUT HOW TO HANDLE NAME INDEX
+    GTindex_t nami = -1;    //This will later be an index into a bunch of names
+
+    //work out purpose
+    // typedef enum : GTindex_t {
+    //   GTAT_Unknown = 0,
+    //   GTAT_NoGo,
+    //   GTAT_Slow,
+    //   GTAT_Trigger
+    // } GTArea_type;
+    GTArea_type gat = GTAT_Unknown;
+    if(shap.type == "nogo") gat = GTAT_NoGo;
+    else if(shap.type == "slow") gat = GTAT_Slow;
+    else if(shap.type == "trigger") gat = GTAT_Trigger; 
+
+
     if(shap.shape_type == TOS_Rectangle) {
-      // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
-      // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
-      // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
+      std::shared_ptr<GTRectangle> recky = std::shared_ptr<GTRectangle>(new GTRectangle(gat, poz, bbul, bblr, nami));
+      pgoml->shapes.push_back(recky);
     } else if(shap.shape_type == TOS_Ellipse) {
-      // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
-      // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
-      // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
+      std::shared_ptr<GTEllipse> lipsy = std::shared_ptr<GTEllipse>(new GTEllipse(gat, poz, bbul, bblr, nami));
+      pgoml->shapes.push_back(lipsy);
     } else if(shap.shape_type == TOS_Point) {
       // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
       // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
       // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
+      // do we have a point class? Not in the way we want to!
     } else if(shap.shape_type == TOS_Polygon) {
-      // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
-      // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
-      // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
+      std::shared_ptr<GTPolygon> polly = std::shared_ptr<GTPolygon>(new GTPolygon(gat, poz, bbul, bblr, nami));
+      polly->points.resize(shap.polypoints.size());
+      // copy points across!
+      std::transform(shap.polypoints.begin(), shap.polypoints.end(),polly->points.begin(), 
+          [](std::pair<float,float> pt){ GTPoint p; p.x = std::round(pt.first); p.y = std::round(pt.second); return p; });
+      pgoml->shapes.push_back(polly);
     } else {
       printf("*** ERROR: unknown shape type %d found for shape with name \"%s\", type \"%s\"\n",
         shap.shape_type, shap.name.c_str(), shap.type.c_str());
