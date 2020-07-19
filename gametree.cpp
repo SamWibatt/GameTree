@@ -423,7 +423,9 @@ namespace gt {
     if(!GTShape::add_to_json(subj)) return false;
     subj["type"] = "polygon";
 
-    //THEN DO POINTS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    for(auto pt : points) {
+      subj["points"].push_back(std::pair<GTcoord_t, GTcoord_t>(pt.x,pt.y));
+    }
 
     j.push_back(subj);
     return true; 

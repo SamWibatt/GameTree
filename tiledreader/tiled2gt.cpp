@@ -311,6 +311,8 @@ int main(int argc, char *argv[]) {
   std::ofstream json_outstream(json_filename);
   //setw(4) does 4 space pretty print
   json_outstream << std::setw(4) << jmap << std::endl;
+  //see what it's like without - single giant line
+  //json_outstream << jmap << std::endl;
 
   if(emit_header) {
     // EMIT HEADER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
