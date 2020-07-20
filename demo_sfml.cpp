@@ -1,30 +1,12 @@
 #include <cstdio>
 #include <SFML/Graphics.hpp>
 #include "gametree.h"
+#include "gtree_sfml.h"
 
 
 using namespace gt;
+using namespace gtree_sfml;
 
-// let's see how simple we can make this
-class xfVertArray : public sf::Drawable, public sf::Transformable {
-  public:
-    sf::VertexArray va;
-
-  public:
-    xfVertArray(sf::PrimitiveType pty, size_t nPoints) {
-      va = sf::VertexArray(pty, nPoints);
-    }
-
-    void append(sf::Vertex v) {
-      va.append(v);
-    }
-
-    void draw(sf::RenderTarget &target, sf::RenderStates states) const {
-      sf::RenderStates rs = states;
-      rs.transform = states.transform * getTransform();
-      target.draw(va, rs);
-    }
-};
 
 int main(int argc, char *argv[])
 {

@@ -40,15 +40,10 @@ if(NOT SFML_FOUND)
 	message("-> Make sure the SFML libraries >= 2.5 with the same configuration (Release/Debug, Static/Dynamic) exist.\n")
 endif()
 
-# TEMPORARY!!!!!!!!!!!!!!!!!!!!!!!!!! CURRENTLY GAMETREE DEPENDS ON SFML!
-target_link_libraries(gametree PUBLIC sfml-graphics sfml-window sfml-system)
-
-# TEMP
-target_include_directories(demosfml PUBLIC "cppcodec")
-
+target_link_libraries(gametree PUBLIC sfml-window sfml-system)
 
 # demosfml will always depend on sfml
-target_link_libraries(demosfml PUBLIC gametree sfml-graphics sfml-window sfml-system)
+target_link_libraries(demosfml PUBLIC gametree gtree_sfml sfml-graphics sfml-window sfml-system)
 
 
 

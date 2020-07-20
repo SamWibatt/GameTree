@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-add_library(gtree_sfml sfmlmap.cpp sfmlsprite.cpp)
+add_library(gtree_sfml gtree_sfml.cpp) # sfmlsprite.cpp)
 set_property(TARGET gtree_sfml PROPERTY CXX_STANDARD 11)
 
 # needs to be able to see gametree - this is gross
