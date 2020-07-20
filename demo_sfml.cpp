@@ -6,52 +6,22 @@
 using namespace gt;
 
 // let's see how simple we can make this
-class xfVertArray : public sf::Drawable {
+class xfVertArray : public sf::Drawable, public sf::Transformable {
   public:
     sf::VertexArray va;
-    sf::Transformable tr;
 
   public:
     xfVertArray(sf::PrimitiveType pty, size_t nPoints) {
       va = sf::VertexArray(pty, nPoints);
-      tr = sf::Transformable();
     }
 
     void append(sf::Vertex v) {
       va.append(v);
     }
 
-    void setRotation(float rot) {
-      tr.setRotation(rot);
-    }
-
-    void setPosition(const sf::Vector2f vec) {
-      tr.setPosition(vec);
-    }
-
-    void setPosition(float x, float y) {
-      tr.setPosition(x,y);
-    }
-
-    void setOrigin(const sf::Vector2f vec) {
-      tr.setOrigin(vec);
-    }
-
-    void setOrigin(float x, float y) {
-      tr.setOrigin(x,y);
-    }
-
-    void setScale(const sf::Vector2f vec) {
-      tr.setScale(vec);
-    }
-
-    void setScale(float x, float y) {
-      tr.setScale(x,y);
-    }
-
     void draw(sf::RenderTarget &target, sf::RenderStates states) const {
       sf::RenderStates rs = states;
-      rs.transform = states.transform * tr.getTransform();
+      rs.transform = states.transform * getTransform();
       target.draw(va, rs);
     }
 };
