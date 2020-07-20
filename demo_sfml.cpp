@@ -5,6 +5,57 @@
 
 using namespace gt;
 
+// let's see how simple we can make this
+class xfVertArray : public sf::Drawable {
+  public:
+    sf::VertexArray va;
+    sf::Transformable tr;
+
+  public:
+    xfVertArray(sf::PrimitiveType pty, size_t nPoints) {
+      va = sf::VertexArray(pty, nPoints);
+      tr = sf::Transformable();
+    }
+
+    void append(sf::Vertex v) {
+      va.append(v);
+    }
+
+    void setRotation(float rot) {
+      tr.setRotation(rot);
+    }
+
+    void setPosition(const sf::Vector2f vec) {
+      tr.setPosition(vec);
+    }
+
+    void setPosition(float x, float y) {
+      tr.setPosition(x,y);
+    }
+
+    void setOrigin(const sf::Vector2f vec) {
+      tr.setOrigin(vec);
+    }
+
+    void setOrigin(float x, float y) {
+      tr.setOrigin(x,y);
+    }
+
+    void setScale(const sf::Vector2f vec) {
+      tr.setScale(vec);
+    }
+
+    void setScale(float x, float y) {
+      tr.setScale(x,y);
+    }
+
+    void draw(sf::RenderTarget &target, sf::RenderStates states) const {
+      sf::RenderStates rs = states;
+      rs.transform = states.transform * tr.getTransform();
+      target.draw(va, rs);
+    }
+};
+
 int main(int argc, char *argv[])
 {
 
@@ -33,10 +84,26 @@ int main(int argc, char *argv[])
     std::vector<std::shared_ptr<sf::Drawable>> scene_objects;
 
     // set up some stuff to draw
-    std::shared_ptr<sf::CircleShape> circy = std::shared_ptr<sf::CircleShape>(new sf::CircleShape(50.f));
-    circy->setFillColor(sf::Color(100, 250, 50));
-    circy->setOrigin(0,0);
-    scene_objects.push_back(circy);
+    // std::shared_ptr<sf::CircleShape> circy = std::shared_ptr<sf::CircleShape>(new sf::CircleShape(50.f));
+    // circy->setFillColor(sf::Color(100, 250, 50));
+    // circy->setOrigin(0,0);
+    // scene_objects.push_back(circy);
+
+    // let's find out if you can transform VertexArrays
+    std::shared_ptr<xfVertArray> tri = 
+      std::shared_ptr<xfVertArray>(new xfVertArray(sf::PrimitiveType::Triangles,3));
+    sf::Vertex vert = sf::Vertex(sf::Vector2f(-50.0,-50.0),sf::Color(255,0,0));
+    tri->append(vert);
+    vert = sf::Vertex(sf::Vector2f(50.0,-50.0),sf::Color(0,255,0));
+    tri->append(vert);
+    vert = sf::Vertex(sf::Vector2f(0.0,50.0),sf::Color(0,0,255));
+    tri->append(vert);
+    tri->setPosition(150.0,150.0);
+    tri->setOrigin(0.0,0.0);
+    float trot = 30.0;
+    tri->setRotation(trot);
+    scene_objects.push_back(tri);
+
 
     // so HERE instead of that we need to load up a map in GameTree format and turn it into SFML-usable, yes?
     // Still got a piece left to do for that, though a lot of it is directly usable
@@ -67,6 +134,9 @@ int main(int argc, char *argv[])
 
         // clear the window with black color
         window.clear(sf::Color::Black);
+
+        trot += 1.0;
+        tri->setRotation(trot);
 
         // draw everything here...
         // again, simple kludgy way to do a scene graph
