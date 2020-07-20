@@ -50,14 +50,30 @@ namespace gtree_sfml {
       }
   };
 
+  // ok, these are kind of gross, inheriting them from the gametree versions so the parent map can
+  // allocate them and handle them properly
+  class SFMLTiledMapLayer : public GTTiledMapLayer {
+    public:
+      std::shared_ptr<sf::Texture> layer_tex;                       //tilesheet, if any, nullptr if not
+      std::shared_ptr<std::vector<xfVertArray>> layer_vertarrays;   //vertex arrays, if any,  nullptr if not
+
+    public:
+      virtual bool get_from_json(json& jt) override;
+  };
+
+  class SFMLObjectsMapLayer : public GTObjectsMapLayer {
+    public:
+      std::shared_ptr<sf::Texture> layer_tex;                       //tilesheet, if any, nullptr if not
+      std::shared_ptr<std::vector<xfVertArray>> layer_vertarrays;   //vertex arrays, if any,  nullptr if not
+
+    public:
+      virtual bool get_from_json(json& jt) override;
+  };
+
 
   class SFMLMap : public GTMap {
     public:
-      //Textures from the map layers
-      std::vector<sf::Texture> layer_tiletexs;
-
-      // vertex arrays - not sure it will be organized like this
-      std::vector<xfVertArray> layer_vert_arrays;
+      //data members
 
     public:
       SFMLMap(){}
@@ -66,6 +82,7 @@ namespace gtree_sfml {
     public:
       //member functions
       // - reading from json also does the step where it constructs vertex arrays and textures
+      //   handled by the layers' get_from_jsons
       virtual bool get_from_json(json& jt) override;
   };
 }

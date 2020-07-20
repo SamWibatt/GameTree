@@ -5,6 +5,10 @@ set_property(TARGET gtree_sfml PROPERTY CXX_STANDARD 11)
 # needs to be able to see gametree - this is gross
 target_include_directories(gtree_sfml PUBLIC "..")
 
+## for base64 encode/decode, ewwww
+#target_include_directories(gtree_sfml PUBLIC "../cppcodec")
+
+
 # used to have hardcoded sfml paths - this is from https://github.com/Bromeon/Thor/blob/master/CMakeLists.txt#L110-L120
 # see https://en.sfml-dev.org/forums/index.php?topic=26160.0
 find_package(SFML 2.5 COMPONENTS graphics REQUIRED)

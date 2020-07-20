@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <fstream>
 #include <SFML/Graphics.hpp>
 #include "gametree.h"
 #include "gtree_sfml.h"
@@ -59,7 +60,21 @@ int main(int argc, char *argv[])
 
     // so HERE instead of that we need to load up a map in GameTree format and turn it into SFML-usable, yes?
     // Still got a piece left to do for that, though a lot of it is directly usable
-    GTMap the_map;
+    SFMLMap the_map;
+
+    //read in the map we want to load as a json string and 
+    std::string map_filename = "demo_assets/outputs/DemoMap.tmx.json";
+
+    //hey error trap
+    std::ifstream ifs(map_filename);
+    json jmap;
+    ifs >> jmap;
+    ifs.close();
+
+    if(!the_map.get_from_json(jmap)) {
+        printf("*** ERROR: failed to load SFMLMap from json file \"%s\"\n",map_filename.c_str());
+        return 1;
+    }
 
     // MAIN LOOP =============================================================================================
 
