@@ -34,28 +34,27 @@ int main(int argc, char *argv[])
     window.setVerticalSyncEnabled(true); // call it once, after creating the window
 
     // KLUDGY WAY TO DO A SCENE GRAPH
-    std::vector<std::shared_ptr<sf::Drawable>> scene_objects;
+    std::vector<sf::Drawable *> scene_objects;
 
-    // set up some stuff to draw
-    // std::shared_ptr<sf::CircleShape> circy = std::shared_ptr<sf::CircleShape>(new sf::CircleShape(50.f));
-    // circy->setFillColor(sf::Color(100, 250, 50));
-    // circy->setOrigin(0,0);
-    // scene_objects.push_back(circy);
+    // // set up some stuff to draw
+    // sf::CircleShape circy(50.f);
+    // circy.setFillColor(sf::Color(100, 250, 50));
+    // circy.setOrigin(0,0);
+    // scene_objects.push_back(&circy);
 
-    // let's find out if you can transform VertexArrays
-    std::shared_ptr<xfVertArray> tri = 
-      std::shared_ptr<xfVertArray>(new xfVertArray(sf::PrimitiveType::Triangles,3));
-    sf::Vertex vert = sf::Vertex(sf::Vector2f(-50.0,-50.0),sf::Color(255,0,0));
-    tri->append(vert);
-    vert = sf::Vertex(sf::Vector2f(50.0,-50.0),sf::Color(0,255,0));
-    tri->append(vert);
-    vert = sf::Vertex(sf::Vector2f(0.0,50.0),sf::Color(0,0,255));
-    tri->append(vert);
-    tri->setPosition(150.0,150.0);
-    tri->setOrigin(0.0,0.0);
-    float trot = 30.0;
-    tri->setRotation(trot);
-    scene_objects.push_back(tri);
+    // // let's find out if you can transform VertexArrays
+    // xfVertArray tri(sf::PrimitiveType::Triangles,3, nullptr);
+    // sf::Vertex vert = sf::Vertex(sf::Vector2f(-50.0,-50.0),sf::Color(255,0,0));
+    // tri.append(vert);
+    // vert = sf::Vertex(sf::Vector2f(50.0,-50.0),sf::Color(0,255,0));
+    // tri.append(vert);
+    // vert = sf::Vertex(sf::Vector2f(0.0,50.0),sf::Color(0,0,255));
+    // tri.append(vert);
+    // tri.setPosition(150.0,150.0);
+    // tri.setOrigin(0.0,0.0);
+    // float trot = 30.0;
+    // tri.setRotation(trot);
+    // scene_objects.push_back(&tri);
 
 
     // so HERE instead of that we need to load up a map in GameTree format and turn it into SFML-usable, yes?
@@ -74,6 +73,15 @@ int main(int argc, char *argv[])
     if(!the_map.get_from_json(jmap)) {
         printf("*** ERROR: failed to load SFMLMap from json file \"%s\"\n",map_filename.c_str());
         return 1;
+    }
+
+    //ok! now let's do a quick thing to add the map's layers to our scene objects and see what we get
+    for(auto lyr: the_map.slayers) {    //try kludge with different base class
+      //aargh, looks like we have some object slicing happening & vertarrays isn't visible
+      if(lyr->layer_vertarrays != nullptr) {
+        for(auto j = 0; j < lyr->layer_vertarrays->size(); j++)
+          scene_objects.push_back(&(*lyr->layer_vertarrays)[j]);
+      }
     }
 
     // MAIN LOOP =============================================================================================
@@ -102,8 +110,8 @@ int main(int argc, char *argv[])
         // clear the window with black color
         window.clear(sf::Color::Black);
 
-        trot += 1.0;
-        tri->setRotation(trot);
+        // trot += 1.0;
+        // tri.setRotation(trot);
 
         // draw everything here...
         // again, simple kludgy way to do a scene graph

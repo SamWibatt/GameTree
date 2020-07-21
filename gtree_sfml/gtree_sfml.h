@@ -33,10 +33,12 @@ namespace gtree_sfml {
   class xfVertArray : public sf::Drawable, public sf::Transformable {
     public:
       sf::VertexArray va;
+      sf::Texture *tex; 
 
     public:
-      xfVertArray(sf::PrimitiveType pty, size_t nPoints) {
+      xfVertArray(sf::PrimitiveType pty, size_t nPoints, sf::Texture *tx) {
         va = sf::VertexArray(pty, nPoints);
+        tex = tx;
       }
 
       void append(sf::Vertex v) {
@@ -46,6 +48,9 @@ namespace gtree_sfml {
       void draw(sf::RenderTarget &target, sf::RenderStates states) const {
         sf::RenderStates rs = states;
         rs.transform = states.transform * getTransform();
+        if(tex != nullptr) {
+          rs.texture = tex;
+        } 
         target.draw(va, rs);
       }
   };
@@ -61,7 +66,7 @@ namespace gtree_sfml {
 
     public:
       bool build_tile_object_vertarrays(std::vector<std::shared_ptr<GTObjectTile>>& tile_objects, 
-                std::vector<GTTile>& tile_atlas);
+                std::vector<GTTile>& tile_atlas, sf::Texture *tx);
   };
 
   // ok, these are kind of gross, inheriting them from the gametree versions so the parent map can
@@ -86,6 +91,7 @@ namespace gtree_sfml {
   class SFMLMap : public GTMap {
     public:
       //data members
+      std::vector<std::shared_ptr<SFMLMapLayer>> slayers;   //...not happy with this but layers are getting sliced
 
     public:
       SFMLMap(){}

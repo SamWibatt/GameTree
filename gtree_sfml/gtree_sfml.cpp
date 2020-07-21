@@ -5,7 +5,7 @@ using namespace gt;
 namespace gtree_sfml {
 
   bool SFMLMapLayer::build_tile_object_vertarrays(std::vector<std::shared_ptr<GTObjectTile>>& tile_objects, 
-                std::vector<GTTile>& tile_atlas) {
+                std::vector<GTTile>& tile_atlas, sf::Texture *tx) {
     // iterate over tile_objects and build a little quadlike thing for each. 
     if(!tile_objects.empty()) {
       this->layer_vertarrays = std::shared_ptr<std::vector<xfVertArray>>(new std::vector<xfVertArray>());
@@ -16,14 +16,19 @@ namespace gtree_sfml {
         // the atlas is coords into the texture sheet image
         // texture verts similar but tile_atlas[tob->tile].wid/ht instead, yes? 
         // do a quad, clockwise so 0,0 - w, 0, - w, h - 0, h
-        xfVertArray xva(sf::PrimitiveType::Quads,4);
-        xva.append(sf::Vertex(sf::Vector2f(0.0,0.0),sf::Vector2f(tile_atlas[tob->tile].ulx,tile_atlas[tob->tile].uly)));
-        xva.append(sf::Vertex(sf::Vector2f(tob->wid,0.0),
-            sf::Vector2f(tile_atlas[tob->tile].ulx+tile_atlas[tob->tile].wid, tile_atlas[tob->tile].uly)));
-        xva.append(sf::Vertex(sf::Vector2f(tob->wid,tob->ht),
+        // should I be doing a separate vertex array for each?
+        // Let's go with that; likely the tile map will emit subsets too, in a refactor
+        // wait, need to give the actual position for each quad, not relative to a "position"
+        xfVertArray xva(sf::PrimitiveType::Quads,4,tx);
+        xva.va[0] = (sf::Vertex(sf::Vector2f(tob->orx,tob->ory),
+            sf::Vector2f(tile_atlas[tob->tile].ulx,tile_atlas[tob->tile].uly)));
+        xva.va[1] = (sf::Vertex(sf::Vector2f(tob->orx + tob->wid, tob->ory),
+            sf::Vector2f(tile_atlas[tob->tile].ulx+tile_atlas[tob->tile].wid, 
+              tile_atlas[tob->tile].uly)));
+        xva.va[2] = (sf::Vertex(sf::Vector2f(tob->orx + tob->wid, tob->orx + tob->ht),
             sf::Vector2f(tile_atlas[tob->tile].ulx+tile_atlas[tob->tile].wid, 
             tile_atlas[tob->tile].uly+tile_atlas[tob->tile].ht)));
-        xva.append(sf::Vertex(sf::Vector2f(0.0,tob->ht),
+        xva.va[3] = (sf::Vertex(sf::Vector2f(tob->orx, tob->ory + tob->ht),
             sf::Vector2f(tile_atlas[tob->tile].ulx, tile_atlas[tob->tile].uly+tile_atlas[tob->tile].ht)));
         layer_vertarrays->push_back(xva);
       }
@@ -53,10 +58,11 @@ namespace gtree_sfml {
     // ******************************************************** WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     // ******************************************************** WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //this->tile_map and this->tile_objects need to be accounted for, recall
-    build_tile_object_vertarrays(tile_objects, tile_atlas);
+    build_tile_object_vertarrays(tile_objects, tile_atlas, layer_tex.get());
 
     // DO TILE MAP
-    xfVertArray xva(sf::PrimitiveType::Quads,0);
+    layer_vertarrays = std::shared_ptr<std::vector<xfVertArray>>(new std::vector<xfVertArray>());
+    xfVertArray xva(sf::PrimitiveType::Quads,0,layer_tex.get());
     for(auto i = 0; i < tile_map.size(); i++) {
       if(tile_map[i] != 0) {
         GTindex_t tcol = i % layer_tilewid;
@@ -65,21 +71,24 @@ namespace gtree_sfml {
         GTcoord_t x = tcol * tile_pixwid;
         GTcoord_t y = trow * tile_pixht;
         
-        // ************ WRITE THIS *********************************************************
-        // ************ WRITE THIS *********************************************************
-        // ************ WRITE THIS *********************************************************
         //ADD TO VERTEX ARRAY
         // add all 4 points for this in the order ulx, uly; ulx, lry; lrx, rly, ulx, lry
-        //xva.append()
-      } else {
-        // ************ WRITE THIS *********************************************************
-        // ************ WRITE THIS *********************************************************
-        // ************ WRITE THIS *********************************************************
-        // no tile in this spot, emit any vertex array accumulated so far and
-        // start a new one
-      }
+        // remember all tiles in the tilemap are the tile_pixwd x tile_pixht size;
+        // any oddsize are put in the tile_objects list
+        xva.append(sf::Vertex(sf::Vector2f(x,y),sf::Vector2f(tile_atlas[tile_map[i]].ulx,
+            tile_atlas[tile_map[i]].uly)));
+        xva.append(sf::Vertex(sf::Vector2f(x+tile_pixwid,y),
+            sf::Vector2f(tile_atlas[tile_map[i]].ulx+tile_pixwid, tile_atlas[tile_map[i]].uly)));
+        xva.append(sf::Vertex(sf::Vector2f(x+tile_pixwid,y+tile_pixht),
+            sf::Vector2f(tile_atlas[tile_map[i]].ulx+tile_pixwid, 
+            tile_atlas[tile_map[i]].uly+tile_pixht)));
+        xva.append(sf::Vertex(sf::Vector2f(x,y+tile_pixht),
+            sf::Vector2f(tile_atlas[tile_map[i]].ulx, tile_atlas[tile_map[i]].uly+tile_pixht)));
+      } 
+      // else it's a blank, skip
       
     }
+    layer_vertarrays->push_back(xva);
 
     return true;
   }
@@ -102,7 +111,7 @@ namespace gtree_sfml {
       image_data.clear();
 
       // NOW BUILD VERTEX ARRAYS
-      build_tile_object_vertarrays(tile_objects, tile_atlas);
+      build_tile_object_vertarrays(tile_objects, tile_atlas, layer_tex.get());
     }
 
 
@@ -122,6 +131,7 @@ namespace gtree_sfml {
             auto lyr = std::shared_ptr<SFMLTiledMapLayer>(new SFMLTiledMapLayer());
             if(lyr->get_from_json(jlyr) == true) {
               layers.push_back(lyr);
+              slayers.push_back(lyr); //GROSS KLUDGE TO AVOID SLICING BC I SCREWED UP SOMEWHERE
             } else {
               fprintf(stderr,"*** ERROR: failed to read tiled map layer\n");
               return false;
@@ -130,6 +140,7 @@ namespace gtree_sfml {
             auto lyr = std::shared_ptr<SFMLObjectsMapLayer>(new SFMLObjectsMapLayer());
             if(lyr->get_from_json(jlyr) == true) {
               layers.push_back(lyr);
+              slayers.push_back(lyr); //GROSS KLUDGE TO AVOID SLICING BC I SCREWED UP SOMEWHERE
             } else {
               fprintf(stderr,"*** ERROR: failed to read objects map layer\n");
               return false;
