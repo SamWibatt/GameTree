@@ -56,6 +56,7 @@ namespace gtree_sfml {
     build_tile_object_vertarrays(tile_objects, tile_atlas);
 
     // DO TILE MAP
+    xfVertArray xva(sf::PrimitiveType::Quads,0);
     for(auto i = 0; i < tile_map.size(); i++) {
       if(tile_map[i] != 0) {
         GTindex_t tcol = i % layer_tilewid;
@@ -68,6 +69,8 @@ namespace gtree_sfml {
         // ************ WRITE THIS *********************************************************
         // ************ WRITE THIS *********************************************************
         //ADD TO VERTEX ARRAY
+        // add all 4 points for this in the order ulx, uly; ulx, lry; lrx, rly, ulx, lry
+        //xva.append()
       } else {
         // ************ WRITE THIS *********************************************************
         // ************ WRITE THIS *********************************************************
