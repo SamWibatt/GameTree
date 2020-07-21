@@ -230,7 +230,8 @@ namespace gt {
         t.add_to_json(j["tile_atlas"]);
       }
     } else {
-      fprintf(stderr,"+++ WARNING: map layer doesn't have any image data. OK if it's a polygons-only object layer or something\n");
+      // is this even a problem?
+      //fprintf(stderr,"+++ WARNING: map layer doesn't have any image data. OK if it's a polygons-only object layer or something\n");
     }
 
     return true;
@@ -238,7 +239,7 @@ namespace gt {
 
   bool GTMapLayer::get_from_json(json& jt) {
     if(!jt.contains("image_data") || !jt.contains("tile_atlas")) {
-      fprintf(stderr,"+++ WARNING: map layer has no image_data or tile_atlas - ok if it's an object layer with no imagery\n");
+      //fprintf(stderr,"+++ WARNING: map layer has no image_data or tile_atlas - ok if it's an object layer with no imagery\n");
       return true;
     }
 

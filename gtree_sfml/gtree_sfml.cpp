@@ -19,17 +19,23 @@ namespace gtree_sfml {
         // should I be doing a separate vertex array for each?
         // Let's go with that; likely the tile map will emit subsets too, in a refactor
         // wait, need to give the actual position for each quad, not relative to a "position"
+        // looks like Tiled positions object tiles by lower left, tho - so try bumping y up by object's height - YAY
+
         xfVertArray xva(sf::PrimitiveType::Quads,4,tx);
-        xva.va[0] = (sf::Vertex(sf::Vector2f(tob->orx,tob->ory),
+        xva.va[0] = (sf::Vertex(sf::Vector2f(tob->orx,tob->ory - tob->ht),
             sf::Vector2f(tile_atlas[tob->tile].ulx,tile_atlas[tob->tile].uly)));
-        xva.va[1] = (sf::Vertex(sf::Vector2f(tob->orx + tob->wid, tob->ory),
+        //printf("Appending vertex: pos %f, %f tex %f, %f\n", xva.va[0].position.x,xva.va[0].position.y,xva.va[0].texCoords.x,xva.va[0].texCoords.y);
+        xva.va[1] = (sf::Vertex(sf::Vector2f(tob->orx + tob->wid, tob->ory - tob->ht),
             sf::Vector2f(tile_atlas[tob->tile].ulx+tile_atlas[tob->tile].wid, 
               tile_atlas[tob->tile].uly)));
-        xva.va[2] = (sf::Vertex(sf::Vector2f(tob->orx + tob->wid, tob->orx + tob->ht),
+        //printf("Appending vertex: pos %f, %f tex %f, %f\n", xva.va[1].position.x,xva.va[1].position.y,xva.va[1].texCoords.x,xva.va[1].texCoords.y);
+        xva.va[2] = (sf::Vertex(sf::Vector2f(tob->orx + tob->wid, tob->ory),
             sf::Vector2f(tile_atlas[tob->tile].ulx+tile_atlas[tob->tile].wid, 
             tile_atlas[tob->tile].uly+tile_atlas[tob->tile].ht)));
-        xva.va[3] = (sf::Vertex(sf::Vector2f(tob->orx, tob->ory + tob->ht),
+        //printf("Appending vertex: pos %f, %f tex %f, %f\n", xva.va[2].position.x,xva.va[2].position.y,xva.va[2].texCoords.x,xva.va[2].texCoords.y);
+        xva.va[3] = (sf::Vertex(sf::Vector2f(tob->orx, tob->ory),
             sf::Vector2f(tile_atlas[tob->tile].ulx, tile_atlas[tob->tile].uly+tile_atlas[tob->tile].ht)));
+        //printf("Appending vertex: pos %f, %f tex %f, %f\n", xva.va[3].position.x,xva.va[3].position.y,xva.va[3].texCoords.x,xva.va[3].texCoords.y);
         layer_vertarrays->push_back(xva);
       }
 
@@ -53,14 +59,7 @@ namespace gtree_sfml {
     // likewise tile_objects below
     image_data.clear();
 
-    // NOW BUILD VERTEX ARRAYS
-    // ******************************************************** WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // ******************************************************** WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // ******************************************************** WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //this->tile_map and this->tile_objects need to be accounted for, recall
-    build_tile_object_vertarrays(tile_objects, tile_atlas, layer_tex.get());
-
-    // DO TILE MAP
+    // FIRST TILE MAP
     layer_vertarrays = std::shared_ptr<std::vector<xfVertArray>>(new std::vector<xfVertArray>());
     xfVertArray xva(sf::PrimitiveType::Quads,0,layer_tex.get());
     for(auto i = 0; i < tile_map.size(); i++) {
@@ -84,11 +83,16 @@ namespace gtree_sfml {
             tile_atlas[tile_map[i]].uly+tile_pixht)));
         xva.append(sf::Vertex(sf::Vector2f(x,y+tile_pixht),
             sf::Vector2f(tile_atlas[tile_map[i]].ulx, tile_atlas[tile_map[i]].uly+tile_pixht)));
+
       } 
       // else it's a blank, skip
       
     }
     layer_vertarrays->push_back(xva);
+
+    // then tile objects, because they should be later in the list than the other tiles (drawn over them)
+    build_tile_object_vertarrays(tile_objects, tile_atlas, layer_tex.get());
+
 
     return true;
   }
