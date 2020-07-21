@@ -12,6 +12,8 @@ using namespace gtree_sfml;
 int main(int argc, char *argv[])
 {
 
+    // HW SETUP ====================================================================================================================
+
     // this will get replaced with some utility sfml plat-spec that sees which modes are available and finds the most 
     // suitable one (and makes sure it can work - recall how enabling vsync on entrapta broke all the 4:3 modes)
     // it will also choose scale factor
@@ -32,6 +34,34 @@ int main(int argc, char *argv[])
     //how do you make vsync actually work? see https://www.maketecheasier.com/get-rid-screen-tearing-linux/ - yup, like that, the intel
     //section worked on entrapta
     window.setVerticalSyncEnabled(true); // call it once, after creating the window
+
+    //Check for joystick!
+    printf("Checking for joysticks...\n");
+    int firststick = -1;
+    for(int j=0;j<8;j++) 
+        if (sf::Joystick::isConnected(j))
+        {
+            // joystick number 0 is connected
+            printf("Stick %d is connected! button count is %u - axes ",j,sf::Joystick::getButtonCount(0));
+            if(sf::Joystick::hasAxis(j,sf::Joystick::Axis::X)) printf("X ");
+            if(sf::Joystick::hasAxis(j,sf::Joystick::Axis::Y)) printf("Y ");
+            if(sf::Joystick::hasAxis(j,sf::Joystick::Axis::Z)) printf("Z ");
+            if(sf::Joystick::hasAxis(j,sf::Joystick::Axis::R)) printf("R ");
+            if(sf::Joystick::hasAxis(j,sf::Joystick::Axis::U)) printf("U ");
+            if(sf::Joystick::hasAxis(j,sf::Joystick::Axis::V)) printf("V ");
+            if(sf::Joystick::hasAxis(j,sf::Joystick::Axis::PovX)) printf("PovX ");
+            if(sf::Joystick::hasAxis(j,sf::Joystick::Axis::PovY)) printf("PovY ");
+            printf("\n");
+            firststick = j;
+            break;
+        }
+
+    // this will be a matter of calibration at some point
+    float joystick_deadspot = 15.0; //stick goes 0..100 in each axis; if abs(move) < this, ignore
+                                    //to avoid little jitter
+
+
+    // END HW SETUP ================================================================================================================
 
     // KLUDGY WAY TO DO A SCENE GRAPH
     std::vector<sf::Drawable *> scene_objects;
@@ -76,18 +106,39 @@ int main(int argc, char *argv[])
     }
 
     //ok! now let's do a quick thing to add the map's layers to our scene objects and see what we get
+    // then I'll just make layers drawable/transformable and that's what it takes
+    // - that works
+    // - Layers should all have their own separate transforms so you can do multiple parallax and stuff
+    //   - similarly I don't think the map itself should be a drawable... or should it?
+    // - should the map have a transform?
+    // - that could be global_transform
+    float layerPosX = 0.0, layerPosY = 0.0;
+    float mapWidth = 0.0, mapHeight = 0.0;
     for(auto lyr: the_map.slayers) {    //try kludge with different base class
-      //aargh, looks like we have some object slicing happening & vertarrays isn't visible
-      if(lyr->layer_vertarrays != nullptr) {
-        for(auto j = 0; j < lyr->layer_vertarrays->size(); j++)
-          scene_objects.push_back(&(*lyr->layer_vertarrays)[j]);
-      }
+      lyr->setOrigin(0.0,0.0);              // WORK THIS OUT AT SOME POINT for now just draw from ul corner
+      lyr->setPosition(layerPosX,layerPosY);            // same
+      scene_objects.push_back(lyr.get());
     }
+
+    //let's set layer width and height kludgily from map's first slayer
+    mapWidth = the_map.slayers[0]->get_bounding_box().width;
+    mapHeight = the_map.slayers[0]->get_bounding_box().width;
+    printf("Map width: %f height: %f\n",mapWidth,mapHeight);
+
+    // for map scrolling
+    float scroll_velocity = 5.0;
 
     // MAIN LOOP =============================================================================================
 
     //initial clear for trails version
     window.clear(sf::Color::Black);
+
+
+    // handle ongoing stuff like held down keys or stick 
+    // NEED TO ACCOUNT FOR TIME ELAPSED BT FRAMES
+    float deltaX, deltaY;
+    deltaX = 0.0;
+    deltaY = 0.0;
 
     // run the program as long as the window is open
     while (window.isOpen())
@@ -107,7 +158,52 @@ int main(int argc, char *argv[])
             }
         }
 
+        deltaX = 0.0;
+        deltaY = 0.0;
+
+        if(firststick != -1) {
+            float stick_x = sf::Joystick::getAxisPosition(firststick,sf::Joystick::Axis::X);
+            float stick_y = sf::Joystick::getAxisPosition(firststick,sf::Joystick::Axis::Y);
+            
+            //move according to scaled joystick value
+            //have a dead spot in the middle of the joystick so princess doesn't wander when stick
+            //is released
+            if(std::abs(stick_x) > joystick_deadspot) deltaX += ((stick_x / 100.0) * scroll_velocity);
+            if(std::abs(stick_y) > joystick_deadspot) deltaY += ((stick_y / 100.0) * scroll_velocity);
+        } 
+
+        //if there was a stick handlement, skip keys? Or just do both
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) deltaX -= scroll_velocity;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) deltaX += scroll_velocity;
+
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) deltaY -= scroll_velocity;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) deltaY += scroll_velocity;
+
+        // if(deltaX != 0.0 || deltaY != 0.0) {
+        //     printf("DeltaX %f Y %f\n",deltaX, deltaY);
+        // }
+
+        // set layer positions according to map extents - currently , position/origin are both upper left corner
+        // turns out the deltas are how we're moving the VIEW, so layer position goes the other way
+        layerPosX -= deltaX;
+        layerPosY -= deltaY;
+
+        // bounding box is also backwards
+        if(layerPosX < -(mapWidth-(window.getSize().x / globalScaleX))) layerPosX = -(mapWidth-(window.getSize().x / globalScaleX));
+        if(layerPosX > 0) layerPosX = 0;
+        if(layerPosY < -(mapHeight-(window.getSize().y / globalScaleY))) layerPosY = -(mapWidth-(window.getSize().y / globalScaleY));
+        if(layerPosY > 0) layerPosY = 0;
+
+        for(auto lyr: the_map.slayers) {
+            // this doesn't seem to have any effect
+            lyr->setPosition(layerPosX,layerPosY);
+        }
+
+
         // clear the window with black color
+        // let's not do this anymore; assume tile map will do it? 
+        // only if scroll is constrained s.t. nothing outside the map shows
+        // leave it for debug purps
         window.clear(sf::Color::Black);
 
         // trot += 1.0;

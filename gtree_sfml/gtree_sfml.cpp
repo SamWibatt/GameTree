@@ -45,6 +45,28 @@ namespace gtree_sfml {
     return true;
   }
 
+  void SFMLTiledMapLayer::calculate_bounding_box() {
+    //factor in both tiled map and object tiles, if any
+    //start with tiled map as initial values, assuming origin is 0,0 at upper left of map
+    int ulx = 0;
+    int uly = 0;
+    int lrx = layer_tilewid * tile_pixwid;
+    int lry = layer_tileht * tile_pixht;
+
+    //then do tile_objects - remember they're oriented around lower left, not upper left
+    for(auto tob : tile_objects) {
+      if(tob->orx < ulx) ulx = tob->orx;
+      if(tob->ory - tob->ht < uly) uly = tob->ory - tob->ht;
+      if(tob->orx + tob->wid > lrx) lrx = tob->orx + tob->wid;
+      if(tob->ory > lry) lry = tob->ory;
+    }
+
+    bounding_box.left = ulx;
+    bounding_box.top = uly;
+    bounding_box.width = (lrx - ulx);
+    bounding_box.height = (lry - uly);
+  }
+
   bool SFMLTiledMapLayer::get_from_json(json& jt) {
     if(!GTTiledMapLayer::get_from_json(jt)) {
       //failed to read!
@@ -93,8 +115,33 @@ namespace gtree_sfml {
     // then tile objects, because they should be later in the list than the other tiles (drawn over them)
     build_tile_object_vertarrays(tile_objects, tile_atlas, layer_tex.get());
 
+    // and find bounding box
+    calculate_bounding_box();
 
     return true;
+  }
+
+  void SFMLObjectsMapLayer::calculate_bounding_box() {
+    //factor in both tiled map and object tiles, if any
+    //start with tiled map as initial values, assuming origin is 0,0 at upper left of map
+    // init with suitable values - will we get past 1M pixels? probably not
+    int ulx = 999999;
+    int uly = 999999;
+    int lrx = -999999;
+    int lry = -999999;
+
+    //then do tile_objects - remember they're oriented around lower left, not upper left
+    for(auto tob : tile_objects) {
+      if(tob->orx < ulx) ulx = tob->orx;
+      if(tob->ory - tob->ht < uly) uly = tob->ory - tob->ht;
+      if(tob->orx + tob->wid > lrx) lrx = tob->orx + tob->wid;
+      if(tob->ory > lry) lry = tob->ory;
+    }
+
+    bounding_box.left = ulx;
+    bounding_box.top = uly;
+    bounding_box.width = (lrx - ulx);
+    bounding_box.height = (lry - uly);
   }
 
   bool SFMLObjectsMapLayer::get_from_json(json& jt) {
@@ -118,6 +165,8 @@ namespace gtree_sfml {
       build_tile_object_vertarrays(tile_objects, tile_atlas, layer_tex.get());
     }
 
+    // and find bounding box
+    calculate_bounding_box();
 
     return true;
   }
