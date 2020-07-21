@@ -19,8 +19,9 @@ int main(int argc, char *argv[])
     // it will also choose scale factor
     // look into https://www.sfml-dev.org/tutorials/2.5/graphics-transform.php#object-hierarchies-scene-graph
     // for how to have a global scale factor; that's for a bit later
-    //should be sf::VideoMode screenMode = sf::VideoMode(720, 400);
-    sf::VideoMode screenMode = sf::VideoMode(600, 600);
+    //should be 
+    sf::VideoMode screenMode = sf::VideoMode(720, 400);
+    //sf::VideoMode screenMode = sf::VideoMode(600, 600);
 
     sf::Transform globalTransform = sf::Transform();
     float globalScaleX = 2.0;
