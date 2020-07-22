@@ -1,6 +1,7 @@
 # Acknowledgements
 
-Character spritesheet asset `antifarea3sides.png` renamed by Sean Igo from `redone charset by antifarea 3 sides.png` from [18x20 Characters Walk/Attack/Cast spritesheet](https://opengameart.org/content/18x20-characters-walkattackcast-spritesheet) by Antifarea (Charles Gabriel). Licensed under a [Attribution 3.0 Unported (CC BY 3.0) Licence](https://creativecommons.org/licenses/by/3.0/)
+Character spritesheet assets `antifarea3sides.png` renamed by Sean Igo from `redone charset by antifarea 3 sides.png` from [18x20 Characters Walk/Attack/Cast spritesheet](https://opengameart.org/content/18x20-characters-walkattackcast-spritesheet) by Antifarea (Charles Gabriel). Licensed under a [Attribution 3.0 Unported (CC BY 3.0) Licence](https://creativecommons.org/licenses/by/3.0/)
+* ohter files are snipped from that
 
 Item asset `spritesheet_16x16.png` is from [Kyrise's Free 16x16 RPG Icon Pack](https://kyrise.itch.io/kyrises-free-16x16-rpg-icon-pack) by [Kyrise](https://kyrise.itch.io/).
 Licensed under a [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/).

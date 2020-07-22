@@ -4,7 +4,7 @@
 #include <memory>
 #include <map>
 #include "asepritereader.h"
-#include "sfmlsprite.h"
+#include "gtree_sfml.h"
 
 using namespace asepreader;
 using namespace sfml_assets;
