@@ -1,9 +1,253 @@
 #include "gametree.h"
 #include "asepritereader.h"
 #include "CLI11.hpp"
+// png handling from lodepng so no requirement of libpng
+#define LODEPNG_NO_COMPILE_CPP
+#include "lodepng.h"
 
 using namespace gt;
 using namespace asepreader;
+
+std::shared_ptr<GTSprite> aseprite_to_gt_sprite(std::shared_ptr<AseSprite> psp, std::string input_dir, std::string output_dir) {
+
+  std::shared_ptr<GTSprite> spritely = std::shared_ptr<GTSprite>(new GTSprite());
+
+  //aseprite2sfml has much of what I need
+  /* what we're getting as input
+  class AseSprite {
+    public:
+      //has a sprite sheet
+      std::shared_ptr<AseSpriteSheet> sheet;
+
+      //has a collection of frames
+      //SUPER GROSS. indexed by: 
+      std::shared_ptr<std::map<std::string,                                             //character,
+                        std::map<std::string,                                           //action,
+                          std::map<std::string,                                         //direction,
+                            std::vector<std::shared_ptr<AseSpriteFrame>>>>>> frames;    //frame number
+
+      //might have a palette
+      //multiple actors in the game could use the same Sprite - is this a good name for it?
+      //so each of those would maintain its own timing counters, current action and direction
+  };
+  */
+
+  // TO DO *************************************************************************************************************************************************
+  // * For this platform, we don't need to do much with the sprite sheet - however, should crop off the origin dots and be sure it's in the format the game
+  //   assumes. Other platforms that aren't going to scale and have a premium on space, e.g. Arduino, might tighten up imagery to exclude inter-frame transparency
+  //   * for that, we can traverse the input AseSprite's frames and build a cropping box
+  //   * that would need to take padding into account, yes? How do we know the pad size? It's recorded in each frame - a bit wasteful, :P
+  // * Need to build a SFMLSpriteInfo and write it out as a header file to header_out_dir, should just be the declaration of a sprite variable
+  //   with the initializations... 
+  //   * should it be a subclass for that character? That makes some sense. 
+  //     * That way could have enums for directions and actions and stuff...or would it be better if those were universals?
+  //     * bull on with this and see what occurs. So far SFMLMap doesn't write anything out either and could do these in tandem
+  //     * I could see the ardy version being like paletted RLE but that's for another class.
+
+  //I love you, auto, for my not having to type out
+  //std::shared_ptr<std::map<std::string,std::map<std::string,std::map<std::string,std::vector<std::shared_ptr<AseSpriteFrame>>>>>> frames
+  auto frames = psp->frames;
+
+  // bounding box of imagery (for cropping out the origin dots)
+  int32_t bound_ulx = INT32_MAX;
+  int32_t bound_uly = INT32_MAX;
+  int32_t bound_lrx = -1;
+  int32_t bound_lry = -1;
+
+  //traverse and discover!
+  //- bounding box around imagery within sprite sheet, leaving out origin dots
+  //  assuming that the imagery in the sprite sheet is all used, we don't need to do an
+  //  extract and "crunch"
+
+  //traverse input frames, finding the bounding box of imagery on the sprite sheet
+  int cur_char_ind;
+  int cur_act_ind;
+  int cur_dir_ind;
+
+  for (auto ch_it = frames->begin(); ch_it != frames->end(); ch_it++) {
+    //get character index if already exists, else create it
+    if(spritely->info.character_to_index.find(ch_it->first) != spritely->info.character_to_index.end()) {
+      cur_char_ind = spritely->info.character_to_index[ch_it->first];
+    } else {
+      cur_char_ind = spritely->info.character_to_index.size();     // - verify
+      spritely->info.character_to_index[ch_it->first] = cur_char_ind;
+    }
+    //printf("- Character: %s index %d\n",ch_it->first.c_str(), cur_char_ind);
+
+    for(auto act_it = ch_it->second.begin(); act_it != ch_it->second.end(); act_it++) {
+      if(spritely->info.action_to_index.find(act_it->first) != spritely->info.action_to_index.end()) {
+        cur_act_ind = spritely->info.action_to_index[act_it->first];
+      } else {
+        cur_act_ind = spritely->info.action_to_index.size();     // - verify
+        spritely->info.action_to_index[act_it->first] = cur_act_ind;
+      }
+      //printf("  - Action: %s index %d\n",act_it->first.c_str(),cur_act_ind);
+
+      for(auto dir_it = act_it->second.begin(); dir_it != act_it->second.end(); dir_it++) {
+        if(spritely->info.direction_to_index.find(dir_it->first) != spritely->info.direction_to_index.end()) {
+          cur_dir_ind = spritely->info.direction_to_index[dir_it->first];
+        } else {
+          cur_dir_ind = spritely->info.direction_to_index.size();     // - verify
+          spritely->info.direction_to_index[dir_it->first] = cur_dir_ind;
+        }
+        //printf("    - Direction: %s index %d\n",dir_it->first.c_str(),cur_dir_ind);
+
+        for(auto fnum = 0; fnum < dir_it->second.size(); fnum++) {
+          //printf("      - Frame: %d\n",fnum);
+          auto framely = dir_it->second[fnum];
+          //figure out if it nudges the bounding box out. Don't forget to account for pad
+          bound_ulx = std::min(bound_ulx, framely->ulx - framely->pad);
+          bound_uly = std::min(bound_uly, framely->uly - framely->pad);
+          bound_lrx = std::max(bound_lrx, framely->ulx + framely->wid + framely->pad);
+          bound_lry = std::max(bound_lry, framely->uly + framely->ht + framely->pad);
+        }
+      }
+    }
+  }
+
+  //traverse again, creating spriteframes
+  //printf("Creating spriteframes...\n");
+  // class SFMLSpriteFrame {
+  //   public:
+  //     //data members
+  //     int ulx, uly;         //texture coordinates, pixels, within sprite sheet texture
+  //     int wid, ht;          //extents of rectangle within sprite sheet texture
+  //     float offx, offy;       //offsets to give to sprite.setOrigin(sf::Vector2f(offx, offy));
+  // };
+
+  //**********************************************************************************************
+  //**********************************************************************************************
+  //**********************************************************************************************
+  // SO HERE SUBTRACT BBOX ULX OFF OF ALL THE FRAMES' SHEET COORDS - OR RATHER BE SURE TO DO THAT
+  // FOR THE OUTPUT FORM!!!!!!!!!!!!!!!
+  //**********************************************************************************************
+  //**********************************************************************************************
+  //**********************************************************************************************
+  for (auto ch_it = frames->begin(); ch_it != frames->end(); ch_it++) {
+    cur_char_ind = spritely->info.character_to_index[ch_it->first];
+    //printf("- Character: %s index %d\n",ch_it->first.c_str(), cur_char_ind);
+
+    for(auto act_it = ch_it->second.begin(); act_it != ch_it->second.end(); act_it++) {
+      cur_act_ind = spritely->info.action_to_index[act_it->first];
+      //printf("  - Action: %s index %d\n",act_it->first.c_str(),cur_act_ind);
+
+      for(auto dir_it = act_it->second.begin(); dir_it != act_it->second.end(); dir_it++) {
+        cur_dir_ind = spritely->info.direction_to_index[dir_it->first];
+        //printf("    - Direction: %s index %d\n",dir_it->first.c_str(),cur_dir_ind);
+
+        for(auto fnum = 0; fnum < dir_it->second.size(); fnum++) {
+          //printf("      - Frame: %d\n",fnum);
+          auto framely = dir_it->second[fnum];
+
+          //HERE SUBTRACT BBOX ULX OFF OF ALL THE FRAMES' ORIGINAL SHEET COORDS
+          //but wait, where does it go?
+          spritely->frames[cur_char_ind][cur_act_ind][cur_dir_ind].push_back(
+            GTSpriteFrame(
+              framely->ulx - bound_ulx,
+              framely->uly - bound_uly,
+              framely->wid,
+              framely->ht,
+              -framely->off_x,    //I think these have the opposite sense of what the ripper does
+              -framely->off_y,
+              framely->dur
+            )
+          );
+        }
+      }
+    }
+  }
+
+  //now do vectors to convert index to char/dir/act
+  spritely->info.index_to_character.resize(spritely->info.character_to_index.size());
+  for(auto kv : spritely->info.character_to_index) spritely->info.index_to_character[kv.second] = kv.first;
+
+  spritely->info.index_to_action.resize(spritely->info.action_to_index.size());
+  for(auto kv : spritely->info.action_to_index) spritely->info.index_to_action[kv.second] = kv.first;
+
+  spritely->info.index_to_direction.resize(spritely->info.direction_to_index.size());
+  for(auto kv : spritely->info.direction_to_index) spritely->info.index_to_direction[kv.second] = kv.first;
+
+  //write header here! if bothering
+  // printf("Writing header...\n");
+  // writeHeader(psp, spritely, "creedle.h", header_out_dir);      //HEY HAVE A REAL FILENAME
+
+  printf("- Bounding box of imagery within sprite sheet: [%d, %d - %d, %d]\n",
+      bound_ulx, bound_uly, bound_lrx, bound_lry);
+
+  //**********************************************************************************************
+  //**********************************************************************************************
+  //**********************************************************************************************
+  // Create texture for this sprite! Which we will encode to base64_url on json write
+  // let's try this lodepng thing that was in crunch's bitmap.cpp - code nicked from there, qv.
+  //**********************************************************************************************
+  //**********************************************************************************************
+  //**********************************************************************************************
+  //Load the png file
+  std::string pngpath = input_dir + psp->sheet->get_image_name();
+  printf("- Reading png: %s\n",pngpath.c_str());
+  unsigned char* pdata;
+  unsigned int pw, ph;
+  if (lodepng_decode32_file(&pdata, &pw, &ph, pngpath.c_str()))       //this does close its file, down in its guts
+  {
+      printf("*** ERROR: failed to load png file %s\n",pngpath.c_str());
+      return nullptr;
+  }
+  int w = static_cast<int>(pw);
+  int h = static_cast<int>(ph);
+  uint32_t* pixels = reinterpret_cast<uint32_t*>(pdata);      //convenient, each pixel is a uint32
+
+  // DO STUFF! Crop equivalent to this: 
+  // cropsheet.create((bound_lrx-bound_ulx), (bound_lry-bound_uly), sf::Color(0,255,0));
+  // //see if we need to add 1 to lrx/y - doesn't look like it!
+  // cropsheet.copy(origsheet,0,0,sf::IntRect(bound_ulx, bound_uly, bound_lrx, bound_lry), false);
+  // lodepng doesn't seem to have any cropping stuff, so just do it by hand
+  int cropwid = (bound_lrx-bound_ulx);
+  int cropht = (bound_lry-bound_uly);
+  printf("- Cropping image to %d x %d\n",cropwid,cropht);
+  uint32_t* crop_pixels = new uint32_t[cropwid * cropht];
+  int croppix_index = 0;
+  for(int y = bound_uly; y < bound_lry; y++) {
+    for(int x = bound_ulx; x < bound_lrx; x++) {
+      crop_pixels[croppix_index++] = pixels[(y * cropwid) + x];
+    }
+  }
+
+  //Free the untrimmed pixels
+  free(pixels);
+
+  // so now encode the crop_pixels 
+  unsigned char *crop_pixels_u8 = reinterpret_cast<unsigned char *>(crop_pixels);
+
+  /*Same as lodepng_encode_memory, but always encodes from 32-bit RGBA raw image.*/
+  //unsigned lodepng_encode32(unsigned char** out, size_t* outsize,
+  //                        const unsigned char* image, unsigned w, unsigned h);
+  // I think it has the png header on it - the functions that save pngs appear to just write this buffer
+  unsigned char *crop_png_data;
+  size_t out_size;      //size of output data
+
+  printf("- Encoding cropped image to png format\n");
+  if(lodepng_encode32(&crop_png_data,&out_size,crop_pixels_u8,cropwid,cropht)) {
+      printf("*** ERROR: failed to compress cropped spritesheet\n");
+      return nullptr;
+  }
+
+  printf("- worky! final size %lu bytes\n",out_size);
+
+  // make the cropped png data into a base64_url string
+  // or no wait that happens in writing to json, let's just copy it to the gt sprite image_data
+  spritely->image_data.resize(out_size);
+  for(int b = 0; b < out_size; b++) spritely->image_data[b] = crop_png_data[b];
+
+  // free the trimmed pixels
+  delete[] crop_pixels;
+
+  // free the pngified data
+  free(crop_png_data);
+
+  // and that should be it
+  
+  return spritely;
+}
 
 int main(int argc, char *argv[]) {
   CLI::App app{"Hello and welcome to Aseprite2GT, the asymptotic Aseprite to Gametree conversion utility."};
@@ -49,12 +293,17 @@ int main(int argc, char *argv[]) {
 
   printf("About to read Aseprite file %s...\n",aseprite_input_file.c_str());
 
+  // MAKE THIS NON_UNIX_CHAUVINIST
+  auto const pos=aseprite_input_file.find_last_of('/');
+  std::string input_dir = aseprite_input_file.substr(0,pos);
+  if(input_dir.empty()) input_dir = ".";
+  input_dir += "/";
+
   std::shared_ptr<AseSprite> pts = ar.read_sprite_file(aseprite_input_file);
 
-  // FINISH THIS!!!!!!!!!!!!!!!!!!!!!!
-  // then we need something analogous to this
-  // so: now to convert TiledReader objects into GT objects.
-  // that should all be in this file.
-  //std::shared_ptr<GTMap> pmap = tiled_map_to_gt_map(ptm, output_dir);
+  std::shared_ptr<GTSprite> pgts = aseprite_to_gt_sprite(pts, input_dir, output_dir);
+
+  // NOW DO SOMETHING WITH IT! write to json, like
+
 
 }

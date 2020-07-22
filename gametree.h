@@ -161,6 +161,11 @@ namespace gt {
       std::map<std::string,GTindex_t> character_to_index;
       std::map<std::string,GTindex_t> action_to_index;
       std::map<std::string,GTindex_t> direction_to_index;
+      // and the other way around
+      std::vector<std::string> index_to_character;
+      std::vector<std::string> index_to_action;
+      std::vector<std::string> index_to_direction;
+
 
     public:
       GTSpriteInfo(){}
@@ -191,6 +196,7 @@ namespace gt {
       //data members
       GTSpriteInfo info;
       std::map<GTindex_t, std::map<GTindex_t, std::map<GTindex_t, std::vector<GTSpriteFrame>>>> frames;
+      std::vector<uint8_t> image_data;      // png-formatted (i.e., written to disk would be a full .png file) image data of sprite sheet
 
     public:
       GTSprite() {}

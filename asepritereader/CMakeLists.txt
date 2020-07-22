@@ -18,7 +18,7 @@ set_property(TARGET asepritereader PROPERTY CXX_STANDARD 11)
 #add_subdirectory("json")
 target_include_directories(asepritereader PUBLIC "json/single_include") 
 
-add_executable(aseprite2gt aseprite2gt.cpp)
+add_executable(aseprite2gt aseprite2gt.cpp lodepng.cpp)
 # for conversion to gametree - THIS IS GROSS
 target_include_directories(aseprite2gt PUBLIC "..")
 target_link_directories(aseprite2gt PUBLIC "..")
@@ -26,6 +26,5 @@ target_link_directories(aseprite2gt PUBLIC "..")
 target_include_directories(aseprite2gt PUBLIC "../tiledreader") 
 # for json emitting
 target_include_directories(aseprite2gt PUBLIC "json/single_include") 
-# do we need? Prolly going to put png in json
 target_include_directories(aseprite2gt PUBLIC "../cppcodec")
 target_link_libraries(aseprite2gt asepritereader gametree)
