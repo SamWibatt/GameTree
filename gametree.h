@@ -149,6 +149,11 @@ namespace gt {
         dur = dr;
       }
       virtual ~GTSpriteFrame() {}
+
+      public:
+        // json i/o
+        virtual bool add_to_json(json& j);
+        virtual bool get_from_json(json& jt);
   };
 
   //There needs to be a class GTthat's like a "directory" for these
@@ -188,6 +193,10 @@ namespace gt {
         if(it == direction_to_index.end()) return -1;
         return it->second;
       }
+
+      // json i/o
+      virtual bool add_to_json(json& j);
+      virtual bool get_from_json(json& jt);
   };
 
   //platform-independent Sprite object that plat-spec ones will subclass
@@ -201,6 +210,10 @@ namespace gt {
     public:
       GTSprite() {}
       virtual ~GTSprite() {}
+
+      // json i/o
+      virtual bool add_to_json(json& j);
+      virtual bool get_from_json(json& jt);
   };
 
 

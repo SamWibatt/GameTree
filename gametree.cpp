@@ -117,6 +117,33 @@ namespace gt {
     }
   }
 
+  // SPRITE =========================================================================================
+
+  bool GTSpriteFrame::add_to_json(json& j) {
+    return false;     //TEMP
+  }
+
+  bool GTSpriteFrame::get_from_json(json& jt) {
+    return false;     //TEMP
+  }
+
+  bool GTSpriteInfo::add_to_json(json& j) {
+    return false;     //TEMP
+  }
+
+  bool GTSpriteInfo::get_from_json(json& jt) {
+    return false;     //TEMP
+  }
+
+  bool GTSprite::add_to_json(json& j) {
+    return false;     //TEMP
+  }
+
+  bool GTSprite::get_from_json(json& jt) {
+    return false;     //TEMP
+  }
+
+
   // ACTOR ==========================================================================================
   GTActor::GTActor() {
     // id should be filled in by Entity ctor

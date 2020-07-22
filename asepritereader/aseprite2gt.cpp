@@ -245,6 +245,13 @@ std::shared_ptr<GTSprite> aseprite_to_gt_sprite(std::shared_ptr<AseSprite> psp, 
   free(crop_png_data);
 
   // and that should be it
+
+  //quick test: write out the png data - yay worky!
+  // std::string temp_png = pngpath + ".crop.png";
+  // printf("- writing debug png %s\n",temp_png.c_str());
+  // FILE *fp = fopen(temp_png.c_str(),"wb");
+  // fwrite(spritely->image_data.data(), 1, spritely->image_data.size(), fp);
+  // fclose(fp);
   
   return spritely;
 }
