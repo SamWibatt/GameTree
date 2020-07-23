@@ -187,7 +187,7 @@ namespace gt {
     return true;
   }
 
-  bool GTSprite::add_to_json(json& j) {
+  bool GTSpriteBank::add_to_json(json& j) {
     // GTSpriteInfo info;
     // std::map<GTindex_t, std::map<GTindex_t, std::map<GTindex_t, std::vector<GTSpriteFrame>>>> frames;
     // std::vector<uint8_t> image_data;      // png-formatted (i.e., written to disk would be a full .png file) image data of sprite sheet
@@ -222,7 +222,7 @@ namespace gt {
     return true;
   }
 
-  bool GTSprite::get_from_json(json& jt) {
+  bool GTSpriteBank::get_from_json(json& jt) {
 
     printf("- Reading sprite info...\n");
     if(info.get_from_json(jt["info"]) == false) {
@@ -261,7 +261,7 @@ namespace gt {
   GTActor::GTActor() {
     // id should be filled in by Entity ctor
     //printf("Creating actor id %u\n",id);
-    sprite = nullptr;
+    sbank = nullptr;
     current_character = -1;
     current_action = -1;
     current_direction = -1;
@@ -275,8 +275,8 @@ namespace gt {
 
   // MIGHT ALSO PASS IN WHETHER THE ANIMATION REPEATS
   GTres_t GTActor::set_action(std::string actname) {
-    if(sprite == nullptr) return -1;
-    GTindex_t actind = sprite->info.get_index_for_action(actname);
+    if(sbank == nullptr) return -1;
+    GTindex_t actind = sbank->info.get_index_for_action(actname);
     if(actind == -1) return -1;
     if(actind == current_action) return 1;   //already in this action!
     current_action = actind;
@@ -287,8 +287,8 @@ namespace gt {
 
   // MIGHT ALSO PASS IN WHETHER THE ANIMATION REPEATS
   GTres_t GTActor::set_direction(std::string dirname) {
-    if(sprite == nullptr) return -1;
-    GTindex_t dirind = sprite->info.get_index_for_direction(dirname);
+    if(sbank == nullptr) return -1;
+    GTindex_t dirind = sbank->info.get_index_for_direction(dirname);
     if(dirind == -1) return -1;
     if(dirind == current_direction) return 1;   //already in this direction!
     current_direction = dirind;
@@ -340,7 +340,7 @@ namespace gt {
     if(fram == nullptr) return -1;
 
     current_frame = 
-      (current_frame + 1) % sprite->frames[current_character][current_action][current_direction].size();
+      (current_frame + 1) % sbank->frames[current_character][current_action][current_direction].size();
 
     //return number of millis until next frame, or 0 if the animation is done
     // CURRENTLY ALWAYS CYCLES put in a flag about this - in aseprite or elsewhere

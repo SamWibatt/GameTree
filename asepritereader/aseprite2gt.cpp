@@ -8,9 +8,9 @@
 using namespace gt;
 using namespace asepreader;
 
-std::shared_ptr<GTSprite> aseprite_to_gt_sprite(std::shared_ptr<AseSprite> psp, std::string input_dir, std::string output_dir) {
+std::shared_ptr<GTSpriteBank> aseprite_to_gt_sprite(std::shared_ptr<AseSprite> psp, std::string input_dir, std::string output_dir) {
 
-  std::shared_ptr<GTSprite> spritely = std::shared_ptr<GTSprite>(new GTSprite());
+  std::shared_ptr<GTSpriteBank> spritely = std::shared_ptr<GTSpriteBank>(new GTSpriteBank());
 
   //aseprite2sfml has much of what I need
   /* what we're getting as input
@@ -321,7 +321,7 @@ int main(int argc, char *argv[]) {
 
   printf("About to convert to GTSprite...\n");
 
-  std::shared_ptr<GTSprite> pgts = aseprite_to_gt_sprite(pts, input_dir, output_dir);
+  std::shared_ptr<GTSpriteBank> pgts = aseprite_to_gt_sprite(pts, input_dir, output_dir);
 
   //now write it out!
   // MAKE THIS NON-UNIX-CHAUVINIST
@@ -347,7 +347,7 @@ int main(int argc, char *argv[]) {
   // read the json back in 
   if(verify_json) {
     printf("VERIFYING: reading json file back in\n");
-    GTSprite resprite;
+    GTSpriteBank resprite;
     std::ifstream ifs(json_filename);
     json jresprite;
     ifs >> jresprite;

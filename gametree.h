@@ -199,12 +199,12 @@ namespace gt {
       virtual bool get_from_json(json& jt);
   };
 
-  //platform-independent Sprite object that plat-spec ones will subclass
-  class GTSprite {
+  //platform-independent SpriteBank object that plat-spec ones will subclass
+  class GTSpriteBank {
     public:
       //data members
       GTSpriteInfo info;
-      //... why can't this just be a vector of vector of vectors?
+      //... why can't this just be a vector of vector of vectors? NOW IT IS!!!!!!!!!!!!!!
       // we went to the trouble of making the keys into numbers, and they're contiguous.
       //std::map<GTindex_t, std::map<GTindex_t, std::map<GTindex_t, std::vector<GTSpriteFrame>>>> frames;
       // character  |  action |   direction | frame #
@@ -212,8 +212,8 @@ namespace gt {
       std::vector<uint8_t> image_data;      // png-formatted (i.e., written to disk would be a full .png file) image data of sprite sheet
 
     public:
-      GTSprite() {}
-      virtual ~GTSprite() {}
+      GTSpriteBank() {}
+      virtual ~GTSpriteBank() {}
 
       // json i/o
       virtual bool add_to_json(json& j);
@@ -381,7 +381,7 @@ namespace gt {
   class GTActor : public GTEventEntity {
     public:
       //data members
-      std::shared_ptr<GTSprite> sprite;
+      std::shared_ptr<GTSpriteBank> sbank;
       GTindex_t current_character;
       GTindex_t current_direction;
       GTindex_t current_action;
@@ -394,29 +394,20 @@ namespace gt {
       GTActor();
       virtual ~GTActor();
 
-      const GTSpriteFrame *get_current_spriteframe() {
+        GTSpriteFrame *get_current_spriteframe() {
         //sanity check: should we do all this for every frame? on a "real computer" it's no problem
         //once per sprite per frame advance is not terrible overhead, but damn
-        // if(sprite == nullptr || 
-        //   current_character == -1 || sprite->frames.find(current_character) == sprite->frames.end() ||
-        //   current_action == -1 || sprite->frames[current_character].find(current_action) == sprite->frames[current_character].end() ||
-        //   current_direction == -1 || sprite->frames[current_character][current_action].find(current_direction) == sprite->frames[current_character][current_action].end() ||
-        //   current_frame == -1 || current_frame >= sprite->frames[current_character][current_action][current_direction].size()) {
-        //   return nullptr;
-        // }
-
-        // frames is now a quadruple-nested vector!
-        if(sprite == nullptr || 
-          current_character == -1 || current_character >= sprite->frames.size() ||
-          current_action == -1 || current_action >= sprite->frames[current_character].size() ||
-          current_direction == -1 || current_direction >= sprite->frames[current_character][current_action].size() ||
-          current_frame == -1 || current_frame >= sprite->frames[current_character][current_action][current_direction].size()) {
+        if(sbank == nullptr || 
+          current_character == -1 || current_character >= sbank->frames.size() ||
+          current_action == -1 || current_action >= sbank->frames[current_character].size() ||
+          current_direction == -1 || current_direction >= sbank->frames[current_character][current_action].size() ||
+          current_frame == -1 || current_frame >= sbank->frames[current_character][current_action][current_direction].size()) {
           return nullptr;
         }
 
 
-        //was return std::shared_ptr<GTSpriteFrame>(&(sprite->frames[current_character][current_action][current_direction][current_frame]));
-        return &(sprite->frames[current_character][current_action][current_direction][current_frame]);
+        //was return std::shared_ptr<GTSpriteFrame>(&(sbank->frames[current_character][current_action][current_direction][current_frame]));
+        return &(sbank->frames[current_character][current_action][current_direction][current_frame]);
       }
 
     public:

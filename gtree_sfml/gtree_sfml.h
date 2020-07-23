@@ -13,18 +13,36 @@ using namespace sf;
 
 namespace gtree_sfml {
 
-  //SFMLSprite ==================================================================================
-  class SFMLSprite : public GTSprite {
+  //SFMLActor ===================================================================================
+
+  // assume a typical actor is a sprite - can use other drawables to derive from otherwise
+  // OR because Sprite's draw is private, make this Transformable and Drawable and have a Sprite member :|
+  class SFMLActor : public GTActor, public Transformable, public Drawable {
+    public:
+      Sprite spr;
+
+    public:
+      void draw(sf::RenderTarget &target, sf::RenderStates states);
+
+  };
+
+  //SFMLSpriteBank ==============================================================================
+
+  class SFMLSpriteBank : public GTSpriteBank {
     public:
       //data members
       sf::Texture spritesheet;
 
     public:
-      SFMLSprite(){}
-      virtual ~SFMLSprite() {}
+      SFMLSpriteBank(){}
+      virtual ~SFMLSpriteBank() {}
 
     public:
       //member functions
+      // set_frame sets up the texture rectangle / offset to draw. 
+      // Recall that Actor stores the state, not the SpriteBank; multiple Actors can use the same SpriteBank.
+      // in that case, this shouldn't be drawable - it's the Actor that is
+      virtual bool get_from_json(json& jt) override;
   };
 
 
