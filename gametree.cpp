@@ -231,37 +231,29 @@ namespace gt {
     }
 
     // how do we get the frames back out? TEST THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // printf("- Reading sprite frames...\n");
-    // frames.clear();
-    // GTindex_t chi, aci, dii;
-    // for(auto ch : jt["frames"].get<std::map<std::string, json>>()) {
-    //   chi = std::stoi(ch.first);
-    //   printf("    - character %d\n",chi);
-    //   if(frames.count(chi) == 0) frames[chi] = std::map<GTindex_t, std::map<GTindex_t, std::vector<GTSpriteFrame>>>();
-    //   for(auto ac : ch.second.get<std::map<std::string,json>>()) {
-    //     aci = std::stoi(ac.first);
-    //     printf("        - action %d\n",aci);
-    //     if(frames[chi].count(aci) == 0) frames[chi][aci] = std::map<GTindex_t, std::vector<GTSpriteFrame>>();
-    //     for(auto di : ac.second.get<std::map<std::string,json>>()) {
-    //       dii = std::stoi(di.first);
-    //       printf("            - direction %d\n",dii);
-    //       if(frames[chi][aci].count(dii) == 0) frames[chi][aci][dii] = std::vector<GTSpriteFrame>();
-    //       for(auto sfi = 0; sfi < di.second.size(); sfi++) {
-    //         printf("                - frame %d\n",sfi);
-    //         // ********************************* BREAKING HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //         if(frames[chi][aci][dii][sfi].get_from_json(di.second[sfi]) == false) {
-    //           printf("*** ERROR reading json for GTSprite.frames\n");
-    //           return false;
-    //         }
-    //       }
-    //     }
-    //   }
-    // }
+    printf("- Reading sprite frames...\n");
+    frames.resize(jt["frames"].size());
+    for(auto chi = 0; chi < jt["frames"].size(); chi++) {
+      frames[chi].resize(jt["frames"][chi].size());
+      for(auto aci = 0; aci < frames[chi].size(); aci++) {
+        frames[chi][aci].resize(jt["frames"][chi][aci].size());
+        for(auto dii = 0; dii < frames[chi][aci].size(); dii++) {
+          frames[chi][aci][dii].resize(jt["frames"][chi][aci][dii].size());
+          for(auto sfi = 0; sfi < frames[chi][aci][dii].size(); sfi++) {
+            if(frames[chi][aci][dii][sfi].get_from_json(jt["frames"][chi][aci][dii][sfi]) == false) {
+              printf("*** ERROR reading json for GTSprite.frames\n");
+              return false;
+            }
+          }
+        }
+      }
+    }
 
     // and finally, get the base64_url-encoded string of image_data decoded into image_data
+    printf("- Decoding image data\n");
     image_data = base64::decode(std::string(jt["image_data"]));
 
-    return false;     //TEMP
+    return true;
   }
 
 
