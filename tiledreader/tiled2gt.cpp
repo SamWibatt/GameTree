@@ -174,6 +174,9 @@ std::shared_ptr<GTMapLayer> tiled_layer_to_gt_layer(std::shared_ptr<TiledMap> pt
     return nullptr;
   }
 
+  //set name
+  plyr->name = ptl->layer_name;
+
   //read image - OPTIONAL FOR OBJECT LAYERS
   //plyr->image_data is just the entire contents of the png from ptl
   //does ptl record that? no, but see tiledreader do_crunch

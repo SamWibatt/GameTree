@@ -95,16 +95,33 @@ int main(int argc, char *argv[])
     //read in the map we want to load as a json string and 
     std::string map_filename = "demo_assets/outputs/DemoMap.tmx.json";
 
-    //hey error trap
-    std::ifstream ifs(map_filename);
-    json jmap;
-    ifs >> jmap;
-    ifs.close();
-
-    if(!the_map.get_from_json(jmap)) {
-        printf("*** ERROR: failed to load SFMLMap from json file \"%s\"\n",map_filename.c_str());
-        return 1;
+    if(!the_map.load_from_json_file(map_filename)) {
+        printf("Failed loading map %s\n",map_filename.c_str());
+        printf("(are you running from GameTree dir?)\n");
+        exit(1);
     }
+
+    // snag the Samurai lady sprite-bank
+    std::shared_ptr<SFMLSpriteBank> samurai_sbank = std::shared_ptr<SFMLSpriteBank>(new SFMLSpriteBank());
+    SFMLActor samurai;
+    std::string sbank_filename = "demo_assets/outputs/Samurai.json_a2gt_out.json";
+
+    if(!samurai_sbank->load_from_json_file(sbank_filename)) {
+        printf("Failed loading sprite bank %s\n",sbank_filename.c_str());
+        printf("(are you running from GameTree dir?)\n");
+        exit(1);
+    }
+
+    samurai.set_sprite_bank(samurai_sbank);
+
+    //init samurai frame & such
+    samurai.current_character = 0;
+    samurai.current_action = 0;
+    samurai.current_direction = 2;
+    samurai.current_frame = 0;
+    
+
+    samurai.setPosition(100.0,100.0);
 
     //ok! now let's do a quick thing to add the map's layers to our scene objects and see what we get
     // then I'll just make layers drawable/transformable and that's what it takes
@@ -115,11 +132,42 @@ int main(int argc, char *argv[])
     // - that could be global_transform
     float layerPosX = 0.0, layerPosY = 0.0;
     float mapWidth = 0.0, mapHeight = 0.0;
-    for(auto lyr: the_map.slayers) {    //try kludge with different base class
-      lyr->setOrigin(0.0,0.0);              // WORK THIS OUT AT SOME POINT for now just draw from ul corner
-      lyr->setPosition(layerPosX,layerPosY);            // same
-      scene_objects.push_back(lyr.get());
+    // old way just adding them in order they're found
+    // for(auto lyr: the_map.slayers) {    //try kludge with different base class
+    //   lyr->setOrigin(0.0,0.0);              // WORK THIS OUT AT SOME POINT for now just draw from ul corner
+    //   lyr->setPosition(layerPosX,layerPosY);            // same
+    //   scene_objects.push_back(lyr.get());
+    // }
+
+    // WITH THE ADDITION OF SPRITES let's do this a little different
+    // add the map layers in order by names: Background, BGOverlay, Gettables, <sprites go here>, Front
+    // the "InteractionObject" layer should be handled differently... Should it be on the display list at all? Not yet
+    std::shared_ptr<SFMLMapLayer> lyr;
+    for(std::string nam : {"Background", "BGOverlay", "Gettables"}) {
+        lyr = the_map.get_sfml_layer_by_name(nam);
+        if(lyr != nullptr) {
+            lyr->setOrigin(0.0,0.0);              // WORK THIS OUT AT SOME POINT for now just draw from ul corner
+            lyr->setPosition(layerPosX,layerPosY);            // same
+            scene_objects.push_back(lyr.get());
+        } else {
+            printf("*** ERROR: couldn't find layer \"%s\"\n",nam.c_str());
+        }
     }
+
+    // sprites go here!
+    scene_objects.push_back(&samurai);
+
+    // then add the front layer
+    std::string nam = "Front";
+    lyr = the_map.get_sfml_layer_by_name(nam);
+    if(lyr != nullptr) {
+        lyr->setOrigin(0.0,0.0);              // WORK THIS OUT AT SOME POINT for now just draw from ul corner
+        lyr->setPosition(layerPosX,layerPosY);            // same
+        scene_objects.push_back(lyr.get());
+    } else {
+        printf("*** ERROR: couldn't find layer \"%s\"\n",nam.c_str());
+    }
+
 
     //let's set layer width and height kludgily from map's first slayer
     mapWidth = the_map.slayers[0]->get_bounding_box().width;

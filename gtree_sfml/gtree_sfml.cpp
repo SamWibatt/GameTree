@@ -6,22 +6,6 @@ namespace gtree_sfml {
 
   //SFMLActor ===================================================================================
 
-  void SFMLActor::draw(sf::RenderTarget &target, sf::RenderStates states) {
-    if(sbank == nullptr) return;
-
-    //but I think I can just set the texture rectangle appropriately and draw it?
-    GTSpriteFrame  *frm = get_current_spriteframe();
-    if(frm == nullptr) return;
-
-    //set texture rectangle and hotspot offset; position is set in our transform, yes?
-    spr.setTextureRect(sf::IntRect(frm->ulx,frm->uly,frm->wid,frm->ht));
-    spr.setOrigin(frm->offx, frm->offy);
-
-    // Do I need to compose states's transform with anything? If I do:
-    sf::RenderStates rs = states;
-    rs.transform = states.transform * getTransform();
-    target.draw(spr,rs);
-  }
 
   //SFMLSpriteBank ==============================================================================
 
@@ -32,7 +16,6 @@ namespace gtree_sfml {
     }
 
     //turn the imagery into a Texture and discard it
-    sf::Texture spritesheet;
     spritesheet.loadFromMemory(image_data.data(), image_data.size());
     image_data.clear();
 

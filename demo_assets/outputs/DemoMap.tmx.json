@@ -6,6 +6,7 @@
             "layer_pixwid": 16,
             "layer_tileht": 32,
             "layer_tilewid": 32,
+            "name": "Background",
             "tile_atlas": [
                 {
                     "ht": 0,
@@ -1690,6 +1691,7 @@
             "layer_pixwid": 16,
             "layer_tileht": 32,
             "layer_tilewid": 32,
+            "name": "BGOverlay",
             "tile_atlas": [
                 {
                     "ht": 0,
@@ -3082,6 +3084,7 @@
         },
         {
             "image_data": "iVBORw0KGgoAAAANSUhEUgAAACAAAAEACAMAAADlf4REAAAAgVBMVEUAAAAAAAD8W1vmIiL_0UWzXw6dGBhwExN5QgzLjxhMLhmbZ0Kptf-zs7P___9sfun1U7reJJudJHEhg9kma6gbRWzZ2dklJSX_9UJbWA3g1RqEhISPiRTgqGHxwIWaWtN-MsJXM3kzHEr_gE_kUhnw1LSiPxd7LxFKSkrKlfpmZmaQbzF7AAAAAXRSTlMAQObYZgAAA3BJREFUeAHtldFy2jwQhVlixVFrmbQ0EiCM5ZQfx7z_A_5HAjq90K4yMEk7HU5s6WI_r1bagzJ7r4gK4fmDhFClHmtVsQQ9af0UX44gpZMUC-iKoErzAP02fRBQqkGpJ0gp8SCEY0hHHTX7oyrWQF--fv0ibiIBPEGNaVvTSMCiwSMA1LRtI5oyAbPrAWqa5-eGJ1L8-RtL0KL5FvW9WeQJWsRoFAt8P-t64JdIavZtprsb5mIIAGKRMpDiAFiiDOAUYnzBAyAQZ4GLZT70jrob5tLO5VI2zHK5_CEZ5kfUi2AYRCHBMDH88rK4GvgUw6QccryqKrEX-L-ttVQkPicR0Co-0hq6UoUqC3G5gvcAVASqG5dAJ-RdYIUbM5Tb_Z6v-RyEW5TOY_5z61pLtnU2m4RWq7W11uBdr1Y5AJePMdZZjNlF4tpt64xLc34JCGlcnHPAJipW4DBLwIYDaA1579duvc6eFW0hbAHANn9SF6DbFYBdCeg6GdiuuRp-1-w6FQ2TekD5TqQPN261oc3KbfKGmc9rNGGLt57P8-3GNtEpjPl2Jz-4bbJDFphHIY2Lcw54iIoVOMwS8MABVEPwTO3qOm-YRwhbAPCYP6kL0O0KwK4EdJ0MPNZcDZ9hmL7v6TzmPw-uDxR6F_KGaVsfQhjw-vz90PfDMAQXMGYXiWv3vRtcmtkrCGkcdwXh7rA2VuAwS4DlAMLt4l9fX73zPm8Y_LINtgDA5E_qAnS7ArArAV0nA8ZzNdxsmOJ39HMvI_TT_XcQCKI9JBBYAfH9KBGHw_5wGAVXezuO-9Fnm30h_HgY34RVQByEKkC8FQjyb2TFOlEf2dF7vs5zGvHQyZe6Zkt2uPqCeY8KfqTTL5w_pXaaEMeQJwiXQzvhDxMx8Qmx05j7-U-hDwFLBMxTDghTKiEWMYXsGsMwhaEdwjQMTJWIhRbvwO4Tt-gU-Pg5xyBaYZjEeNxL0QuzP6vS9UVVlHBKlda60jwRgfjwgIpxzRdCWmmlhEJSBqmQlEEq5JThVIjiM6RClL4qAwglZjj1QsrwK40S4uWWfrD-GkfxhyS34XM8efKDuJV_ww9FFQ1z-o8lxI0xreGJCMSHB44xbo48YI7meDyaUgbBMCmDsJWUQdwKoQJ5K3H10lZSmqMQ__sNc9ddd911lf4H00NZfRr4vB4AAAAASUVORK5CYII=",
+            "name": "Gettables",
             "tile_atlas": [
                 {
                     "ht": 0,
@@ -3269,6 +3272,7 @@
             "layer_pixwid": 16,
             "layer_tileht": 32,
             "layer_tilewid": 32,
+            "name": "Front",
             "tile_atlas": [
                 {
                     "ht": 0,
@@ -4552,6 +4556,7 @@
             "type": "tiled"
         },
         {
+            "name": "InteractionObject",
             "shapes": [
                 {
                     "bbox_lr": [

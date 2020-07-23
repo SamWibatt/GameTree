@@ -15,6 +15,7 @@
 #include <functional>
 //set up include dirs to have json/single_include
 #include "nlohmann/json.hpp"
+#include <fstream>
 
 using json = nlohmann::json;
 
@@ -218,6 +219,24 @@ namespace gt {
       // json i/o
       virtual bool add_to_json(json& j);
       virtual bool get_from_json(json& jt);
+
+      virtual bool load_from_json_file(std::string sbank_filename) {
+        std::ifstream ifs(sbank_filename);
+        if(ifs.fail()) {
+            printf("*** ERROR: couldn't open %s\n",sbank_filename.c_str());
+            return false;
+        }
+        json jmap;
+        ifs >> jmap;
+        ifs.close();
+
+        if(!get_from_json(jmap)) {
+            printf("*** ERROR: failed to load SpriteBank from json file \"%s\"\n",sbank_filename.c_str());
+            return false;
+        }
+        return true;
+      }
+
   };
 
 
@@ -394,7 +413,7 @@ namespace gt {
       GTActor();
       virtual ~GTActor();
 
-        GTSpriteFrame *get_current_spriteframe() {
+        GTSpriteFrame *get_current_spriteframe() const {
         //sanity check: should we do all this for every frame? on a "real computer" it's no problem
         //once per sprite per frame advance is not terrible overhead, but damn
         if(sbank == nullptr || 
@@ -608,6 +627,7 @@ namespace gt {
   class GTMapLayer : public GTEventEntity {
     public:
       //data members
+      std::string name;       //we'll want a way to choose these by name e.g. for interleaving sprites in the scene graph
       //single source of tile imagery - 
       //bytes that are just a png file in memory. May later have other formats
       std::vector<uint8_t> image_data;
@@ -618,6 +638,7 @@ namespace gt {
 
     public:
       void init() {
+        name.clear();
         image_data.clear();
         tile_atlas.clear();
         //add a dummy tile for tile 0, which should never get rendered
@@ -711,6 +732,12 @@ namespace gt {
       // do we need the notion of a tileset?
       // each layer has a tile sheet and atlas, yes?
       std::vector<std::shared_ptr<GTMapLayer>> layers;
+      std::shared_ptr<GTMapLayer> get_layer_by_name(std::string nm) {
+        for(auto plyr : layers) {
+          if(plyr->name == nm) return plyr;       //dumb search but we're not likely to have lots of these
+        }
+        return nullptr; //didn't find it
+      }
 
     public:
       GTMap();
@@ -719,6 +746,24 @@ namespace gt {
     public:
       virtual bool add_to_json(json& j);
       virtual bool get_from_json(json& jt);
+
+      // this worked for SFMLMap too :P
+      virtual bool load_from_json_file(std::string map_filename) {
+        std::ifstream ifs(map_filename);
+        if(ifs.fail()) {
+            printf("*** ERROR: couldn't open %s\n",map_filename.c_str());
+            return false;
+        }
+        json jmap;
+        ifs >> jmap;
+        ifs.close();
+
+        if(!get_from_json(jmap)) {
+            printf("*** ERROR: failed to load SFMLMap from json file \"%s\"\n",map_filename.c_str());
+            return false;
+        }
+        return true;
+      }
   };
 
 }

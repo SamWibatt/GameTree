@@ -13,18 +13,6 @@ using namespace sf;
 
 namespace gtree_sfml {
 
-  //SFMLActor ===================================================================================
-
-  // assume a typical actor is a sprite - can use other drawables to derive from otherwise
-  // OR because Sprite's draw is private, make this Transformable and Drawable and have a Sprite member :|
-  class SFMLActor : public GTActor, public Transformable, public Drawable {
-    public:
-      Sprite spr;
-
-    public:
-      void draw(sf::RenderTarget &target, sf::RenderStates states);
-
-  };
 
   //SFMLSpriteBank ==============================================================================
 
@@ -45,6 +33,45 @@ namespace gtree_sfml {
       virtual bool get_from_json(json& jt) override;
   };
 
+  //SFMLActor ===================================================================================
+
+  // assume a typical actor is a sprite - can use other drawables to derive from otherwise
+  // OR because Sprite's draw is private, make this Transformable and Drawable and have a Sprite member :|
+  class SFMLActor : public GTActor, public Transformable, public Drawable {
+    public:
+      std::shared_ptr<Sprite> spr;
+
+    public:
+      SFMLActor() { spr = std::shared_ptr<Sprite>(new Sprite()); }
+      virtual ~SFMLActor() {}
+
+    public:
+      virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const {
+        if(sbank == nullptr) return;
+
+        //but I think I can just set the texture rectangle appropriately and draw it?
+        GTSpriteFrame  *frm = get_current_spriteframe();
+        if(frm == nullptr) return;
+
+        //set texture rectangle and hotspot offset; position is set in our transform, yes?
+        // drat, gets object-sliced but shouldn't do here anyway
+        //spr->setTexture(sbank->spritesheet);
+        spr->setTextureRect(sf::IntRect(frm->ulx,frm->uly,frm->wid,frm->ht));
+        spr->setOrigin(frm->offx, frm->offy);
+
+        // Do I need to compose states's transform with anything? If I do:
+        sf::RenderStates rs = states;
+        rs.transform = states.transform * getTransform();
+        target.draw(*spr,rs);
+      }
+
+      //if you just assign sprite bank and try to set the texture anywhere else, it gets all object-sliced :P
+      virtual void set_sprite_bank(std::shared_ptr<SFMLSpriteBank> sb) {
+        this->sbank = sb;
+        spr->setTexture(sb->spritesheet);
+      };
+
+  };
 
   //SFMLMap =====================================================================================
 
@@ -131,6 +158,16 @@ namespace gtree_sfml {
     public:
       //data members
       std::vector<std::shared_ptr<SFMLMapLayer>> slayers;   //...not happy with this but layers are getting sliced
+      // and similar anti-slicer
+      std::shared_ptr<SFMLMapLayer> get_sfml_layer_by_name(std::string nm) {
+        int j = 0;
+        for(auto plyr : layers) {
+          if(plyr->name == nm) return slayers[j];       //dumb search but we're not likely to have lots of these
+          j++;
+        }
+        return nullptr; //didn't find it
+      }
+
 
     public:
       SFMLMap(){}

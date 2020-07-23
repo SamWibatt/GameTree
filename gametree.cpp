@@ -360,6 +360,8 @@ namespace gt {
     // base class handles image_data and tile_atlas
     // write image data in base64_url - https://github.com/tplgy/cppcodec#base64
 
+    j["name"] = name;
+
     //OBJECT LAYERS MAY NOT HAVE IMAGE DATA! don't emit an image_data or tile_atlas if they don't!
     if(!image_data.empty()) {
       std::string encoded_png = base64::encode(image_data);
@@ -382,6 +384,9 @@ namespace gt {
       //fprintf(stderr,"+++ WARNING: map layer has no image_data or tile_atlas - ok if it's an object layer with no imagery\n");
       return true;
     }
+
+    // get the name
+    name = jt["name"];
 
     // get the .png data
     image_data = base64::decode(std::string(jt["image_data"]));
