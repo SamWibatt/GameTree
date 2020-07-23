@@ -274,7 +274,7 @@ int main(int argc, char *argv[]) {
   std::string output_dir;
   bool emit_header = false;
   std::string header_output_file;
-  bool verify_json = true;
+  bool verify_json = false;
 
   app.add_option("-i,--input", aseprite_input_file, "Aseprite file (.json)")
     ->required()
@@ -328,7 +328,7 @@ int main(int argc, char *argv[]) {
   pos=aseprite_input_file.find_last_of('/');
   std::string spritename = aseprite_input_file.substr(pos+1,aseprite_input_file.size()-1);
 
-  std::string json_filename = output_dir + spritename + ".json";
+  std::string json_filename = output_dir + spritename + "_a2gt_out.json";
   printf("Writing json file %s\n",json_filename.c_str());
   json jsprit;
   pgts->add_to_json(jsprit);
