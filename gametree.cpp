@@ -120,26 +120,146 @@ namespace gt {
   // SPRITE =========================================================================================
 
   bool GTSpriteFrame::add_to_json(json& j) {
-    return false;     //TEMP
+    json subj;
+    // GTcoord_t ulx, uly;         //texture coordinates, pixels, within sprite sheet texture
+    // GTcoord_t wid, ht;          //extents of rectangle within sprite sheet texture
+    // GTcoord_t offx, offy;     //offsets to give to sprite.setOrigin(sf::Vector2f(offx, offy));
+    // GTdur_t dur;              //duration, millis
+    
+    subj["ulx"] = ulx;
+    subj["uly"] = uly;
+    subj["wid"] = wid;
+    subj["ht"] = ht;
+    subj["offx"] = offx;
+    subj["offy"] = offy;
+    subj["dur"] = dur;
+
+    j.push_back(subj);
+
+    return true;
   }
 
   bool GTSpriteFrame::get_from_json(json& jt) {
-    return false;     //TEMP
+    if(!jt.contains("dur") || !jt.contains("ulx") || !jt.contains("uly") || !jt.contains("wid") || !jt.contains("ht") ||
+        !jt.contains("offx") || !jt.contains("offy")) {
+      fprintf(stderr,"*** ERROR: GTSpriteFrame object requires all of dur, ulx, uly, wid, ht, offx, offy\n");
+      return false;
+    }
+
+    ulx = jt["ulx"];
+    uly = jt["uly"];
+    wid = jt["wid"];
+    ht = jt["ht"];
+    offx = jt["offx"];
+    offy = jt["offy"];
+    dur = jt["dur"];
+
+    return true;
   }
 
   bool GTSpriteInfo::add_to_json(json& j) {
-    return false;     //TEMP
+    j["character_to_index"] = character_to_index;
+    j["action_to_index"] = action_to_index;
+    j["direction_to_index"] = direction_to_index;
+
+    j["index_to_character"] = index_to_character;
+    j["index_to_action"] = index_to_action;
+    j["index_to_direction"] = index_to_direction;
+
+    return true;
   }
 
   bool GTSpriteInfo::get_from_json(json& jt) {
-    return false;     //TEMP
+    if(!jt.contains("character_to_index") || !jt.contains("action_to_index") || !jt.contains("direction_to_index") || 
+        !jt.contains("index_to_character") || !jt.contains("index_to_action") || !jt.contains("index_to_direction")) {
+      fprintf(stderr,"*** ERROR: GTSpriteInfo object requires all of character_to_index, action_to_index, direction_to_index, index_to_character, index_to_action, and index_to_direction\n");
+      return false;
+    }
+
+    character_to_index = jt["character_to_index"].get<std::map<std::string,GTindex_t>>();
+    action_to_index = jt["action_to_index"].get<std::map<std::string,GTindex_t>>();
+    direction_to_index = jt["direction_to_index"].get<std::map<std::string,GTindex_t>>();
+
+    index_to_character = jt["index_to_character"].get<std::vector<std::string>>();
+    index_to_action = jt["index_to_action"].get<std::vector<std::string>>();
+    index_to_direction = jt["index_to_direction"].get<std::vector<std::string>>();
+
+    return true;
   }
 
   bool GTSprite::add_to_json(json& j) {
-    return false;     //TEMP
+    // GTSpriteInfo info;
+    // std::map<GTindex_t, std::map<GTindex_t, std::map<GTindex_t, std::vector<GTSpriteFrame>>>> frames;
+    // std::vector<uint8_t> image_data;      // png-formatted (i.e., written to disk would be a full .png file) image data of sprite sheet
+    if(info.add_to_json(j["info"]) == false) {
+      printf("*** ERROR writing json for GTSprite.info\n");
+      return false;
+    }
+
+    //eep frames - how to do this? loopity loop loop?
+    // wait, this isn't quite right. this is using indices, not keys.
+    //for(auto ch = 0; ch < frames.size(); ch++) {
+    // instead it's simpler
+    for(auto ch : frames) {   
+      for(auto ac : ch.second) {
+        for(auto di : ac.second) {
+          for(auto sf : di.second) {
+            // try forcing the numbers to be strings - otherwise they're interpreted as vector indices
+            if(sf.add_to_json(j["frames"][std::to_string(ch.first)][std::to_string(ac.first)][std::to_string(di.first)]) == false) {
+              printf("*** ERROR writing json for GTSprite.frames\n");
+              return false;
+            }
+          }
+        }
+      }
+    }
+
+    //then write out base64_url - encoded png imagery of sprite sheet
+    std::string encoded_png = base64::encode(image_data);
+    j["image_data"] = encoded_png;
+
+    return true;
   }
 
   bool GTSprite::get_from_json(json& jt) {
+
+    printf("- Reading sprite info...\n");
+    if(info.get_from_json(jt["info"]) == false) {
+      printf("*** ERROR reading json for GTSprite.info\n");
+      return false;
+    }
+
+    // how do we get the frames back out? TEST THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    printf("- Reading sprite frames...\n");
+    frames.clear();
+    GTindex_t chi, aci, dii;
+    for(auto ch : jt["frames"].get<std::map<std::string, json>>()) {
+      chi = std::stoi(ch.first);
+      printf("    - character %d\n",chi);
+      if(frames.count(chi) == 0) frames[chi] = std::map<GTindex_t, std::map<GTindex_t, std::vector<GTSpriteFrame>>>();
+      for(auto ac : ch.second.get<std::map<std::string,json>>()) {
+        aci = std::stoi(ac.first);
+        printf("        - action %d\n",aci);
+        if(frames[chi].count(aci) == 0) frames[chi][aci] = std::map<GTindex_t, std::vector<GTSpriteFrame>>();
+        for(auto di : ac.second.get<std::map<std::string,json>>()) {
+          dii = std::stoi(di.first);
+          printf("            - direction %d\n",dii);
+          if(frames[chi][aci].count(dii) == 0) frames[chi][aci][dii] = std::vector<GTSpriteFrame>();
+          for(auto sfi = 0; sfi < di.second.size(); sfi++) {
+            printf("                - frame %d\n",sfi);
+            // ********************************* BREAKING HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            if(frames[chi][aci][dii][sfi].get_from_json(di.second[sfi]) == false) {
+              printf("*** ERROR reading json for GTSprite.frames\n");
+              return false;
+            }
+          }
+        }
+      }
+    }
+
+    // and finally, get the base64_url-encoded string of image_data decoded into image_data
+    image_data = base64::decode(std::string(jt["image_data"]));
+
     return false;     //TEMP
   }
 

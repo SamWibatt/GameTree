@@ -1,0 +1,235 @@
+{
+    "frames": {
+        "0": {
+            "0": {
+                "0": [
+                    {
+                        "dur": 100,
+                        "ht": 17,
+                        "offx": 6,
+                        "offy": 17,
+                        "ulx": 29,
+                        "uly": 77,
+                        "wid": 14
+                    }
+                ],
+                "1": [
+                    {
+                        "dur": 100,
+                        "ht": 17,
+                        "offx": 5,
+                        "offy": 17,
+                        "ulx": 45,
+                        "uly": 77,
+                        "wid": 10
+                    }
+                ],
+                "2": [
+                    {
+                        "dur": 100,
+                        "ht": 17,
+                        "offx": 4,
+                        "offy": 17,
+                        "ulx": 17,
+                        "uly": 77,
+                        "wid": 10
+                    }
+                ],
+                "3": [
+                    {
+                        "dur": 100,
+                        "ht": 17,
+                        "offx": 6,
+                        "offy": 17,
+                        "ulx": 1,
+                        "uly": 77,
+                        "wid": 14
+                    }
+                ]
+            },
+            "1": {
+                "0": [
+                    {
+                        "dur": 100,
+                        "ht": 17,
+                        "offx": 6,
+                        "offy": 16,
+                        "ulx": 1,
+                        "uly": 39,
+                        "wid": 13
+                    },
+                    {
+                        "dur": 100,
+                        "ht": 17,
+                        "offx": 6,
+                        "offy": 17,
+                        "ulx": 16,
+                        "uly": 39,
+                        "wid": 14
+                    },
+                    {
+                        "dur": 100,
+                        "ht": 17,
+                        "offx": 5,
+                        "offy": 16,
+                        "ulx": 32,
+                        "uly": 39,
+                        "wid": 13
+                    },
+                    {
+                        "dur": 100,
+                        "ht": 17,
+                        "offx": 6,
+                        "offy": 17,
+                        "ulx": 47,
+                        "uly": 39,
+                        "wid": 14
+                    }
+                ],
+                "1": [
+                    {
+                        "dur": 100,
+                        "ht": 17,
+                        "offx": 5,
+                        "offy": 16,
+                        "ulx": 1,
+                        "uly": 58,
+                        "wid": 11
+                    },
+                    {
+                        "dur": 100,
+                        "ht": 17,
+                        "offx": 5,
+                        "offy": 17,
+                        "ulx": 14,
+                        "uly": 58,
+                        "wid": 10
+                    },
+                    {
+                        "dur": 100,
+                        "ht": 17,
+                        "offx": 5,
+                        "offy": 16,
+                        "ulx": 26,
+                        "uly": 58,
+                        "wid": 10
+                    },
+                    {
+                        "dur": 100,
+                        "ht": 17,
+                        "offx": 5,
+                        "offy": 17,
+                        "ulx": 38,
+                        "uly": 58,
+                        "wid": 10
+                    }
+                ],
+                "2": [
+                    {
+                        "dur": 100,
+                        "ht": 17,
+                        "offx": 5,
+                        "offy": 16,
+                        "ulx": 1,
+                        "uly": 20,
+                        "wid": 11
+                    },
+                    {
+                        "dur": 100,
+                        "ht": 17,
+                        "offx": 4,
+                        "offy": 17,
+                        "ulx": 14,
+                        "uly": 20,
+                        "wid": 10
+                    },
+                    {
+                        "dur": 100,
+                        "ht": 17,
+                        "offx": 4,
+                        "offy": 16,
+                        "ulx": 26,
+                        "uly": 20,
+                        "wid": 10
+                    },
+                    {
+                        "dur": 100,
+                        "ht": 17,
+                        "offx": 4,
+                        "offy": 17,
+                        "ulx": 38,
+                        "uly": 20,
+                        "wid": 10
+                    }
+                ],
+                "3": [
+                    {
+                        "dur": 100,
+                        "ht": 17,
+                        "offx": 6,
+                        "offy": 16,
+                        "ulx": 1,
+                        "uly": 1,
+                        "wid": 13
+                    },
+                    {
+                        "dur": 100,
+                        "ht": 17,
+                        "offx": 6,
+                        "offy": 17,
+                        "ulx": 16,
+                        "uly": 1,
+                        "wid": 14
+                    },
+                    {
+                        "dur": 100,
+                        "ht": 17,
+                        "offx": 5,
+                        "offy": 16,
+                        "ulx": 32,
+                        "uly": 1,
+                        "wid": 13
+                    },
+                    {
+                        "dur": 100,
+                        "ht": 17,
+                        "offx": 6,
+                        "offy": 17,
+                        "ulx": 47,
+                        "uly": 1,
+                        "wid": 14
+                    }
+                ]
+            }
+        }
+    },
+    "image_data": "iVBORw0KGgoAAAANSUhEUgAAAD4AAABfBAMAAABCR2mIAAAAKlBMVEUAAAD_7v9ERERgYGCseyD-9nuxsa9gEAi4OCj2WllKKRjelGL21aT-_v5MEllyAAAAAnRSTlMAAHaTzTgAAATNSURBVHgBrZW_b9tGFMdPaYECnu5stWw0RXaroUiAWnQPiNEAdR0aXZvKMDxWNDhk01DwJHspUOAoI0sQGBI3qwYiQ-JuQNSUDjYkTsk_1PfuB22GQwPUHB7vfb--85345Yfkv64KW3XdOiOMbbhNBnfVUiNTUvEa3G22SPWF77vf7hDdUiODX-WB7-8QthsEfIsR3VIjg78awFUnrAG3NiO6pUZWPte-b3xufHUnlTXuB3yTMDfgvs-IbqmRcb7rcxfmb3DXb8J81VIjg8_WXXcdzwXnw3OqlhoZzyfiWML5Dvrx8A84n2qpkfF8sj8UcL5fRCz_gvOplhoZfEcKGXYIE2EUSkacUEjRoUqGO6lMx1L0ZqQ2E6GcjohuqZEpWVleCnk6I8lMRmK6IFNs5-danp-TlVReHQuYd3UcXh3DOtim5yspdGF6TiqTXjofM1IbT7NZb0RYb5mOJxTk-RLucP5QRh18vvD_8fk6kQjx_LDBDp6fMSeWSg_V34m4w9CH7Uvw_-9VYZ4bw7Klav3VrcP4NSlX62_4XvwrKVfrN4Kj_Z9JuVqfB43nbVKut-tPFr-Tcs3Xd98vNkm5Wn_tIltALEvV-l4vHTFSrtavHnYHEKtStb4zFNCVq_Uns1COIF4YvrvVXCvzy-h4BPHCh1tLb6DqsfWzKLwG7Qark1zn43x9mUBXG2N1Tm_H-f5CyA3GB9aEzPzJzPjWd_oD1GDPIoJ0mfE9XZXqi6dvgEvM24ibLfjxVEuNjPn24hh0Vj2Mz3YwfNhSI6O_dXi2C_qaF7c24a5aamTkC_daPvLlaH8P-aJaamT020d7DeQXhAr5pVpqZOTXy2TxFvjFJ9kE-aVaamSc_-zxuw-4_vvsCa6vWmpk3N938-XfyC94v5FfqqVGVvyazhS_TtNLxS9sqZGRXwd95BoDoEn8fVRLjfxJ_Bp0Fb-64UDxC1tqZMuvRc6v5GN-ZZpfyQ3w69VC8ys713J2l19Juijwazn_iF9RkV9RZPnVhzgxZxj28e-6Q82vroS35B749fDNDxib2G0Vq_UhRvDYHsZnu_VCtT7ECOLzZdzizUI11wOvhZ-_b_b3gnahWh9iFABznrcDv1Dt-i8XF7D-V8kE1rxbrb_97gOvk7XkidsuVOvXsn8u4ExJtr1ZqDm_pzOMTy0dtwo1f7_jLv4m3cHZTqEW-QWPo98pVOuPZW8Gj12E02K1_lREyQwfO4SLOa_SkRnn618LiBU7CVU9WXTMOPez8SnMOVHhOllcdszY-pD-0DKLfQ2pL_Lri1g66HdRgy9lJM34vvjFVl23DoGt_vb0dY4tlToV3orX4G4TXugNAFaOLZU67Vd54Ps79AEHYOXYUql7pL-vAVx1-iAIvNYjiy2VOutz9D8LAFiPLLZU6r7X3zfuB3wT1t9O3ubYUqkz812fuzDDf_b4IseWSp322brrrsOOtn_MRjm2VOrM-UQMYKKfH0xnLMeWSt1P-nyyPxTwi3iDuJNjS6VOzzegqmCocmyp1Gl_OpZCAwt1iy8HUqd8Cyq4S0ZtV2EC4YV-Gl4dhykC66RDLbYwdZnyAVTzpQZW1smxhamb6P_PYEsAKlhR3mJLd9qHDStH4P4NtmD_8pPg9S8jUNupON3BrQAAAABJRU5ErkJggg==",
+    "info": {
+        "action_to_index": {
+            "Idle": 0,
+            "Walk": 1
+        },
+        "character_to_index": {
+            "Samurai": 0
+        },
+        "direction_to_index": {
+            "D": 0,
+            "L": 1,
+            "R": 2,
+            "U": 3
+        },
+        "index_to_action": [
+            "Idle",
+            "Walk"
+        ],
+        "index_to_character": [
+            "Samurai"
+        ],
+        "index_to_direction": [
+            "D",
+            "L",
+            "R",
+            "U"
+        ]
+    }
+}

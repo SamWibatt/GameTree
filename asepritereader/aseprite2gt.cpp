@@ -265,7 +265,7 @@ int main(int argc, char *argv[]) {
   std::string header_output_file;
   bool verify_json = true;
 
-  app.add_option("-i,--input", aseprite_input_file, "Aseprite map file (.json)")
+  app.add_option("-i,--input", aseprite_input_file, "Aseprite file (.json)")
     ->required()
     ->check(CLI::ExistingFile);
 
@@ -301,16 +301,59 @@ int main(int argc, char *argv[]) {
   printf("About to read Aseprite file %s...\n",aseprite_input_file.c_str());
 
   // MAKE THIS NON_UNIX_CHAUVINIST
-  auto const pos=aseprite_input_file.find_last_of('/');
+  auto pos=aseprite_input_file.find_last_of('/');
   std::string input_dir = aseprite_input_file.substr(0,pos);
   if(input_dir.empty()) input_dir = ".";
   input_dir += "/";
 
   std::shared_ptr<AseSprite> pts = ar.read_sprite_file(aseprite_input_file);
 
+  printf("About to convert to GTSprite...\n");
+
   std::shared_ptr<GTSprite> pgts = aseprite_to_gt_sprite(pts, input_dir, output_dir);
 
-  // NOW DO SOMETHING WITH IT! write to json, like
+  //now write it out!
+  // MAKE THIS NON-UNIX-CHAUVINIST
+  pos=aseprite_input_file.find_last_of('/');
+  std::string spritename = aseprite_input_file.substr(pos+1,aseprite_input_file.size()-1);
+
+  std::string json_filename = output_dir + spritename + ".json";
+  printf("Writing json file %s\n",json_filename.c_str());
+  json jsprit;
+  pgts->add_to_json(jsprit);
+  std::ofstream json_outstream(json_filename);
+  //setw(4) does 4 space pretty print
+  json_outstream << std::setw(4) << jsprit << std::endl;
+  //see what it's like without - single giant line
+  //json_outstream << jmap << std::endl;
+
+  if(emit_header) {
+    // EMIT HEADER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  }
+
+
+  //TEST: put a flag on this or just comment out 
+  // read the json back in 
+  if(verify_json) {
+    printf("VERIFYING: reading json file back in\n");
+    GTSprite resprite;
+    std::ifstream ifs(json_filename);
+    json jresprite;
+    ifs >> jresprite;
+    
+    if(resprite.get_from_json(jresprite) == false) {
+      fprintf(stderr,"FAILED to read json file back in\n");
+      exit(1);
+    }
+
+    std::string json_filename2 = json_filename + "2.json";
+    printf("--- successfully read! writing to %s\n",json_filename2.c_str());
+    json outjresprite;
+    resprite.add_to_json(outjresprite);
+    std::ofstream json_outstream2(json_filename2);
+    json_outstream2 << std::setw(4) << outjresprite << std::endl;
+    printf("*** go diff the 2 json files and make sure they're the same\n");
+  }
 
 
 }
