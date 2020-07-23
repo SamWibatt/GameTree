@@ -72,7 +72,7 @@ std::shared_ptr<GTSprite> aseprite_to_gt_sprite(std::shared_ptr<AseSprite> psp, 
       cur_char_ind = spritely->info.character_to_index.size();     // - verify
       spritely->info.character_to_index[ch_it->first] = cur_char_ind;
     }
-    //printf("- Character: %s index %d\n",ch_it->first.c_str(), cur_char_ind);
+    printf("- Character: %s index %d\n",ch_it->first.c_str(), cur_char_ind);
 
     for(auto act_it = ch_it->second.begin(); act_it != ch_it->second.end(); act_it++) {
       if(spritely->info.action_to_index.find(act_it->first) != spritely->info.action_to_index.end()) {
@@ -81,7 +81,7 @@ std::shared_ptr<GTSprite> aseprite_to_gt_sprite(std::shared_ptr<AseSprite> psp, 
         cur_act_ind = spritely->info.action_to_index.size();     // - verify
         spritely->info.action_to_index[act_it->first] = cur_act_ind;
       }
-      //printf("  - Action: %s index %d\n",act_it->first.c_str(),cur_act_ind);
+      printf("  - Action: %s index %d\n",act_it->first.c_str(),cur_act_ind);
 
       for(auto dir_it = act_it->second.begin(); dir_it != act_it->second.end(); dir_it++) {
         if(spritely->info.direction_to_index.find(dir_it->first) != spritely->info.direction_to_index.end()) {
@@ -90,10 +90,10 @@ std::shared_ptr<GTSprite> aseprite_to_gt_sprite(std::shared_ptr<AseSprite> psp, 
           cur_dir_ind = spritely->info.direction_to_index.size();     // - verify
           spritely->info.direction_to_index[dir_it->first] = cur_dir_ind;
         }
-        //printf("    - Direction: %s index %d\n",dir_it->first.c_str(),cur_dir_ind);
+        printf("    - Direction: %s index %d\n",dir_it->first.c_str(),cur_dir_ind);
 
         for(auto fnum = 0; fnum < dir_it->second.size(); fnum++) {
-          //printf("      - Frame: %d\n",fnum);
+          printf("      - Frame: %d\n",fnum);
           auto framely = dir_it->second[fnum];
           //figure out if it nudges the bounding box out. Don't forget to account for pad
           bound_ulx = std::min(bound_ulx, framely->ulx - framely->pad);
@@ -106,7 +106,7 @@ std::shared_ptr<GTSprite> aseprite_to_gt_sprite(std::shared_ptr<AseSprite> psp, 
   }
 
   //traverse again, creating spriteframes
-  //printf("Creating spriteframes...\n");
+  printf("Creating spriteframes...\n");
   // class SFMLSpriteFrame {
   //   public:
   //     //data members
@@ -125,22 +125,32 @@ std::shared_ptr<GTSprite> aseprite_to_gt_sprite(std::shared_ptr<AseSprite> psp, 
   //**********************************************************************************************
   for (auto ch_it = frames->begin(); ch_it != frames->end(); ch_it++) {
     cur_char_ind = spritely->info.character_to_index[ch_it->first];
-    //printf("- Character: %s index %d\n",ch_it->first.c_str(), cur_char_ind);
+    printf("- Character: %s index %d\n",ch_it->first.c_str(), cur_char_ind);
+    if(spritely->frames.size() <= cur_char_ind) 
+      spritely->frames.resize(cur_char_ind + 1);
 
     for(auto act_it = ch_it->second.begin(); act_it != ch_it->second.end(); act_it++) {
       cur_act_ind = spritely->info.action_to_index[act_it->first];
-      //printf("  - Action: %s index %d\n",act_it->first.c_str(),cur_act_ind);
+      printf("  - Action: %s index %d\n",act_it->first.c_str(),cur_act_ind);
+      if(spritely->frames[cur_char_ind].size() <= cur_act_ind) 
+        spritely->frames[cur_char_ind].resize(cur_act_ind + 1);
 
       for(auto dir_it = act_it->second.begin(); dir_it != act_it->second.end(); dir_it++) {
         cur_dir_ind = spritely->info.direction_to_index[dir_it->first];
-        //printf("    - Direction: %s index %d\n",dir_it->first.c_str(),cur_dir_ind);
+        printf("    - Direction: %s index %d\n",dir_it->first.c_str(),cur_dir_ind);
+        if(spritely->frames[cur_char_ind][cur_act_ind].size() <= cur_dir_ind) 
+          spritely->frames[cur_char_ind][cur_act_ind].resize(cur_dir_ind + 1);
 
         for(auto fnum = 0; fnum < dir_it->second.size(); fnum++) {
-          //printf("      - Frame: %d\n",fnum);
+          printf("      - Frame: %d\n",fnum);
           auto framely = dir_it->second[fnum];
 
           //HERE SUBTRACT BBOX ULX OFF OF ALL THE FRAMES' ORIGINAL SHEET COORDS
           //but wait, where does it go?
+          printf("        - about to push\n");
+
+          // THIS IS DUMPING CORE
+
           spritely->frames[cur_char_ind][cur_act_ind][cur_dir_ind].push_back(
             GTSpriteFrame(
               framely->ulx - bound_ulx,
@@ -152,6 +162,7 @@ std::shared_ptr<GTSprite> aseprite_to_gt_sprite(std::shared_ptr<AseSprite> psp, 
               framely->dur
             )
           );
+          printf("        - finished push\n");
         }
       }
     }

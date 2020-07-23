@@ -198,14 +198,15 @@ namespace gt {
 
     //eep frames - how to do this? loopity loop loop?
     // wait, this isn't quite right. this is using indices, not keys.
-    //for(auto ch = 0; ch < frames.size(); ch++) {
-    // instead it's simpler
-    for(auto ch : frames) {   
-      for(auto ac : ch.second) {
-        for(auto di : ac.second) {
-          for(auto sf : di.second) {
+    // but now they are!
+    for(auto ch = 0; ch < frames.size(); ch++) {
+      for(auto ac = 0; ac < frames[ch].size(); ac++) {
+        for(auto di = 0; di < frames[ch][ac].size(); di++) {
+          for(auto sf = 0; sf < frames[ch][ac][di].size(); sf++) {
             // try forcing the numbers to be strings - otherwise they're interpreted as vector indices
-            if(sf.add_to_json(j["frames"][std::to_string(ch.first)][std::to_string(ac.first)][std::to_string(di.first)]) == false) {
+            // well, now we want them to be!
+            //if(sf.add_to_json(j["frames"][std::to_string(ch.first)][std::to_string(ac.first)][std::to_string(di.first)]) == false) {
+            if(frames[ch][ac][di][sf].add_to_json(j["frames"][ch][ac][di]) == false) {
               printf("*** ERROR writing json for GTSprite.frames\n");
               return false;
             }
@@ -230,32 +231,32 @@ namespace gt {
     }
 
     // how do we get the frames back out? TEST THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    printf("- Reading sprite frames...\n");
-    frames.clear();
-    GTindex_t chi, aci, dii;
-    for(auto ch : jt["frames"].get<std::map<std::string, json>>()) {
-      chi = std::stoi(ch.first);
-      printf("    - character %d\n",chi);
-      if(frames.count(chi) == 0) frames[chi] = std::map<GTindex_t, std::map<GTindex_t, std::vector<GTSpriteFrame>>>();
-      for(auto ac : ch.second.get<std::map<std::string,json>>()) {
-        aci = std::stoi(ac.first);
-        printf("        - action %d\n",aci);
-        if(frames[chi].count(aci) == 0) frames[chi][aci] = std::map<GTindex_t, std::vector<GTSpriteFrame>>();
-        for(auto di : ac.second.get<std::map<std::string,json>>()) {
-          dii = std::stoi(di.first);
-          printf("            - direction %d\n",dii);
-          if(frames[chi][aci].count(dii) == 0) frames[chi][aci][dii] = std::vector<GTSpriteFrame>();
-          for(auto sfi = 0; sfi < di.second.size(); sfi++) {
-            printf("                - frame %d\n",sfi);
-            // ********************************* BREAKING HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            if(frames[chi][aci][dii][sfi].get_from_json(di.second[sfi]) == false) {
-              printf("*** ERROR reading json for GTSprite.frames\n");
-              return false;
-            }
-          }
-        }
-      }
-    }
+    // printf("- Reading sprite frames...\n");
+    // frames.clear();
+    // GTindex_t chi, aci, dii;
+    // for(auto ch : jt["frames"].get<std::map<std::string, json>>()) {
+    //   chi = std::stoi(ch.first);
+    //   printf("    - character %d\n",chi);
+    //   if(frames.count(chi) == 0) frames[chi] = std::map<GTindex_t, std::map<GTindex_t, std::vector<GTSpriteFrame>>>();
+    //   for(auto ac : ch.second.get<std::map<std::string,json>>()) {
+    //     aci = std::stoi(ac.first);
+    //     printf("        - action %d\n",aci);
+    //     if(frames[chi].count(aci) == 0) frames[chi][aci] = std::map<GTindex_t, std::vector<GTSpriteFrame>>();
+    //     for(auto di : ac.second.get<std::map<std::string,json>>()) {
+    //       dii = std::stoi(di.first);
+    //       printf("            - direction %d\n",dii);
+    //       if(frames[chi][aci].count(dii) == 0) frames[chi][aci][dii] = std::vector<GTSpriteFrame>();
+    //       for(auto sfi = 0; sfi < di.second.size(); sfi++) {
+    //         printf("                - frame %d\n",sfi);
+    //         // ********************************* BREAKING HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //         if(frames[chi][aci][dii][sfi].get_from_json(di.second[sfi]) == false) {
+    //           printf("*** ERROR reading json for GTSprite.frames\n");
+    //           return false;
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
 
     // and finally, get the base64_url-encoded string of image_data decoded into image_data
     image_data = base64::decode(std::string(jt["image_data"]));

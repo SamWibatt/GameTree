@@ -204,7 +204,11 @@ namespace gt {
     public:
       //data members
       GTSpriteInfo info;
-      std::map<GTindex_t, std::map<GTindex_t, std::map<GTindex_t, std::vector<GTSpriteFrame>>>> frames;
+      //... why can't this just be a vector of vector of vectors?
+      // we went to the trouble of making the keys into numbers, and they're contiguous.
+      //std::map<GTindex_t, std::map<GTindex_t, std::map<GTindex_t, std::vector<GTSpriteFrame>>>> frames;
+      // character  |  action |   direction | frame #
+      std::vector<std::vector<std::vector<std::vector<GTSpriteFrame>>>> frames;
       std::vector<uint8_t> image_data;      // png-formatted (i.e., written to disk would be a full .png file) image data of sprite sheet
 
     public:
@@ -393,13 +397,24 @@ namespace gt {
       const GTSpriteFrame *get_current_spriteframe() {
         //sanity check: should we do all this for every frame? on a "real computer" it's no problem
         //once per sprite per frame advance is not terrible overhead, but damn
+        // if(sprite == nullptr || 
+        //   current_character == -1 || sprite->frames.find(current_character) == sprite->frames.end() ||
+        //   current_action == -1 || sprite->frames[current_character].find(current_action) == sprite->frames[current_character].end() ||
+        //   current_direction == -1 || sprite->frames[current_character][current_action].find(current_direction) == sprite->frames[current_character][current_action].end() ||
+        //   current_frame == -1 || current_frame >= sprite->frames[current_character][current_action][current_direction].size()) {
+        //   return nullptr;
+        // }
+
+        // frames is now a quadruple-nested vector!
         if(sprite == nullptr || 
-          current_character == -1 || sprite->frames.find(current_character) == sprite->frames.end() ||
-          current_action == -1 || sprite->frames[current_character].find(current_action) == sprite->frames[current_character].end() ||
-          current_direction == -1 || sprite->frames[current_character][current_action].find(current_direction) == sprite->frames[current_character][current_action].end() ||
+          current_character == -1 || current_character >= sprite->frames.size() ||
+          current_action == -1 || current_action >= sprite->frames[current_character].size() ||
+          current_direction == -1 || current_direction >= sprite->frames[current_character][current_action].size() ||
           current_frame == -1 || current_frame >= sprite->frames[current_character][current_action][current_direction].size()) {
           return nullptr;
         }
+
+
         //was return std::shared_ptr<GTSpriteFrame>(&(sprite->frames[current_character][current_action][current_direction][current_frame]));
         return &(sprite->frames[current_character][current_action][current_direction][current_frame]);
       }
