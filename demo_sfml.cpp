@@ -114,14 +114,40 @@ int main(int argc, char *argv[])
 
     samurai.set_sprite_bank(samurai_sbank);
 
-    //init samurai frame & such
+
+    // MAP AND CHARACTER SETUP ----------------------------------------------------------------------------------------------------------------------
+    // at some point will get character's initial position from a point in the InteractionObject layer like this one
+    // <object id="72" name="character_start" type="start_point" x="198" y="409.5">
+    //      <point/>
+    // </object>
+
+
+    //init samurai frame & such - temp, data-drive
     samurai.current_character = 0;
     samurai.current_action = 0;
     samurai.current_direction = 2;
     samurai.current_frame = 0;
-    
 
-    samurai.setPosition(100.0,100.0);
+    // how fast she walks - need to data drive this too
+    float samurai_velocity = 3.0;
+    
+    //initial just to see where this puts her - constant position onscreen, not relative to map.
+    // will have to think about how to handle map coords vs. screen
+    //samurai.setPosition(100.0,100.0);
+
+    // world-relative - hand-entered values from "start_point" point in map data
+    GTcoord_t samurai_world_x = 198;
+    GTcoord_t samurai_world_y = 410;
+    // center her onscreen; I don't think I need to scale pixels - oh, nope, do
+    // also figure out how to make relative to a viewport
+    float samurai_screen_x = (window.getSize().x / 2.0) / globalScaleX;
+    float samurai_screen_y = (window.getSize().y / 2.0) / globalScaleY;
+
+    //let's set layer width and height kludgily from map's first slayer
+    float mapWidth = 0.0, mapHeight = 0.0;
+    mapWidth = the_map.slayers[0]->get_bounding_box().width;
+    mapHeight = the_map.slayers[0]->get_bounding_box().width;
+    printf("Map width: %f height: %f\n",mapWidth,mapHeight);
 
     //ok! now let's do a quick thing to add the map's layers to our scene objects and see what we get
     // then I'll just make layers drawable/transformable and that's what it takes
@@ -131,15 +157,22 @@ int main(int argc, char *argv[])
     // - should the map have a transform?
     // - that could be global_transform
     float layerPosX = 0.0, layerPosY = 0.0;
-    float mapWidth = 0.0, mapHeight = 0.0;
-    // old way just adding them in order they're found
-    // for(auto lyr: the_map.slayers) {    //try kludge with different base class
-    //   lyr->setOrigin(0.0,0.0);              // WORK THIS OUT AT SOME POINT for now just draw from ul corner
-    //   lyr->setPosition(layerPosX,layerPosY);            // same
-    //   scene_objects.push_back(lyr.get());
-    // }
+    //work out how to derive these from samurai's world position
+    //recall that if we want the map to appear to move left, we move its position right
+    // to center the character's hot spot, hm.
+    // so - if character's world x and y were at 0,0, map would be positioned at
+    // -chara_screen_x, -chara_screen_y, yes? let us try that - and no, that's not it
+    // let's position the map's upper left corner (world 0,0) at middle of screen
+    // ok, this does that:
+    //layerPosX = ((window.getSize().x / 2.0) / globalScaleX);
+    //layerPosY = ((window.getSize().y / 2.0) / globalScaleY);
+    // how then to adjust for chara pos? This puts her at 10,20 in the map
+    //layerPosX = ((window.getSize().x / 2.0) / globalScaleX) - 10;
+    //layerPosY = ((window.getSize().y / 2.0) / globalScaleY) - 20;
+    // THIS DOES IT!
+    layerPosX = ((window.getSize().x / 2.0) / globalScaleX) - samurai_world_x;
+    layerPosY = ((window.getSize().y / 2.0) / globalScaleY) - samurai_world_y;
 
-    // WITH THE ADDITION OF SPRITES let's do this a little different
     // add the map layers in order by names: Background, BGOverlay, Gettables, <sprites go here>, Front
     // the "InteractionObject" layer should be handled differently... Should it be on the display list at all? Not yet
     std::shared_ptr<SFMLMapLayer> lyr;
@@ -169,13 +202,10 @@ int main(int argc, char *argv[])
     }
 
 
-    //let's set layer width and height kludgily from map's first slayer
-    mapWidth = the_map.slayers[0]->get_bounding_box().width;
-    mapHeight = the_map.slayers[0]->get_bounding_box().width;
-    printf("Map width: %f height: %f\n",mapWidth,mapHeight);
 
     // for map scrolling
-    float scroll_velocity = 5.0;
+    //float scroll_velocity = 5.0;
+    // end MAP AND CHARACTER SETUP ------------------------------------------------------------------------------------------------------------------
 
     // MAIN LOOP =============================================================================================
 
@@ -217,36 +247,40 @@ int main(int argc, char *argv[])
             //move according to scaled joystick value
             //have a dead spot in the middle of the joystick so princess doesn't wander when stick
             //is released
-            if(std::abs(stick_x) > joystick_deadspot) deltaX += ((stick_x / 100.0) * scroll_velocity);
-            if(std::abs(stick_y) > joystick_deadspot) deltaY += ((stick_y / 100.0) * scroll_velocity);
+            if(std::abs(stick_x) > joystick_deadspot) deltaX += ((stick_x / 100.0) * samurai_velocity);
+            if(std::abs(stick_y) > joystick_deadspot) deltaY += ((stick_y / 100.0) * samurai_velocity);
         } 
 
         //if there was a stick handlement, skip keys? Or just do both
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) deltaX -= scroll_velocity;
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) deltaX += scroll_velocity;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) deltaX -= samurai_velocity;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) deltaX += samurai_velocity;
 
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) deltaY -= scroll_velocity;
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) deltaY += scroll_velocity;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) deltaY -= samurai_velocity;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) deltaY += samurai_velocity;
 
         // if(deltaX != 0.0 || deltaY != 0.0) {
         //     printf("DeltaX %f Y %f\n",deltaX, deltaY);
         // }
 
-        // set layer positions according to map extents - currently , position/origin are both upper left corner
-        // turns out the deltas are how we're moving the VIEW, so layer position goes the other way
-        layerPosX -= deltaX;
-        layerPosY -= deltaY;
+        // OLD: just move the map around
+        // // set layer positions according to map extents - currently , position/origin are both upper left corner
+        // // turns out the deltas are how we're moving the VIEW, so layer position goes the other way
+        // layerPosX -= deltaX;
+        // layerPosY -= deltaY;
 
-        // bounding box is also backwards
-        if(layerPosX < -(mapWidth-(window.getSize().x / globalScaleX))) layerPosX = -(mapWidth-(window.getSize().x / globalScaleX));
-        if(layerPosX > 0) layerPosX = 0;
-        if(layerPosY < -(mapHeight-(window.getSize().y / globalScaleY))) layerPosY = -(mapWidth-(window.getSize().y / globalScaleY));
-        if(layerPosY > 0) layerPosY = 0;
+        // // bounding box is also backwards
+        // if(layerPosX < -(mapWidth-(window.getSize().x / globalScaleX))) layerPosX = -(mapWidth-(window.getSize().x / globalScaleX));
+        // if(layerPosX > 0) layerPosX = 0;
+        // if(layerPosY < -(mapHeight-(window.getSize().y / globalScaleY))) layerPosY = -(mapWidth-(window.getSize().y / globalScaleY));
+        // if(layerPosY > 0) layerPosY = 0;
 
         for(auto lyr: the_map.slayers) {
             // this doesn't seem to have any effect
             lyr->setPosition(layerPosX,layerPosY);
         }
+
+        //position character
+        samurai.setPosition(samurai_screen_x,samurai_screen_y);
 
 
         // clear the window with black color
