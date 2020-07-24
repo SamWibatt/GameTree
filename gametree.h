@@ -510,6 +510,14 @@ namespace gt {
     GTAT_Trigger
   } GTArea_type;
 
+  typedef enum : GTindex_t {
+    GTST_Unknown = 0,
+    GTST_Rectangle,
+    GTST_Ellipse,
+    GTST_Polygon,
+    GTST_Point
+  } GTShape_type;
+
 
   class GTShape {
     public:
@@ -549,6 +557,8 @@ namespace gt {
         return bbox_check(pt) && inside_shape_if_inside_bbox(pt);
       }
 
+      virtual GTShape_type get_shape_type() = 0;
+
       virtual bool add_to_json(json& j);
       virtual bool get_from_json(json& jt);
   };
@@ -567,6 +577,8 @@ namespace gt {
       virtual bool inside_shape_if_inside_bbox(GTPoint pt) override { return true; }
       virtual bool add_to_json(json& j) override;
       virtual bool get_from_json(json& jt) override;
+
+      virtual GTShape_type get_shape_type() override { return GTST_Rectangle; }
   };
 
   class GTEllipse : public GTShape {
@@ -583,6 +595,8 @@ namespace gt {
       virtual bool inside_shape_if_inside_bbox(GTPoint pt) override;
       virtual bool add_to_json(json& j) override;
       virtual bool get_from_json(json& jt) override;
+
+      virtual GTShape_type get_shape_type() override { return GTST_Ellipse; }
   };
 
   //assumed to be a simple polygon! I think it's ok if there isn't a duplicate first point after last
@@ -601,6 +615,8 @@ namespace gt {
       virtual bool inside_shape_if_inside_bbox(GTPoint pt) override;
       virtual bool add_to_json(json& j) override;
       virtual bool get_from_json(json& jt) override;
+
+      virtual GTShape_type get_shape_type() override { return GTST_Polygon; }
   };
 
 
@@ -734,6 +750,7 @@ namespace gt {
       std::vector<std::shared_ptr<GTMapLayer>> layers;
       std::shared_ptr<GTMapLayer> get_layer_by_name(std::string nm) {
         for(auto plyr : layers) {
+          printf("Checking \"%s\" against layer name \"%s\"\n",nm.c_str(),plyr->name.c_str());
           if(plyr->name == nm) return plyr;       //dumb search but we're not likely to have lots of these
         }
         return nullptr; //didn't find it

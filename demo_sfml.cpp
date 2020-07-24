@@ -204,6 +204,12 @@ int main(int argc, char *argv[])
 
     // add the map layers in order by names: Background, BGOverlay, Gettables, <sprites go here>, Front
     // the "InteractionObject" layer should be handled differently... Should it be on the display list at all? Not yet
+    std::shared_ptr<GTMapLayer> int_layer = the_map.get_layer_by_name("InteractionObject");
+    // can you do this? I hate that you have to - nother slicey thing
+    std::shared_ptr<GTObjectsMapLayer> interaction_layer = std::static_pointer_cast<GTObjectsMapLayer>(int_layer);
+    if(interaction_layer == nullptr) {
+        printf("*** WARNING: no interaction layer found, won't do collisions\n");
+    }
     // ***** ALSO CONSIDER SPECIAL HANDLING OF GETTABLES TO TURN THE OBJECT LIST THERE INTO A BUNCH OF SPRITES SO THEY
     // ***** CAN BE MOVED / HIDDEN INDEPENDENTLY!
     std::shared_ptr<SFMLMapLayer> lyr;
@@ -302,6 +308,46 @@ int main(int argc, char *argv[])
             GTcoord_t last_worldy = samurai_world_y;
             samurai_world_x += deltaX;
             samurai_world_y += deltaY;
+
+            // HERE is where to put collisions, yes?
+            // if she collided with something, how far do we move her? or do we just leave her where she was?
+            // if it's a rectangle, easy to figure out where the intersection is
+            // otherwise I'm not so sure
+            // would be better to clip against the shape, say something is moving really fast like 100 pix per frame (and doesn't zoom right over the whole thing)
+            // we'd want it to stop at the boundary
+            // I guess it's a matter of finding the intersection of the shape and the vector from current position to the new position
+            // WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            // first pass, just detect and light up shapes she's colliding with.
+            if(interaction_layer != nullptr) {
+                for(auto shap: interaction_layer->shapes) {
+                    if(shap->inside(GTPoint(samurai_world_x, samurai_world_y))) {
+                        //collide!
+                        //printf("Collision with shape of type %d\n",shap->purpose);
+                        // OK THAT WORKS BUT DOESN'T DO ANYTHING YET!
+                        // ******************* WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        // ******************* WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        // ******************* WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        // ******************* WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        // ******************* WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        // ******************* WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        // ******************* WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        // I added a shap->get_shape_type() method that returns GTST_Unknown, GTST_Rectangle, GTST_Ellipse,
+                        // GTST_Polygon, or GTST_Point... but that doesn't tell me much.
+                        // considering a get_geometry method that returns a vector of GTPoint; rects return ul/lr or ul/hw,
+                        // ellipses same and it's treated like the ellipse that fits in that bbox (kinda gross but ok),
+                        // polygons the list of points...
+                        // perhaps the better way to handle it would be to ... extend those shape classes with SFML versions,
+                        // that have ctors from the GT kind, 
+                        // rebuild shape objects in the map layers as the SFML kind...???
+                        // that's nice if we want to draw them, so might be worth doing
+                        // better still, just have a finer-grained collision function that can do that intersection of
+                        // the motion vector with the shape's surface (intersection closest to the beginning spot!)
+                        // YES LET US DO THAT
+                        
+                    }
+                }
+            }
+            
 
             //clamp to world bounds
             if(samurai_world_x < min_samurai_world_x) samurai_world_x = min_samurai_world_x;

@@ -380,13 +380,13 @@ namespace gt {
   }
 
   bool GTMapLayer::get_from_json(json& jt) {
+    // get the name
+    name = jt["name"];
+
     if(!jt.contains("image_data") || !jt.contains("tile_atlas")) {
       //fprintf(stderr,"+++ WARNING: map layer has no image_data or tile_atlas - ok if it's an object layer with no imagery\n");
       return true;
     }
-
-    // get the name
-    name = jt["name"];
 
     // get the .png data
     image_data = base64::decode(std::string(jt["image_data"]));
@@ -396,7 +396,6 @@ namespace gt {
     for(auto j = 0; j < tile_atlas.size(); j++) {
       tile_atlas[j].get_from_json(jt["tile_atlas"][j]);
     }
-
 
     return true;
   }
