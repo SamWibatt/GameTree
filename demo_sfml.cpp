@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
     samurai.current_frame = 0;
 
     // how fast she walks - need to data drive this too
-    float samurai_velocity = 3.0;
+    float samurai_velocity = 2.0;
     
     //initial just to see where this puts her - constant position onscreen, not relative to map.
     // will have to think about how to handle map coords vs. screen
@@ -157,12 +157,25 @@ int main(int argc, char *argv[])
     GTcoord_t samurai_screen_x = round((window.getSize().x / 2.0) / globalScaleX);
     GTcoord_t samurai_screen_y = round((window.getSize().y / 2.0) / globalScaleY);
 
-    // scroll box - don't scroll until she gets within so far of an edge of the screen
-    // let's try 64 pixels on each side
-    GTcoord_t min_screen_scroll_x = 64;
-    GTcoord_t max_screen_scroll_x = window.getSize().x - 64;
-    GTcoord_t min_screen_scroll_y = 64;
-    GTcoord_t max_screen_scroll_y = window.getSize().y - 64;
+    // let's represent everything in world coordinates as much as we can.
+    // we have to start with screen coords if we want her centered - but do we?
+    // there should be a function that, given her world coordinates, figures out the appropriate
+    // screen coords.
+    // perhaps a GTviewport class?
+    // anyway, figure out what the window's presence is in world coordinates.
+    GTcoord_t viewport_world_width = window.getSize().x / globalScaleX;
+    GTcoord_t viewport_world_height = window.getSize().y / globalScaleY;
+    GTcoord_t viewport_world_ulx = samurai_world_x - (viewport_world_width / 2);
+    GTcoord_t viewport_world_uly = samurai_world_y - (viewport_world_height / 2);
+
+
+    // then set up scroll margins so she can wander around a bit before the screen starts scrolling - assume symmetrical?
+    // nah, have separate, like the max world y is
+    GTcoord_t viewport_world_top_scroll_margin = 84;            // 4 tiles + rough character height
+    GTcoord_t viewport_world_bottom_scroll_margin = 64;         // 4 tiles
+    GTcoord_t viewport_world_left_scroll_margin = 64 + 8;       // 4 tiles + about half a character width
+    GTcoord_t viewport_world_right_scroll_margin = 64 + 8;      // 4 tiles + about half a character width
+
 
     //ok! now let's do a quick thing to add the map's layers to our scene objects and see what we get
     // then I'll just make layers drawable/transformable and that's what it takes
@@ -175,29 +188,18 @@ int main(int argc, char *argv[])
     //work out how to derive these from samurai's world position
     //recall that if we want the map to appear to move left, we move its position right
     // to center the character's hot spot, hm.
-    // so - if character's world x and y were at 0,0, map would be positioned at
-    // -chara_screen_x, -chara_screen_y, yes? let us try that - and no, that's not it
-    // let's position the map's upper left corner (world 0,0) at middle of screen
-    // ok, this does that:
-    //layerPosX = ((window.getSize().x / 2.0) / globalScaleX);
-    //layerPosY = ((window.getSize().y / 2.0) / globalScaleY);
-    // how then to adjust for chara pos? This puts her at 10,20 in the map
-    //layerPosX = ((window.getSize().x / 2.0) / globalScaleX) - 10;
-    //layerPosY = ((window.getSize().y / 2.0) / globalScaleY) - 20;
-    // THIS DOES IT!
     layerPosX = ((window.getSize().x / 2.0) / globalScaleX) - samurai_world_x;
     layerPosY = ((window.getSize().y / 2.0) / globalScaleY) - samurai_world_y;
     // that's good for an initial spot. Here reckon the max and min layer positions:
-    // if(layerPosX < -(mapWidth-(window.getSize().x / globalScaleX))) layerPosX = -(mapWidth-(window.getSize().x / globalScaleX));
-    // if(layerPosX > 0) layerPosX = 0;
-    // if(layerPosY < -(mapHeight-(window.getSize().y / globalScaleY))) layerPosY = -(mapWidth-(window.getSize().y / globalScaleY));
-    // if(layerPosY > 0) layerPosY = 0;
     // remember that max of 0 bc we move it "backwards" wrt how it appears to move onscreen
     float minLayerPosX = -(mapWidth-(window.getSize().x / globalScaleX));
     float maxLayerPosX = 0.0;
     float minLayerPosY = -(mapHeight-(window.getSize().y / globalScaleY));
     float maxLayerPosY = 0.0;
     // we'll check against those when moving herself around, but for now allow any position at start.
+
+    printf("Viewport ul: %d, %d dims: %d x %d lyrpos %f, %f\n",viewport_world_ulx,viewport_world_uly,viewport_world_width,viewport_world_height,
+        layerPosX,layerPosY);
 
 
     // add the map layers in order by names: Background, BGOverlay, Gettables, <sprites go here>, Front
@@ -239,7 +241,7 @@ int main(int argc, char *argv[])
     // MAIN LOOP =============================================================================================
 
     //initial clear for trails version
-    window.clear(sf::Color::Black);
+    //window.clear(sf::Color::Black);
 
 
     // handle ongoing stuff like held down keys or stick 
@@ -290,23 +292,85 @@ int main(int argc, char *argv[])
         // so: if samurai is within the screen bounding box, let her just move onscreen
         // ELSE if the screen hasn't scrolled all the way in the direction it needs to go, scroll
         // ELSE let her move to her world min/max
-        // *********************** WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        //... the better way would be to do all the reckoning in world coordinates and derive screen from that
+        // only bother if at least one delta is nonzero bc that will affect which action she's using
+        if(deltaX != 0.0 || deltaY != 0.0) {
+            //printf("DeltaX %f Y %f\n",deltaX, deltaY);
 
-        // if(deltaX != 0.0 || deltaY != 0.0) {
-        //     printf("DeltaX %f Y %f\n",deltaX, deltaY);
-        // }
+            // all right, move her! Will correct if it doesn't work
+            GTcoord_t last_worldx = samurai_world_x;
+            GTcoord_t last_worldy = samurai_world_y;
+            samurai_world_x += deltaX;
+            samurai_world_y += deltaY;
 
-        // OLD: just move the map around
-        // // set layer positions according to map extents - currently , position/origin are both upper left corner
-        // // turns out the deltas are how we're moving the VIEW, so layer position goes the other way
-        // layerPosX -= deltaX;
-        // layerPosY -= deltaY;
+            //clamp to world bounds
+            if(samurai_world_x < min_samurai_world_x) samurai_world_x = min_samurai_world_x;
+            if(samurai_world_y < min_samurai_world_y) samurai_world_y = min_samurai_world_y;
+            if(samurai_world_x > max_samurai_world_x) samurai_world_x = max_samurai_world_x;
+            if(samurai_world_y > max_samurai_world_y) samurai_world_y = max_samurai_world_y;
 
-        // // bounding box is also backwards
-        // if(layerPosX < -(mapWidth-(window.getSize().x / globalScaleX))) layerPosX = -(mapWidth-(window.getSize().x / globalScaleX));
-        // if(layerPosX > 0) layerPosX = 0;
-        // if(layerPosY < -(mapHeight-(window.getSize().y / globalScaleY))) layerPosY = -(mapWidth-(window.getSize().y / globalScaleY));
-        // if(layerPosY > 0) layerPosY = 0;
+            GTcoord_t actual_delta_x = samurai_world_x - last_worldx;
+            GTcoord_t actual_delta_y = samurai_world_y - last_worldy;
+
+            // Determine action/ direction according to whether she *really* moved
+            if(actual_delta_x != 0 || actual_delta_y != 0) {
+                samurai.set_action("Walk");
+                //so - if moving rightward and x delta >= y delta, right
+                if(actual_delta_x > 0 && actual_delta_x >= abs(actual_delta_y)) {
+                    samurai.set_direction("R");
+                } else if(actual_delta_x < 0 && abs(actual_delta_x) >= abs(actual_delta_y)) {
+                    samurai.set_direction("L");
+                } else if(actual_delta_y >= 0) {      //favor down to up so she's facing us
+                    samurai.set_direction("D");
+                } else {
+                    samurai.set_direction("U");
+                }
+
+                // if her new position is within the (world coord) scroll box, let her move and all's well
+                // so - if she's NOT, we need to do something about scroll position, IF WE CAN!
+                // memorize last viewport world ulx & y so we don't change anything when we don't need to
+                // I think there's some rockiness bc of that
+                if(samurai_world_x < viewport_world_ulx + viewport_world_left_scroll_margin) {
+                    //she's off the left edge of the scroll box
+                    // so: if the view can move left, have it do so. 
+                    viewport_world_ulx -= (viewport_world_ulx + viewport_world_left_scroll_margin) - samurai_world_x;
+                    if(viewport_world_ulx < 0) viewport_world_ulx = 0;
+                } else if(samurai_world_x > viewport_world_ulx + viewport_world_width - viewport_world_right_scroll_margin) {
+                    //she's off the right edge of the scroll box
+                    // so: if the view can move right, have it do so. 
+                    viewport_world_ulx += samurai_world_x - (viewport_world_ulx + viewport_world_width - viewport_world_right_scroll_margin);
+                    if(viewport_world_ulx > mapWidth - viewport_world_width) viewport_world_ulx = mapWidth - viewport_world_width;
+                }
+
+                if(samurai_world_y < viewport_world_uly + viewport_world_top_scroll_margin) {
+                    //she's off the top edge of the scroll box
+                    // so: if the view can move down, have it do so. 
+                    viewport_world_uly -= (viewport_world_uly + viewport_world_top_scroll_margin) - samurai_world_y;
+                    if(viewport_world_uly < 0) viewport_world_uly = 0;
+                } else if(samurai_world_y > viewport_world_uly + viewport_world_height - viewport_world_bottom_scroll_margin) {
+                    //she's off the bottom edge of the scroll box
+                    // so: if the view can move down, have it do so. 
+                    viewport_world_uly += samurai_world_y - (viewport_world_uly + viewport_world_height - viewport_world_bottom_scroll_margin);
+                    if(viewport_world_uly > mapHeight - viewport_world_height) viewport_world_uly = mapHeight - viewport_world_height;
+                }
+
+                // OK so derive the layers' position from the viewport position
+                layerPosX = -viewport_world_ulx;
+                layerPosY = -viewport_world_uly;
+
+                // then derive samurai onscreen position from her world position relative to the viewport, yes?
+                samurai_screen_x = (samurai_world_x - viewport_world_ulx);
+                samurai_screen_y = (samurai_world_y - viewport_world_uly);
+
+                // printf("adxy: %d, %d view_world: %d,%d New samwpos: %d,%d sam_screen %d,%d lyrpos %f,%f\n",
+                //     actual_delta_x,actual_delta_y,viewport_world_ulx,viewport_world_uly,
+                //     samurai_world_x,samurai_world_y,samurai_screen_x,samurai_screen_y,layerPosX,layerPosY);
+            }
+
+        } else {
+            // idle! 
+            samurai.set_action("Idle");             // write methods that do this w/index
+        }
 
         for(auto lyr: the_map.slayers) {
             lyr->setPosition(layerPosX,layerPosY);
@@ -315,17 +379,11 @@ int main(int argc, char *argv[])
         //position character
         samurai.setPosition(samurai_screen_x,samurai_screen_y);
 
-
-
-
         // clear the window with black color
         // let's not do this anymore; assume tile map will do it? 
         // only if scroll is constrained s.t. nothing outside the map shows
         // leave it for debug purps
         window.clear(sf::Color::Black);
-
-        // trot += 1.0;
-        // tri.setRotation(trot);
 
         // draw everything here...
         // again, simple kludgy way to do a scene graph
