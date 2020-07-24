@@ -121,6 +121,12 @@ int main(int argc, char *argv[])
     //      <point/>
     // </object>
 
+    //let's set layer width and height kludgily from map's first slayer
+    float mapWidth = 0.0, mapHeight = 0.0;
+    mapWidth = the_map.slayers[0]->get_bounding_box().width;
+    mapHeight = the_map.slayers[0]->get_bounding_box().width;
+    printf("Map width: %f height: %f\n",mapWidth,mapHeight);
+
 
     //init samurai frame & such - temp, data-drive
     samurai.current_character = 0;
@@ -138,16 +144,19 @@ int main(int argc, char *argv[])
     // world-relative - hand-entered values from "start_point" point in map data
     GTcoord_t samurai_world_x = 198;
     GTcoord_t samurai_world_y = 410;
+
+    // minimum / maximum positions; could do better but let's just make it half a tile away from 
+    // edges in x, 1 pixel up from the bottom in y, 20 pix down from top
+    GTcoord_t min_samurai_world_x = 8;
+    GTcoord_t max_samurai_world_x = mapWidth - 8;
+    GTcoord_t min_samurai_world_y = 20;
+    GTcoord_t max_samurai_world_y = mapHeight - 1;
+
     // center her onscreen; I don't think I need to scale pixels - oh, nope, do
     // also figure out how to make relative to a viewport
     float samurai_screen_x = (window.getSize().x / 2.0) / globalScaleX;
     float samurai_screen_y = (window.getSize().y / 2.0) / globalScaleY;
 
-    //let's set layer width and height kludgily from map's first slayer
-    float mapWidth = 0.0, mapHeight = 0.0;
-    mapWidth = the_map.slayers[0]->get_bounding_box().width;
-    mapHeight = the_map.slayers[0]->get_bounding_box().width;
-    printf("Map width: %f height: %f\n",mapWidth,mapHeight);
 
     //ok! now let's do a quick thing to add the map's layers to our scene objects and see what we get
     // then I'll just make layers drawable/transformable and that's what it takes
@@ -172,9 +181,23 @@ int main(int argc, char *argv[])
     // THIS DOES IT!
     layerPosX = ((window.getSize().x / 2.0) / globalScaleX) - samurai_world_x;
     layerPosY = ((window.getSize().y / 2.0) / globalScaleY) - samurai_world_y;
+    // that's good for an initial spot. Here reckon the max and min layer positions:
+    // if(layerPosX < -(mapWidth-(window.getSize().x / globalScaleX))) layerPosX = -(mapWidth-(window.getSize().x / globalScaleX));
+    // if(layerPosX > 0) layerPosX = 0;
+    // if(layerPosY < -(mapHeight-(window.getSize().y / globalScaleY))) layerPosY = -(mapWidth-(window.getSize().y / globalScaleY));
+    // if(layerPosY > 0) layerPosY = 0;
+    // remember that max of 0 bc we move it "backwards" wrt how it appears to move onscreen
+    float minLayerPosX = -(mapWidth-(window.getSize().x / globalScaleX));
+    float maxLayerPosX = 0.0;
+    float minLayerPosY = -(mapHeight-(window.getSize().y / globalScaleY));
+    float maxLayerPosY = 0.0;
+    // we'll check against those when moving herself around, but for now allow any position at start.
+
 
     // add the map layers in order by names: Background, BGOverlay, Gettables, <sprites go here>, Front
     // the "InteractionObject" layer should be handled differently... Should it be on the display list at all? Not yet
+    // ***** ALSO CONSIDER SPECIAL HANDLING OF GETTABLES TO TURN THE OBJECT LIST THERE INTO A BUNCH OF SPRITES SO THEY
+    // ***** CAN BE MOVED / HIDDEN INDEPENDENTLY!
     std::shared_ptr<SFMLMapLayer> lyr;
     for(std::string nam : {"Background", "BGOverlay", "Gettables"}) {
         lyr = the_map.get_sfml_layer_by_name(nam);
@@ -275,12 +298,13 @@ int main(int argc, char *argv[])
         // if(layerPosY > 0) layerPosY = 0;
 
         for(auto lyr: the_map.slayers) {
-            // this doesn't seem to have any effect
             lyr->setPosition(layerPosX,layerPosY);
         }
 
         //position character
         samurai.setPosition(samurai_screen_x,samurai_screen_y);
+
+
 
 
         // clear the window with black color
