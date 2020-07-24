@@ -154,9 +154,15 @@ int main(int argc, char *argv[])
 
     // center her onscreen; I don't think I need to scale pixels - oh, nope, do
     // also figure out how to make relative to a viewport
-    float samurai_screen_x = (window.getSize().x / 2.0) / globalScaleX;
-    float samurai_screen_y = (window.getSize().y / 2.0) / globalScaleY;
+    GTcoord_t samurai_screen_x = round((window.getSize().x / 2.0) / globalScaleX);
+    GTcoord_t samurai_screen_y = round((window.getSize().y / 2.0) / globalScaleY);
 
+    // scroll box - don't scroll until she gets within so far of an edge of the screen
+    // let's try 64 pixels on each side
+    GTcoord_t min_screen_scroll_x = 64;
+    GTcoord_t max_screen_scroll_x = window.getSize().x - 64;
+    GTcoord_t min_screen_scroll_y = 64;
+    GTcoord_t max_screen_scroll_y = window.getSize().y - 64;
 
     //ok! now let's do a quick thing to add the map's layers to our scene objects and see what we get
     // then I'll just make layers drawable/transformable and that's what it takes
@@ -280,6 +286,11 @@ int main(int argc, char *argv[])
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) deltaY -= samurai_velocity;
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) deltaY += samurai_velocity;
+
+        // so: if samurai is within the screen bounding box, let her just move onscreen
+        // ELSE if the screen hasn't scrolled all the way in the direction it needs to go, scroll
+        // ELSE let her move to her world min/max
+        // *********************** WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         // if(deltaX != 0.0 || deltaY != 0.0) {
         //     printf("DeltaX %f Y %f\n",deltaX, deltaY);
