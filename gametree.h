@@ -558,6 +558,7 @@ namespace gt {
       }
 
       virtual GTShape_type get_shape_type() = 0;
+      virtual std::shared_ptr<std::vector<GTPoint>> get_geometry() = 0;
 
       virtual bool add_to_json(json& j);
       virtual bool get_from_json(json& jt);
@@ -579,6 +580,12 @@ namespace gt {
       virtual bool get_from_json(json& jt) override;
 
       virtual GTShape_type get_shape_type() override { return GTST_Rectangle; }
+      virtual std::shared_ptr<std::vector<GTPoint>> get_geometry() override {
+        auto vec = std::shared_ptr<std::vector<GTPoint>>(new std::vector<GTPoint>(2));
+        (*vec)[0] = bbox_ul;
+        (*vec)[1] = bbox_lr;
+        return vec;
+      }
   };
 
   class GTEllipse : public GTShape {
@@ -597,6 +604,12 @@ namespace gt {
       virtual bool get_from_json(json& jt) override;
 
       virtual GTShape_type get_shape_type() override { return GTST_Ellipse; }
+      virtual std::shared_ptr<std::vector<GTPoint>> get_geometry() override {
+        auto vec = std::shared_ptr<std::vector<GTPoint>>(new std::vector<GTPoint>(2));
+        (*vec)[0] = bbox_ul;
+        (*vec)[1] = bbox_lr;
+        return vec;
+      }
   };
 
   //assumed to be a simple polygon! I think it's ok if there isn't a duplicate first point after last
@@ -617,6 +630,11 @@ namespace gt {
       virtual bool get_from_json(json& jt) override;
 
       virtual GTShape_type get_shape_type() override { return GTST_Polygon; }
+      virtual std::shared_ptr<std::vector<GTPoint>> get_geometry() override {
+        auto vec = std::shared_ptr<std::vector<GTPoint>>(new std::vector<GTPoint>(points.size()));
+        std::copy(points.begin(), points.end(), vec->begin());
+        return vec;
+      }
   };
 
 
@@ -750,7 +768,7 @@ namespace gt {
       std::vector<std::shared_ptr<GTMapLayer>> layers;
       std::shared_ptr<GTMapLayer> get_layer_by_name(std::string nm) {
         for(auto plyr : layers) {
-          printf("Checking \"%s\" against layer name \"%s\"\n",nm.c_str(),plyr->name.c_str());
+          //printf("Checking \"%s\" against layer name \"%s\"\n",nm.c_str(),plyr->name.c_str());
           if(plyr->name == nm) return plyr;       //dumb search but we're not likely to have lots of these
         }
         return nullptr; //didn't find it

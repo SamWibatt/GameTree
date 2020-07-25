@@ -210,6 +210,7 @@ int main(int argc, char *argv[])
     if(interaction_layer == nullptr) {
         printf("*** WARNING: no interaction layer found, won't do collisions\n");
     }
+
     // ***** ALSO CONSIDER SPECIAL HANDLING OF GETTABLES TO TURN THE OBJECT LIST THERE INTO A BUNCH OF SPRITES SO THEY
     // ***** CAN BE MOVED / HIDDEN INDEPENDENTLY!
     std::shared_ptr<SFMLMapLayer> lyr;
@@ -238,7 +239,75 @@ int main(int argc, char *argv[])
         printf("*** ERROR: couldn't find layer \"%s\"\n",nam.c_str());
     }
 
+/* FIGURE THIS OUT
+    //on top of everything, put the collision shapes!
+    std::vector<std::shared_ptr<sf::Drawable>> int_shapes;
+    int_shapes.push_back(std::shared_ptr<sf::RectangleShape>(new sf::RectangleShape(sf::Vector2f())));
+    for(auto shap: interaction_layer->shapes) {
+        //get geometry from the shape - bounding box, list of points, etc.
+        std::shared_ptr<std::vector<GTPoint>> geo = shap->get_geometry();
+        std::shared_ptr<sf::Drawable> nu_shape;
+        switch(shap->get_shape_type()) { 
+            case GTST_Rectangle:
+                nu_shape = std::shared_ptr<sf::RectangleShape>(
+                    new sf::RectangleShape(
+                        sf::Vector2f((*geo)[1].x - (*geo)[0].x, (*geo)[1].y - (*geo)[0].y)
+                    )
+                );
+                break;
 
+            case GTST_Ellipse:
+                //make a circle s.t. its scale is 1 in the major axis and
+                //minor/major in the minor axis
+                float major_axis = std::max((*geo)[1].x,(*geo)[1].y);
+                nu_shape = std::shared_ptr<sf::CircleShape>(new sf::CircleShape(major_axis));
+                if((*geo)[1].x > (*geo)[1].y) {
+                    // x larger, so set Y scale to y/x
+                    nu_shape->scale(1.0, float((*geo)[1].y) / major_axis);
+                } else {
+                    // y larger, so set X scale to x/y
+                    nu_shape->scale(float((*geo)[1].x) / major_axis,1.0);
+                }
+                break;
+
+            case GTST_Polygon:
+                //argh, how to do this? I guess just connected lines atm
+
+                break;
+
+            case GTST_Point:
+                nu_shape = nullptr;
+                break;
+
+            default:
+                printf("*** WARNING: unknown shape type, skipping\n");
+                nu_shape = nullptr;
+                break;
+        }
+
+        if(nu_shape != nullptr) {
+            // FIGURE OUT HOW TO HANDLE THIS
+            // nu_shape->setPosition(shap->position.x, shap->position.y);
+            // //set fill color according to type!
+            // switch(shap->purpose) {
+            //     case GTAT_NoGo: nu_shape->setFillColor(sf::Color(255,0,0,64));      //red for nogo
+            //         break;
+            //     case GTAT_Slow: nu_shape->setFillColor(sf::Color(0,0,255,64));      //blue for slow
+            //         break;
+            //     case GTAT_Trigger: nu_shape->setFillColor(sf::Color(0.255,0,64));   //green for trigger
+            //         break;
+            //     default: nu_shape->setFillColor(sf::Color(128,128,128,64));         //grey for unk
+            //         break;
+            // }
+            // nu_shape->setOutlineColor(sf::Color(0,0,0,255));    //black outline
+            // nu_shape->setOutlineThickness(1);                   //thin
+
+            int_shapes.push_back(nu_shape);
+            
+            scene_objects.push_back(nu_shape.get());
+        }
+    }
+END FIGURE THIS OUT */
 
     // for map scrolling
     //float scroll_velocity = 5.0;
@@ -340,6 +409,8 @@ int main(int argc, char *argv[])
                         // that have ctors from the GT kind, 
                         // rebuild shape objects in the map layers as the SFML kind...???
                         // that's nice if we want to draw them, so might be worth doing
+                        // Let's just do the get_geometry thing, all the platspec back ends will need them
+                        // ok it is now written
                         // better still, just have a finer-grained collision function that can do that intersection of
                         // the motion vector with the shape's surface (intersection closest to the beginning spot!)
                         // YES LET US DO THAT
