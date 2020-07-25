@@ -75,14 +75,72 @@ namespace gtree_sfml {
 
   //SFMLMap =====================================================================================
 
+  //base class so I can store these things in a vector
+  class SFMLShape : public sf::Drawable, public sf::Transformable {
+    public:
+      SFMLShape() {}
+      virtual ~SFMLShape() {}
+
+      // for those classes that are wrappers around sfml shapes, return shape pointer, eww, shudder
+      // this way you can do stuff like set position
+      virtual sf::Shape *get_shape() = 0;
+  };
+
+  //wrapper for SFML rectangle :P 
+  class SFMLRectangle : public SFMLShape {
+    public:
+      std::shared_ptr<sf::RectangleShape> r;
+
+    public:
+      SFMLRectangle() {}
+      SFMLRectangle(std::shared_ptr<sf::RectangleShape>& rec) { 
+        r = rec; 
+      }
+      virtual ~SFMLRectangle() {}
+      virtual sf::Shape *get_shape() override { return r.get(); }
+
+      virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const override {
+        // I don't think I need to compose states's transform with anything? no, I think I do
+        if(r != nullptr) {
+          sf::RenderStates rs = states;
+          rs.transform = states.transform * getTransform();
+          target.draw(*(r.get()), rs);
+        }
+      }
+  };
+
+  //wrapper for SFML circle :P 
+  class SFMLCircle : public SFMLShape {
+    public:
+      std::shared_ptr<sf::CircleShape> c;
+
+    public:
+      SFMLCircle() {}
+      SFMLCircle(std::shared_ptr<sf::CircleShape>& circ) { 
+        c = circ; 
+      }
+      virtual ~SFMLCircle() {}
+      virtual sf::Shape *get_shape() override { return c.get(); }
+
+      virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const override {
+        // I don't think I need to compose states's transform with anything? no, I think I do
+        if(c != nullptr) {
+          sf::RenderStates rs = states;
+          rs.transform = states.transform * getTransform();
+          target.draw(*(c.get()), rs);
+        }
+      }
+  };
+
+
   // Transformable vertex array for building scrolly / rotatey / etc tile maps
-  class xfVertArray : public sf::Drawable, public sf::Transformable {
+  class SFMLVertArray : public SFMLShape {
     public:
       sf::VertexArray va;
       sf::Texture *tex; 
 
     public:
-      xfVertArray(sf::PrimitiveType pty, size_t nPoints, sf::Texture *tx) {
+      SFMLVertArray(sf::PrimitiveType pty, size_t nPoints, sf::Texture *tx) {
         va = sf::VertexArray(pty, nPoints);
         tex = tx;
       }
@@ -91,7 +149,12 @@ namespace gtree_sfml {
         va.append(v);
       }
 
-      void draw(sf::RenderTarget &target, sf::RenderStates states) const {
+      void set_vertex(int index, sf::Vertex v) {
+        if(index < 0 || index >= va.getVertexCount()) return;     //illegal index, do nothing
+        va[index] = v;
+      }
+
+      void draw(sf::RenderTarget &target, sf::RenderStates states) const override {
         sf::RenderStates rs = states;
         rs.transform = states.transform * getTransform();
         if(tex != nullptr) {
@@ -99,12 +162,15 @@ namespace gtree_sfml {
         } 
         target.draw(va, rs);
       }
+
+      //nastiness - this class isn't a sf::Shape wrapper, so can't do a get_shape
+      virtual sf::Shape *get_shape() override { return nullptr; }
   };
 
   class SFMLMapLayer : public sf::Drawable, public sf::Transformable {
     public:
       std::shared_ptr<sf::Texture> layer_tex;                       //tilesheet, if any, nullptr if not
-      std::shared_ptr<std::vector<xfVertArray>> layer_vertarrays;   //vertex arrays, if any,  nullptr if not
+      std::shared_ptr<std::vector<SFMLVertArray>> layer_vertarrays;   //vertex arrays, if any,  nullptr if not
       // box containing the min/max in each dimension
       sf::Rect<int> bounding_box;
 

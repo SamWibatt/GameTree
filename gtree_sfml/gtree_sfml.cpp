@@ -29,7 +29,7 @@ namespace gtree_sfml {
                 std::vector<GTTile>& tile_atlas, sf::Texture *tx) {
     // iterate over tile_objects and build a little quadlike thing for each. 
     if(!tile_objects.empty()) {
-      this->layer_vertarrays = std::shared_ptr<std::vector<xfVertArray>>(new std::vector<xfVertArray>());
+      this->layer_vertarrays = std::shared_ptr<std::vector<SFMLVertArray>>(new std::vector<SFMLVertArray>());
       for(auto tob : tile_objects) {
         //here's what we have to work with
         //tob->orx, tob->ory, tob->tile, tob->wid, tob->ht
@@ -42,7 +42,7 @@ namespace gtree_sfml {
         // wait, need to give the actual position for each quad, not relative to a "position"
         // looks like Tiled positions object tiles by lower left, tho - so try bumping y up by object's height - YAY
 
-        xfVertArray xva(sf::PrimitiveType::Quads,4,tx);
+        SFMLVertArray xva(sf::PrimitiveType::Quads,4,tx);
         xva.va[0] = (sf::Vertex(sf::Vector2f(tob->orx,tob->ory - tob->ht),
             sf::Vector2f(tile_atlas[tob->tile].ulx,tile_atlas[tob->tile].uly)));
         //printf("Appending vertex: pos %f, %f tex %f, %f\n", xva.va[0].position.x,xva.va[0].position.y,xva.va[0].texCoords.x,xva.va[0].texCoords.y);
@@ -103,8 +103,8 @@ namespace gtree_sfml {
     image_data.clear();
 
     // FIRST TILE MAP
-    layer_vertarrays = std::shared_ptr<std::vector<xfVertArray>>(new std::vector<xfVertArray>());
-    xfVertArray xva(sf::PrimitiveType::Quads,0,layer_tex.get());
+    layer_vertarrays = std::shared_ptr<std::vector<SFMLVertArray>>(new std::vector<SFMLVertArray>());
+    SFMLVertArray xva(sf::PrimitiveType::Quads,0,layer_tex.get());
     for(auto i = 0; i < tile_map.size(); i++) {
       if(tile_map[i] != 0) {
         GTindex_t tcol = i % layer_tilewid;

@@ -9,6 +9,20 @@ using namespace gt;
 using namespace gtree_sfml;
 
 
+// piddly support routines ########################################################################################################
+
+// colors for filling or outlining collision shapes
+sf::Color get_color_for_purpose(GTArea_type t, sf::Uint8 alpha) {
+    switch(t) {
+        case GTAT_NoGo: return sf::Color(255,0,0,alpha);      //red for nogo
+        case GTAT_Slow: return sf::Color(0,0,255,alpha);      //blue for slow
+        case GTAT_Trigger: return sf::Color(0,255,0,alpha);   //green for trigger
+        default: return sf::Color(128,128,128,alpha);         //grey for unk
+    }
+}
+
+// MAIN ###########################################################################################################################
+
 int main(int argc, char *argv[])
 {
 
@@ -239,75 +253,85 @@ int main(int argc, char *argv[])
         printf("*** ERROR: couldn't find layer \"%s\"\n",nam.c_str());
     }
 
-/* FIGURE THIS OUT
+    // INTERACTION SHAPES! REFACTOR THIS KIND OF THING INTO SCENE GRAPH! ==============================================================================
     //on top of everything, put the collision shapes!
-    std::vector<std::shared_ptr<sf::Drawable>> int_shapes;
-    int_shapes.push_back(std::shared_ptr<sf::RectangleShape>(new sf::RectangleShape(sf::Vector2f())));
+    //Ugh, I might need my own class for this that's both drawable and transformable
+    //That's what SFML shape was about - The problem is that my SFMLVertArray isn't a sf::Shape, so I can't use that
+    //I need both Drawable and Transformable, so I can't use either one as the type for this
+    std::vector<std::shared_ptr<SFMLShape>> int_shapes;
+    // super gross, here is a parallel array of the gtshapes so we can know the origins
+    // GTShape should have some kind of stub for drawing that plat-spec implementations fill in ...? 
+    // I guess get_geometry is the nod at it for now
+    std::vector<std::shared_ptr<GTShape>> int_gtshapes;
+    // being able to show or hide all these at once is just the sort of thing a scene graph node could do.
     for(auto shap: interaction_layer->shapes) {
         //get geometry from the shape - bounding box, list of points, etc.
         std::shared_ptr<std::vector<GTPoint>> geo = shap->get_geometry();
-        std::shared_ptr<sf::Drawable> nu_shape;
-        switch(shap->get_shape_type()) { 
-            case GTST_Rectangle:
-                nu_shape = std::shared_ptr<sf::RectangleShape>(
-                    new sf::RectangleShape(
-                        sf::Vector2f((*geo)[1].x - (*geo)[0].x, (*geo)[1].y - (*geo)[0].y)
-                    )
-                );
-                break;
-
-            case GTST_Ellipse:
-                //make a circle s.t. its scale is 1 in the major axis and
-                //minor/major in the minor axis
-                float major_axis = std::max((*geo)[1].x,(*geo)[1].y);
-                nu_shape = std::shared_ptr<sf::CircleShape>(new sf::CircleShape(major_axis));
-                if((*geo)[1].x > (*geo)[1].y) {
-                    // x larger, so set Y scale to y/x
-                    nu_shape->scale(1.0, float((*geo)[1].y) / major_axis);
-                } else {
-                    // y larger, so set X scale to x/y
-                    nu_shape->scale(float((*geo)[1].x) / major_axis,1.0);
-                }
-                break;
-
-            case GTST_Polygon:
-                //argh, how to do this? I guess just connected lines atm
-
-                break;
-
-            case GTST_Point:
-                nu_shape = nullptr;
-                break;
-
-            default:
-                printf("*** WARNING: unknown shape type, skipping\n");
-                nu_shape = nullptr;
-                break;
+        std::shared_ptr<SFMLShape> nu_sfmlshape = nullptr;
+        
+        if(shap->get_shape_type() == GTST_Rectangle) {
+            auto nu_rect = std::shared_ptr<sf::RectangleShape>(
+                new sf::RectangleShape(
+                    // SHOULD THIS ALLOW FOR AN OFFSET OF SOME KIND? I guess only screen position needs to, qv.
+                    sf::Vector2f((*geo)[1].x - (*geo)[0].x, (*geo)[1].y - (*geo)[0].y)
+                )
+            );
+            nu_rect->setFillColor(get_color_for_purpose(shap->purpose, 64));       //low-opacity fill
+            nu_rect->setOutlineColor(get_color_for_purpose(shap->purpose, 255));   //opaque outline
+            nu_rect->setOutlineThickness(-1.0);    //thin outline, inside shape
+            //this is screen position! nu_shape->setPosition(shap->position.x, shap->position.y);
+            nu_sfmlshape = std::shared_ptr<SFMLRectangle>(new SFMLRectangle(nu_rect));
+        } else if(shap->get_shape_type() == GTST_Ellipse) {
+            //make a circle s.t. its scale is 1 in the major axis and
+            //minor/major in the minor axis
+            float major_axis = std::max((*geo)[1].x,(*geo)[1].y);
+            auto nu_circ = std::shared_ptr<sf::CircleShape>(new sf::CircleShape(major_axis/2.0));
+            if((*geo)[1].x > (*geo)[1].y) {
+                // x larger, so set Y scale to y/x
+                nu_circ->scale(1.0, float((*geo)[1].y) / major_axis);
+            } else {
+                // y larger, so set X scale to x/y
+                nu_circ->scale(float((*geo)[1].x) / major_axis,1.0);
+            }
+            nu_circ->setFillColor(get_color_for_purpose(shap->purpose, 64));       //low-opacity fill
+            nu_circ->setOutlineColor(get_color_for_purpose(shap->purpose, 255));   //opaque outline
+            nu_circ->setOutlineThickness(-1.0);    //thin outline, inside shape
+            //this is screen position! nu_shape->setPosition(shap->position.x, shap->position.y);
+            nu_sfmlshape = std::shared_ptr<SFMLCircle>(new SFMLCircle(nu_circ));
+        } else if(shap->get_shape_type() == GTST_Polygon) {
+            //argh, how to do this? I guess just connected lines atm
+            //I don't want to do the whole triangulating thing again
+            //sf::PrimitiveType pty, size_t nPoints, sf::Texture *tx
+            auto nu_poly = std::shared_ptr<SFMLVertArray>(new SFMLVertArray(sf::PrimitiveType::LineStrip,geo->size()+1,nullptr));
+            //fill in all the vertices from geometry, with color determined by shape's purpose
+            sf::Color col = get_color_for_purpose(shap->purpose,255);       //opaque outline
+            for(int i = 0; i < geo->size(); i++) {
+                //let's just put all the points in verbatim
+                nu_poly->set_vertex(i,sf::Vertex(sf::Vector2f((*geo)[i].x, (*geo)[i].y),col));
+            }
+            // one last vertex to close up the polyline
+            nu_poly->set_vertex(geo->size(),sf::Vertex(sf::Vector2f((*geo)[0].x, (*geo)[0].y),col));
+            nu_sfmlshape = nu_poly;
+        } else if(shap->get_shape_type() == GTST_Point) {
+            printf("*** WARNING: Point not yet supported, skipping\n");
+            nu_sfmlshape = nullptr;
+        } else {
+            printf("*** WARNING: unknown shape type, skipping\n");
+            nu_sfmlshape = nullptr;
         }
 
-        if(nu_shape != nullptr) {
-            // FIGURE OUT HOW TO HANDLE THIS
-            // nu_shape->setPosition(shap->position.x, shap->position.y);
-            // //set fill color according to type!
-            // switch(shap->purpose) {
-            //     case GTAT_NoGo: nu_shape->setFillColor(sf::Color(255,0,0,64));      //red for nogo
-            //         break;
-            //     case GTAT_Slow: nu_shape->setFillColor(sf::Color(0,0,255,64));      //blue for slow
-            //         break;
-            //     case GTAT_Trigger: nu_shape->setFillColor(sf::Color(0.255,0,64));   //green for trigger
-            //         break;
-            //     default: nu_shape->setFillColor(sf::Color(128,128,128,64));         //grey for unk
-            //         break;
-            // }
-            // nu_shape->setOutlineColor(sf::Color(0,0,0,255));    //black outline
-            // nu_shape->setOutlineThickness(1);                   //thin
-
-            int_shapes.push_back(nu_shape);
-            
-            scene_objects.push_back(nu_shape.get());
+        //add  to scene graph
+        if(nu_sfmlshape != nullptr) {
+            // figure out the sfml shape's position wrt screen
+            nu_sfmlshape->setPosition(shap->position.x - viewport_world_ulx, shap->position.y - viewport_world_uly);
+            int_shapes.push_back(nu_sfmlshape);           // do we even need this? Yes, for adjusting positions onscreen
+            int_gtshapes.push_back(shap);                 // oh man this is gross, we need proper classes and scene graph
+            scene_objects.push_back(nu_sfmlshape.get());
         }
     }
-END FIGURE THIS OUT */
+
+    // end INTERACTION SHAPES! REFACTOR THIS KIND OF THING INTO SCENE GRAPH! ==========================================================================
+
 
     // for map scrolling
     //float scroll_velocity = 5.0;
@@ -482,6 +506,20 @@ END FIGURE THIS OUT */
                 // printf("adxy: %d, %d view_world: %d,%d New samwpos: %d,%d sam_screen %d,%d lyrpos %f,%f\n",
                 //     actual_delta_x,actual_delta_y,viewport_world_ulx,viewport_world_uly,
                 //     samurai_world_x,samurai_world_y,samurai_screen_x,samurai_screen_y,layerPosX,layerPosY);
+
+                // tweak onscreen positions of interaction shapes
+                // using embarrasingly gross parallel arrays of sfml shapes and GTShapes
+                // that's asking for a mad refactor
+                for(int i = 0; i < int_shapes.size(); i++) {
+                    auto ishape = int_shapes[i];
+                    auto gshape = int_gtshapes[i];
+
+                    // FIGURE OUT IF GIVEN SHAPE IS ONSCREEN AND DRAW IT IF SO
+                    // first just draw it
+                    // DOES THIS NEED TO ACCOUNT FOR AN OFFSET OF SOME SORT? Doesn't seem to!
+                    // might need to if there's a rectangle or ellipse whose ulx isn't 0?
+                    ishape->setPosition(gshape->position.x - viewport_world_ulx, gshape->position.y - viewport_world_uly);
+                }
             }
 
         } else {

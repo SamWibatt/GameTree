@@ -415,7 +415,8 @@ namespace tiledreader {
               continue;
             } else if(kid.child("ellipse")) {
               //ellipse object has an ellipse child
-              printf("- Found an ellipse of type %s, name \"%s\", id %d!\n",area_type.c_str(), area_name.c_str(), kid.attribute("id").as_int());
+              printf("- Found an ellipse of type %s, name \"%s\", width %f, height %f, id %d!\n",area_type.c_str(), area_name.c_str(), 
+                kid.attribute("width").as_float(), kid.attribute("height").as_float(), kid.attribute("id").as_int());
               tl->shapes.push_back(TiledObjectShape(TOS_Ellipse,origin_x,origin_y,0.0,0.0,
                                                     kid.attribute("width").as_float(),
                                                     kid.attribute("height").as_float(),
