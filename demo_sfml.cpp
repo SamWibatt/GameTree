@@ -446,17 +446,24 @@ int main(int argc, char *argv[])
                         // if moving her in y makes her not be in there, keep the y
                         // this almost works but we're getting some stuck-in-walls
                         if(shap->purpose == GTAT_NoGo) {
-                            // we know that adding both x and y makes her be inside, so if ONE doesn't, assume the other does
-                            if(!shap->inside(samurai_world_x, last_worldy)) {
-                                samurai_world_y = last_worldy;
-                            } //what if we made these not exclusive? Used to be an else here 
-                            if(!shap->inside(last_worldy,samurai_world_y)) {
+                            // this seems to work for rectangles and ellipses...?
+                            if(shap->get_shape_type() == GTST_Rectangle || shap->get_shape_type() == GTST_Ellipse) {
+                                // we know that adding both x and y makes her be inside, so if ONE doesn't, assume the other does
+                                if(!shap->inside(samurai_world_x, last_worldy)) {
+                                    samurai_world_y = last_worldy;
+                                } //what if we made these not exclusive? Used to be an else here - oh, that makes it so that
+                                // you can punch through vertically bc now samurai_world_y is previous y. 
+                                //Does that still happen if we restore the else? yup
+                                else if(!shap->inside(last_worldy,samurai_world_y)) {
+                                    samurai_world_x = last_worldx;
+                                } 
+                            }
+                            else {
+                                // for polygons, just stop them cold for now
+                                // icky, but better than stuck in a wall
                                 samurai_world_x = last_worldx;
-                            } 
-                            // else {
-                            //     samurai_world_x = last_worldx;
-                            //     samurai_world_y = last_worldy;
-                            // }
+                                samurai_world_y = last_worldy;
+                            }
                         }
                         
                     }
