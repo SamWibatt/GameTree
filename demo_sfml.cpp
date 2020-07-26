@@ -75,8 +75,18 @@ int main(int argc, char *argv[])
     float joystick_deadspot = 15.0; //stick goes 0..100 in each axis; if abs(move) < this, ignore
                                     //to avoid little jitter
 
+    //timing! see https://www.sfml-dev.org/tutorials/2.5/system-time.php
+    sf::Clock clock;
 
     // END HW SETUP ================================================================================================================
+
+    // GLOBAL TIME OBJECT - can have multiple
+    // these start out paused
+    GTTime g_time;
+    //g_time.unpause before any events get added
+    //*** USE REAL UNPAUSE once it's writ
+    g_time.paused = false;
+
 
     // KLUDGY WAY TO DO A SCENE GRAPH
     std::vector<sf::Drawable *> scene_objects;
@@ -128,6 +138,16 @@ int main(int argc, char *argv[])
 
     samurai.set_sprite_bank(samurai_sbank);
 
+    //init samurai frame & such - temp, data-drive
+    samurai.register_clock(g_time);
+
+    samurai.current_character = samurai.sbank->info.character_to_index["Samurai"];          //MAKE A BETTER METHOD FOR THIS and error trap
+    samurai.current_frame = 0;
+    samurai.set_action("Idle");
+    samurai.set_direction("R");
+    
+    samurai.active = true;
+    
 
     // MAP AND CHARACTER SETUP ----------------------------------------------------------------------------------------------------------------------
     // at some point will get character's initial position from a point in the InteractionObject layer like this one
@@ -142,14 +162,9 @@ int main(int argc, char *argv[])
     printf("Map width: %f height: %f\n",mapWidth,mapHeight);
 
 
-    //init samurai frame & such - temp, data-drive
-    samurai.current_character = 0;
-    samurai.current_action = 0;
-    samurai.current_direction = 2;
-    samurai.current_frame = 0;
 
     // how fast she walks - need to data drive this too
-    float samurai_velocity = 2.0;
+    float samurai_velocity = 1.0;       //was 2.0
     
     //initial just to see where this puts her - constant position onscreen, not relative to map.
     // will have to think about how to handle map coords vs. screen
@@ -352,6 +367,16 @@ int main(int argc, char *argv[])
     // run the program as long as the window is open
     while (window.isOpen())
     {
+        //timing stuff see https://www.sfml-dev.org/tutorials/2.5/system-time.php
+        sf::Time elapsed = clock.restart();
+        //RIDICULOUSLY VERBOSE DEBUG
+        //this ranges from 1 to 19, with the large majority being 16
+        //printf("frame elapsed millis = %d\n",elapsed.asMilliseconds());
+
+        //so, we need to update the global event clock
+        //updateGame(elapsed);
+        g_time.advance_time(GTtimestamp_t(elapsed.asMilliseconds()));
+
         // check all the window's events that were triggered since the last iteration of the loop
         sf::Event event;
         while (window.pollEvent(event))
@@ -547,6 +572,9 @@ int main(int argc, char *argv[])
                     // might need to if there's a rectangle or ellipse whose ulx isn't 0?
                     ishape->setPosition(gshape->position.x - viewport_world_ulx, gshape->position.y - viewport_world_uly);
                 }
+            } else {
+                //since she didn't actually move, make her idle
+                samurai.set_action("Idle");             // write methods that do this w/index
             }
 
         } else {
