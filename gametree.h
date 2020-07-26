@@ -548,13 +548,17 @@ namespace gt {
     public:
       //member functions
       // say bbox_check is end-exclusive in both dimensions?
-      inline bool bbox_check(GTPoint pt) {
+      inline bool bbox_check(GTPoint& pt) {
         return(pt.x >= bbox_ul.x + position.x && pt.x < bbox_lr.x + position.x && 
                 pt.y >= bbox_ul.y + position.y && pt.y < bbox_lr.y + position.y);
       }
-      virtual bool inside_shape_if_inside_bbox(GTPoint pt) = 0;      //each shape must define; doesn't do bbox check, inside() does
-      bool inside(GTPoint pt) {
+      virtual bool inside_shape_if_inside_bbox(GTPoint& pt) = 0;      //each shape must define; doesn't do bbox check, inside() does
+      bool inside(GTPoint& pt) {
         return bbox_check(pt) && inside_shape_if_inside_bbox(pt);
+      }
+      bool inside(GTcoord_t x, GTcoord_t y) {
+        GTPoint pt(x,y);
+        return inside(pt);
       }
 
       virtual GTShape_type get_shape_type() = 0;
@@ -575,7 +579,7 @@ namespace gt {
 
     public:
       //trivial: if pt is inside bbox, it's inside the rectangle.
-      virtual bool inside_shape_if_inside_bbox(GTPoint pt) override { return true; }
+      virtual bool inside_shape_if_inside_bbox(GTPoint& pt) override { return true; }
       virtual bool add_to_json(json& j) override;
       virtual bool get_from_json(json& jt) override;
 
@@ -599,7 +603,7 @@ namespace gt {
 
     public:
       //remember to allow for "position"
-      virtual bool inside_shape_if_inside_bbox(GTPoint pt) override;
+      virtual bool inside_shape_if_inside_bbox(GTPoint& pt) override;
       virtual bool add_to_json(json& j) override;
       virtual bool get_from_json(json& jt) override;
 
@@ -625,7 +629,7 @@ namespace gt {
     public:
       //remember to allow for "position"
       // HERE USE BOURKE'S ROUTINE AND CREDIT IT
-      virtual bool inside_shape_if_inside_bbox(GTPoint pt) override;
+      virtual bool inside_shape_if_inside_bbox(GTPoint& pt) override;
       virtual bool add_to_json(json& j) override;
       virtual bool get_from_json(json& jt) override;
 

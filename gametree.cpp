@@ -521,7 +521,7 @@ namespace gt {
   // I think bc I know the bounding box I can just use width or ht /2
   // so let's try that and see what we get
   // remember to allow for shape's "position"
-  bool GTEllipse::inside_shape_if_inside_bbox(GTPoint pt) {
+  bool GTEllipse::inside_shape_if_inside_bbox(GTPoint& pt) {
     // should I subtract the position off of the point to check, instead of adding it to bbox?
     // that way stuff is nearer to the origin and the squaring won't make it overflow?
     // ASSUME THE BOUNDING BOX UPPER LEFT IS WHERE THE ORIGIN IS
@@ -560,7 +560,7 @@ namespace gt {
   //"Any source code found here may be freely used provided credits are given to the author."
   //bool InsidePolygon(std::vector<GTPoint>& polygon, GTPoint p)
 
-  bool GTPolygon::inside_shape_if_inside_bbox(GTPoint pt)
+  bool GTPolygon::inside_shape_if_inside_bbox(GTPoint& pt)
   {
     int32_t counter = 0;
     int32_t i;

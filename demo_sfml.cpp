@@ -413,7 +413,7 @@ int main(int argc, char *argv[])
             // first pass, just detect and light up shapes she's colliding with.
             if(interaction_layer != nullptr) {
                 for(auto shap: interaction_layer->shapes) {
-                    if(shap->inside(GTPoint(samurai_world_x, samurai_world_y))) {
+                    if(shap->inside(samurai_world_x, samurai_world_y)) {
                         //collide!
                         //printf("Collision with shape of type %d\n",shap->purpose);
                         // OK THAT WORKS BUT DOESN'T DO ANYTHING YET!
@@ -438,6 +438,26 @@ int main(int argc, char *argv[])
                         // better still, just have a finer-grained collision function that can do that intersection of
                         // the motion vector with the shape's surface (intersection closest to the beginning spot!)
                         // YES LET US DO THAT
+                        // OK found a graphics gems thing to do it BUT since our motion currently is like 2 pixels let's
+                        // try just having her stop if she hits a nogo
+                        // other problem with this is that it won't allow her to slide along the edge of the nogo like
+                        // she does along the sides of the screen - but see how it looks
+                        // cheap way around it - if moving her just in x makes her not be in there, keep the x
+                        // if moving her in y makes her not be in there, keep the y
+                        // this almost works but we're getting some stuck-in-walls
+                        if(shap->purpose == GTAT_NoGo) {
+                            // we know that adding both x and y makes her be inside, so if ONE doesn't, assume the other does
+                            if(!shap->inside(samurai_world_x, last_worldy)) {
+                                samurai_world_y = last_worldy;
+                            } //what if we made these not exclusive? Used to be an else here 
+                            if(!shap->inside(last_worldy,samurai_world_y)) {
+                                samurai_world_x = last_worldx;
+                            } 
+                            // else {
+                            //     samurai_world_x = last_worldx;
+                            //     samurai_world_y = last_worldy;
+                            // }
+                        }
                         
                     }
                 }
