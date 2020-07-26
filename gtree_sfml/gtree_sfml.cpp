@@ -9,7 +9,7 @@ namespace gtree_sfml {
 
   //SFMLSpriteBank ==============================================================================
 
-  bool SFMLSpriteBank::get_from_json(json& jt) {
+  bool GTSFSpriteBank::get_from_json(json& jt) {
     if(!GTSpriteBank::get_from_json(jt)) {
       //failed to read!
       return false;
@@ -25,11 +25,11 @@ namespace gtree_sfml {
 
   //SFMLMap =====================================================================================
 
-  bool SFMLMapLayer::build_tile_object_vertarrays(std::vector<std::shared_ptr<GTObjectTile>>& tile_objects, 
+  bool GTSFMapLayer::build_tile_object_vertarrays(std::vector<std::shared_ptr<GTObjectTile>>& tile_objects, 
                 std::vector<GTTile>& tile_atlas, sf::Texture *tx) {
     // iterate over tile_objects and build a little quadlike thing for each. 
     if(!tile_objects.empty()) {
-      this->layer_vertarrays = std::shared_ptr<std::vector<SFMLVertArray>>(new std::vector<SFMLVertArray>());
+      this->layer_vertarrays = std::shared_ptr<std::vector<GTSFVertArray>>(new std::vector<GTSFVertArray>());
       for(auto tob : tile_objects) {
         //here's what we have to work with
         //tob->orx, tob->ory, tob->tile, tob->wid, tob->ht
@@ -42,7 +42,7 @@ namespace gtree_sfml {
         // wait, need to give the actual position for each quad, not relative to a "position"
         // looks like Tiled positions object tiles by lower left, tho - so try bumping y up by object's height - YAY
 
-        SFMLVertArray xva(sf::PrimitiveType::Quads,4,tx);
+        GTSFVertArray xva(sf::PrimitiveType::Quads,4,tx);
         xva.va[0] = (sf::Vertex(sf::Vector2f(tob->orx,tob->ory - tob->ht),
             sf::Vector2f(tile_atlas[tob->tile].ulx,tile_atlas[tob->tile].uly)));
         //printf("Appending vertex: pos %f, %f tex %f, %f\n", xva.va[0].position.x,xva.va[0].position.y,xva.va[0].texCoords.x,xva.va[0].texCoords.y);
@@ -66,7 +66,7 @@ namespace gtree_sfml {
     return true;
   }
 
-  void SFMLTiledMapLayer::calculate_bounding_box() {
+  void GTSFTiledMapLayer::calculate_bounding_box() {
     //factor in both tiled map and object tiles, if any
     //start with tiled map as initial values, assuming origin is 0,0 at upper left of map
     int ulx = 0;
@@ -88,7 +88,7 @@ namespace gtree_sfml {
     bounding_box.height = (lry - uly);
   }
 
-  bool SFMLTiledMapLayer::get_from_json(json& jt) {
+  bool GTSFTiledMapLayer::get_from_json(json& jt) {
     if(!GTTiledMapLayer::get_from_json(jt)) {
       //failed to read!
       return false;
@@ -103,8 +103,8 @@ namespace gtree_sfml {
     image_data.clear();
 
     // FIRST TILE MAP
-    layer_vertarrays = std::shared_ptr<std::vector<SFMLVertArray>>(new std::vector<SFMLVertArray>());
-    SFMLVertArray xva(sf::PrimitiveType::Quads,0,layer_tex.get());
+    layer_vertarrays = std::shared_ptr<std::vector<GTSFVertArray>>(new std::vector<GTSFVertArray>());
+    GTSFVertArray xva(sf::PrimitiveType::Quads,0,layer_tex.get());
     for(auto i = 0; i < tile_map.size(); i++) {
       if(tile_map[i] != 0) {
         GTindex_t tcol = i % layer_tilewid;
@@ -142,7 +142,7 @@ namespace gtree_sfml {
     return true;
   }
 
-  void SFMLObjectsMapLayer::calculate_bounding_box() {
+  void GTSFObjectsMapLayer::calculate_bounding_box() {
     //factor in both tiled map and object tiles, if any
     //start with tiled map as initial values, assuming origin is 0,0 at upper left of map
     // init with suitable values - will we get past 1M pixels? probably not
@@ -165,7 +165,7 @@ namespace gtree_sfml {
     bounding_box.height = (lry - uly);
   }
 
-  bool SFMLObjectsMapLayer::get_from_json(json& jt) {
+  bool GTSFObjectsMapLayer::get_from_json(json& jt) {
     if(!GTObjectsMapLayer::get_from_json(jt)) {
       //failed to read!
       return false;
@@ -194,7 +194,7 @@ namespace gtree_sfml {
 
   // ick, had to reconstruct the whole GTMap reader bc it has to allocate the right subclasses of layer
   // may need to refactor some
-  bool SFMLMap::get_from_json(json& j) {
+  bool GTSFMap::get_from_json(json& j) {
     //we expect there to be an array of layers at the top level
     // or no wait, "layers" : []
     if(j.contains("layers")) {
@@ -202,7 +202,7 @@ namespace gtree_sfml {
       for(json jlyr : j["layers"]) {
         if(jlyr.contains("type")) {
           if(jlyr["type"] == "tiled") {
-            auto lyr = std::shared_ptr<SFMLTiledMapLayer>(new SFMLTiledMapLayer());
+            auto lyr = std::shared_ptr<GTSFTiledMapLayer>(new GTSFTiledMapLayer());
             if(lyr->get_from_json(jlyr) == true) {
               layers.push_back(lyr);
               slayers.push_back(lyr); //GROSS KLUDGE TO AVOID SLICING BC I SCREWED UP SOMEWHERE
@@ -211,7 +211,7 @@ namespace gtree_sfml {
               return false;
             }
           } else if(jlyr["type"] == "objects") {
-            auto lyr = std::shared_ptr<SFMLObjectsMapLayer>(new SFMLObjectsMapLayer());
+            auto lyr = std::shared_ptr<GTSFObjectsMapLayer>(new GTSFObjectsMapLayer());
             if(lyr->get_from_json(jlyr) == true) {
               layers.push_back(lyr);
               slayers.push_back(lyr); //GROSS KLUDGE TO AVOID SLICING BC I SCREWED UP SOMEWHERE

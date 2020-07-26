@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 
     // so HERE instead of that we need to load up a map in GameTree format and turn it into SFML-usable, yes?
     // Still got a piece left to do for that, though a lot of it is directly usable
-    SFMLMap the_map;
+    GTSFMap the_map;
 
     //read in the map we want to load as a json string and 
     std::string map_filename = "demo_assets/outputs/DemoMap.tmx.json";
@@ -116,8 +116,8 @@ int main(int argc, char *argv[])
     }
 
     // snag the Samurai lady sprite-bank
-    std::shared_ptr<SFMLSpriteBank> samurai_sbank = std::shared_ptr<SFMLSpriteBank>(new SFMLSpriteBank());
-    SFMLActor samurai;
+    std::shared_ptr<GTSFSpriteBank> samurai_sbank = std::shared_ptr<GTSFSpriteBank>(new GTSFSpriteBank());
+    GTSFActor samurai;
     std::string sbank_filename = "demo_assets/outputs/Samurai.json_a2gt_out.json";
 
     if(!samurai_sbank->load_from_json_file(sbank_filename)) {
@@ -227,7 +227,7 @@ int main(int argc, char *argv[])
 
     // ***** ALSO CONSIDER SPECIAL HANDLING OF GETTABLES TO TURN THE OBJECT LIST THERE INTO A BUNCH OF SPRITES SO THEY
     // ***** CAN BE MOVED / HIDDEN INDEPENDENTLY!
-    std::shared_ptr<SFMLMapLayer> lyr;
+    std::shared_ptr<GTSFMapLayer> lyr;
     for(std::string nam : {"Background", "BGOverlay", "Gettables"}) {
         lyr = the_map.get_sfml_layer_by_name(nam);
         if(lyr != nullptr) {
@@ -258,7 +258,7 @@ int main(int argc, char *argv[])
     //Ugh, I might need my own class for this that's both drawable and transformable
     //That's what SFML shape was about - The problem is that my SFMLVertArray isn't a sf::Shape, so I can't use that
     //I need both Drawable and Transformable, so I can't use either one as the type for this
-    std::vector<std::shared_ptr<SFMLShape>> int_shapes;
+    std::vector<std::shared_ptr<GTSFShape>> int_shapes;
     // super gross, here is a parallel array of the gtshapes so we can know the origins
     // GTShape should have some kind of stub for drawing that plat-spec implementations fill in ...? 
     // I guess get_geometry is the nod at it for now
@@ -267,7 +267,7 @@ int main(int argc, char *argv[])
     for(auto shap: interaction_layer->shapes) {
         //get geometry from the shape - bounding box, list of points, etc.
         std::shared_ptr<std::vector<GTPoint>> geo = shap->get_geometry();
-        std::shared_ptr<SFMLShape> nu_sfmlshape = nullptr;
+        std::shared_ptr<GTSFShape> nu_sfmlshape = nullptr;
         
         if(shap->get_shape_type() == GTST_Rectangle) {
             auto nu_rect = std::shared_ptr<sf::RectangleShape>(
@@ -280,7 +280,7 @@ int main(int argc, char *argv[])
             nu_rect->setOutlineColor(get_color_for_purpose(shap->purpose, 255));   //opaque outline
             nu_rect->setOutlineThickness(-1.0);    //thin outline, inside shape
             //this is screen position! nu_shape->setPosition(shap->position.x, shap->position.y);
-            nu_sfmlshape = std::shared_ptr<SFMLRectangle>(new SFMLRectangle(nu_rect));
+            nu_sfmlshape = std::shared_ptr<GTSFRectangle>(new GTSFRectangle(nu_rect));
         } else if(shap->get_shape_type() == GTST_Ellipse) {
             //make a circle s.t. its scale is 1 in the major axis and
             //minor/major in the minor axis
@@ -297,12 +297,12 @@ int main(int argc, char *argv[])
             nu_circ->setOutlineColor(get_color_for_purpose(shap->purpose, 255));   //opaque outline
             nu_circ->setOutlineThickness(-1.0);    //thin outline, inside shape
             //this is screen position! nu_shape->setPosition(shap->position.x, shap->position.y);
-            nu_sfmlshape = std::shared_ptr<SFMLCircle>(new SFMLCircle(nu_circ));
+            nu_sfmlshape = std::shared_ptr<GTSFCircle>(new GTSFCircle(nu_circ));
         } else if(shap->get_shape_type() == GTST_Polygon) {
             //argh, how to do this? I guess just connected lines atm
             //I don't want to do the whole triangulating thing again
             //sf::PrimitiveType pty, size_t nPoints, sf::Texture *tx
-            auto nu_poly = std::shared_ptr<SFMLVertArray>(new SFMLVertArray(sf::PrimitiveType::LineStrip,geo->size()+1,nullptr));
+            auto nu_poly = std::shared_ptr<GTSFVertArray>(new GTSFVertArray(sf::PrimitiveType::LineStrip,geo->size()+1,nullptr));
             //fill in all the vertices from geometry, with color determined by shape's purpose
             sf::Color col = get_color_for_purpose(shap->purpose,255);       //opaque outline
             for(int i = 0; i < geo->size(); i++) {

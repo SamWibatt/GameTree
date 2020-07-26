@@ -14,16 +14,16 @@ using namespace sf;
 namespace gtree_sfml {
 
 
-  //SFMLSpriteBank ==============================================================================
+  //GTSFSpriteBank ==============================================================================
 
-  class SFMLSpriteBank : public GTSpriteBank {
+  class GTSFSpriteBank : public GTSpriteBank {
     public:
       //data members
       sf::Texture spritesheet;
 
     public:
-      SFMLSpriteBank(){}
-      virtual ~SFMLSpriteBank() {}
+      GTSFSpriteBank(){}
+      virtual ~GTSFSpriteBank() {}
 
     public:
       //member functions
@@ -33,17 +33,17 @@ namespace gtree_sfml {
       virtual bool get_from_json(json& jt) override;
   };
 
-  //SFMLActor ===================================================================================
+  //GTSFActor ===================================================================================
 
   // assume a typical actor is a sprite - can use other drawables to derive from otherwise
   // OR because Sprite's draw is private, make this Transformable and Drawable and have a Sprite member :|
-  class SFMLActor : public GTActor, public Transformable, public Drawable {
+  class GTSFActor : public GTActor, public Transformable, public Drawable {
     public:
       std::shared_ptr<Sprite> spr;
 
     public:
-      SFMLActor() { spr = std::shared_ptr<Sprite>(new Sprite()); }
-      virtual ~SFMLActor() {}
+      GTSFActor() { spr = std::shared_ptr<Sprite>(new Sprite()); }
+      virtual ~GTSFActor() {}
 
     public:
       virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const {
@@ -66,20 +66,20 @@ namespace gtree_sfml {
       }
 
       //if you just assign sprite bank and try to set the texture anywhere else, it gets all object-sliced :P
-      virtual void set_sprite_bank(std::shared_ptr<SFMLSpriteBank> sb) {
+      virtual void set_sprite_bank(std::shared_ptr<GTSFSpriteBank> sb) {
         this->sbank = sb;
         spr->setTexture(sb->spritesheet);
       };
 
   };
 
-  //SFMLMap =====================================================================================
+  //GTSFMap =====================================================================================
 
   //base class so I can store these things in a vector
-  class SFMLShape : public sf::Drawable, public sf::Transformable {
+  class GTSFShape : public sf::Drawable, public sf::Transformable {
     public:
-      SFMLShape() {}
-      virtual ~SFMLShape() {}
+      GTSFShape() {}
+      virtual ~GTSFShape() {}
 
       // for those classes that are wrappers around sfml shapes, return shape pointer, eww, shudder
       // this way you can do stuff like set position
@@ -87,16 +87,16 @@ namespace gtree_sfml {
   };
 
   //wrapper for SFML rectangle :P 
-  class SFMLRectangle : public SFMLShape {
+  class GTSFRectangle : public GTSFShape {
     public:
       std::shared_ptr<sf::RectangleShape> r;
 
     public:
-      SFMLRectangle() {}
-      SFMLRectangle(std::shared_ptr<sf::RectangleShape>& rec) { 
+      GTSFRectangle() {}
+      GTSFRectangle(std::shared_ptr<sf::RectangleShape>& rec) { 
         r = rec; 
       }
-      virtual ~SFMLRectangle() {}
+      virtual ~GTSFRectangle() {}
       virtual sf::Shape *get_shape() override { return r.get(); }
 
       virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const override {
@@ -110,16 +110,16 @@ namespace gtree_sfml {
   };
 
   //wrapper for SFML circle :P 
-  class SFMLCircle : public SFMLShape {
+  class GTSFCircle : public GTSFShape {
     public:
       std::shared_ptr<sf::CircleShape> c;
 
     public:
-      SFMLCircle() {}
-      SFMLCircle(std::shared_ptr<sf::CircleShape>& circ) { 
+      GTSFCircle() {}
+      GTSFCircle(std::shared_ptr<sf::CircleShape>& circ) { 
         c = circ; 
       }
-      virtual ~SFMLCircle() {}
+      virtual ~GTSFCircle() {}
       virtual sf::Shape *get_shape() override { return c.get(); }
 
       virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const override {
@@ -134,13 +134,13 @@ namespace gtree_sfml {
 
 
   // Transformable vertex array for building scrolly / rotatey / etc tile maps
-  class SFMLVertArray : public SFMLShape {
+  class GTSFVertArray : public GTSFShape {
     public:
       sf::VertexArray va;
       sf::Texture *tex; 
 
     public:
-      SFMLVertArray(sf::PrimitiveType pty, size_t nPoints, sf::Texture *tx) {
+      GTSFVertArray(sf::PrimitiveType pty, size_t nPoints, sf::Texture *tx) {
         va = sf::VertexArray(pty, nPoints);
         tex = tx;
       }
@@ -167,16 +167,16 @@ namespace gtree_sfml {
       virtual sf::Shape *get_shape() override { return nullptr; }
   };
 
-  class SFMLMapLayer : public sf::Drawable, public sf::Transformable {
+  class GTSFMapLayer : public sf::Drawable, public sf::Transformable {
     public:
       std::shared_ptr<sf::Texture> layer_tex;                       //tilesheet, if any, nullptr if not
-      std::shared_ptr<std::vector<SFMLVertArray>> layer_vertarrays;   //vertex arrays, if any,  nullptr if not
+      std::shared_ptr<std::vector<GTSFVertArray>> layer_vertarrays;   //vertex arrays, if any,  nullptr if not
       // box containing the min/max in each dimension
       sf::Rect<int> bounding_box;
 
     public:
-      SFMLMapLayer() {}
-      virtual ~SFMLMapLayer() {}
+      GTSFMapLayer() {}
+      virtual ~GTSFMapLayer() {}
 
     public:
       virtual bool build_tile_object_vertarrays(std::vector<std::shared_ptr<GTObjectTile>>& tile_objects, 
@@ -201,7 +201,7 @@ namespace gtree_sfml {
 
   // ok, these are kind of gross, inheriting them from the gametree versions so the parent map can
   // allocate them and handle them properly
-  class SFMLTiledMapLayer : public GTTiledMapLayer, public SFMLMapLayer {
+  class GTSFTiledMapLayer : public GTTiledMapLayer, public GTSFMapLayer {
     public:
 
     public:
@@ -212,7 +212,7 @@ namespace gtree_sfml {
       void calculate_bounding_box() override;
   };
 
-  class SFMLObjectsMapLayer : public GTObjectsMapLayer, public SFMLMapLayer {
+  class GTSFObjectsMapLayer : public GTObjectsMapLayer, public GTSFMapLayer {
 
     public:
       virtual bool get_from_json(json& jt) override;
@@ -220,12 +220,12 @@ namespace gtree_sfml {
   };
 
 
-  class SFMLMap : public GTMap {
+  class GTSFMap : public GTMap {
     public:
       //data members
-      std::vector<std::shared_ptr<SFMLMapLayer>> slayers;   //...not happy with this but layers are getting sliced
+      std::vector<std::shared_ptr<GTSFMapLayer>> slayers;   //...not happy with this but layers are getting sliced
       // and similar anti-slicer
-      std::shared_ptr<SFMLMapLayer> get_sfml_layer_by_name(std::string nm) {
+      std::shared_ptr<GTSFMapLayer> get_sfml_layer_by_name(std::string nm) {
         int j = 0;
         for(auto plyr : layers) {
           if(plyr->name == nm) return slayers[j];       //dumb search but we're not likely to have lots of these
@@ -236,8 +236,8 @@ namespace gtree_sfml {
 
 
     public:
-      SFMLMap(){}
-      virtual ~SFMLMap() {}
+      GTSFMap(){}
+      virtual ~GTSFMap() {}
 
     public:
       //member functions
