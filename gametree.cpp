@@ -258,15 +258,6 @@ namespace gt {
 
 
   // ACTOR ==========================================================================================
-  GTActor::GTActor() {
-    // id should be filled in by Entity ctor
-    //printf("Creating actor id %u\n",id);
-    sbank = nullptr;
-    current_character = -1;
-    current_action = -1;
-    current_direction = -1;
-    current_frame = -1;
-  }
 
   GTActor::~GTActor() {
     //sprite is a smart pointer, just let it go?

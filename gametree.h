@@ -410,7 +410,9 @@ namespace gt {
       bool visible;
 
     public:
-      GTActor();
+      GTActor(std::shared_ptr<GTSpriteBank> nsb) {
+        sbank = nsb;
+      }
       virtual ~GTActor();
 
         GTSpriteFrame *get_current_spriteframe() const {

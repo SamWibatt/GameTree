@@ -4,25 +4,6 @@ using namespace gt;
 
 namespace gtree_sfml {
 
-  //SFMLActor ===================================================================================
-
-
-  //SFMLSpriteBank ==============================================================================
-
-  bool GTSFSpriteBank::get_from_json(json& jt) {
-    if(!GTSpriteBank::get_from_json(jt)) {
-      //failed to read!
-      return false;
-    }
-
-    //turn the imagery into a Texture and discard it
-    spritesheet.loadFromMemory(image_data.data(), image_data.size());
-    image_data.clear();
-
-    return true;
-  }
-
-
   //SFMLMap =====================================================================================
 
   bool GTSFMapLayer::build_tile_object_vertarrays(std::vector<std::shared_ptr<GTObjectTile>>& tile_objects, 
@@ -66,6 +47,7 @@ namespace gtree_sfml {
     return true;
   }
 
+  // This needs to go to GT class
   void GTSFTiledMapLayer::calculate_bounding_box() {
     //factor in both tiled map and object tiles, if any
     //start with tiled map as initial values, assuming origin is 0,0 at upper left of map

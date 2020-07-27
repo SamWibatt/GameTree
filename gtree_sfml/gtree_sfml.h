@@ -16,41 +16,73 @@ namespace gtree_sfml {
 
   //GTSFSpriteBank ==============================================================================
 
-  class GTSFSpriteBank : public GTSpriteBank {
+  class GTSFSpriteBank {
     public:
       //data members
+      GTSpriteBank *sb;         //dumb pointer assumes GT version will outlive GTSF version - keep an eye on this
       sf::Texture spritesheet;
 
     public:
-      GTSFSpriteBank(){}
+      GTSFSpriteBank(){
+        sb = nullptr;
+      }
+      GTSFSpriteBank(GTSpriteBank *newsb) {
+        if(newsb != nullptr) {
+          sb = newsb;
+          //ICKY SIDE EFFECT: turn the imagery into a Texture and discard it
+          spritesheet.loadFromMemory(sb->image_data.data(), sb->image_data.size());
+          sb->image_data.clear();
+        }
+      }
       virtual ~GTSFSpriteBank() {}
 
     public:
       //member functions
-      // set_frame sets up the texture rectangle / offset to draw. 
-      // Recall that Actor stores the state, not the SpriteBank; multiple Actors can use the same SpriteBank.
-      // in that case, this shouldn't be drawable - it's the Actor that is
-      virtual bool get_from_json(json& jt) override;
   };
 
   //GTSFActor ===================================================================================
 
   // assume a typical actor is a sprite - can use other drawables to derive from otherwise
   // OR because Sprite's draw is private, make this Transformable and Drawable and have a Sprite member :|
-  class GTSFActor : public GTActor, public Transformable, public Drawable {
+  class GTSFActor : public Transformable, public Drawable {
     public:
+      GTActor *ac;
+      std::shared_ptr<GTSFSpriteBank> sfsb;
       std::shared_ptr<Sprite> spr;
 
     public:
-      GTSFActor() { spr = std::shared_ptr<Sprite>(new Sprite()); }
+      //if you just assign sprite bank and try to set the texture anywhere else, it gets all object-sliced :P
+      virtual void set_sprite_bank(std::shared_ptr<GTSFSpriteBank> sb) {
+        this->sfsb = sb;
+        spr = std::shared_ptr<sf::Sprite>(new Sprite());
+        spr->setTexture(sfsb->spritesheet);
+      };
+
+      GTSFActor() { 
+        spr = nullptr;
+        sfsb = nullptr;
+        ac = nullptr; 
+      }
+
+      GTSFActor(GTActor *nac) {
+        std::shared_ptr<GTSFSpriteBank> nsfsb = std::shared_ptr<GTSFSpriteBank>(new GTSFSpriteBank(nac->sbank.get()));       //gross side effect clears samurai_sbank's image data
+        ac = nac;
+        set_sprite_bank(nsfsb);
+      }
+
+      GTSFActor(GTActor *nac, std::shared_ptr<GTSFSpriteBank> nsfsb) {
+        ac = nac;
+        set_sprite_bank(nsfsb);
+      }
+
       virtual ~GTSFActor() {}
 
     public:
       virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const {
-        if(sbank == nullptr) return;
+        if(sfsb == nullptr) return;
 
         //but I think I can just set the texture rectangle appropriately and draw it?
-        GTSpriteFrame  *frm = get_current_spriteframe();
+        GTSpriteFrame  *frm = ac->get_current_spriteframe();
         if(frm == nullptr) return;
 
         //set texture rectangle and hotspot offset; position is set in our transform, yes?
@@ -59,19 +91,25 @@ namespace gtree_sfml {
         spr->setTextureRect(sf::IntRect(frm->ulx,frm->uly,frm->wid,frm->ht));
         spr->setOrigin(frm->offx, frm->offy);
 
+        // for Invisible Samurai bug this is showing getTexture() as 0 - and aha, that is actually shewing a pointer, so it's nullptr by here
+        // printf("spr texture: %lu tr: (%d,%d - w%d,h%d) org: %f,%f\n",spr->getTexture(),
+        //   spr->getTextureRect().left, spr->getTextureRect().top, spr->getTextureRect().width, spr->getTextureRect().height,
+        //   spr->getOrigin().x, spr->getOrigin().y);
+
         // Do I need to compose states's transform with anything? If I do:
         sf::RenderStates rs = states;
         rs.transform = states.transform * getTransform();
         target.draw(*spr,rs);
       }
-
-      //if you just assign sprite bank and try to set the texture anywhere else, it gets all object-sliced :P
-      virtual void set_sprite_bank(std::shared_ptr<GTSFSpriteBank> sb) {
-        this->sbank = sb;
-        spr->setTexture(sb->spritesheet);
-      };
-
   };
+
+  // HEREAFTER UNREFACTORED *******************************************************************************************************************************************
+  // HEREAFTER UNREFACTORED *******************************************************************************************************************************************
+  // HEREAFTER UNREFACTORED *******************************************************************************************************************************************
+  // HEREAFTER UNREFACTORED *******************************************************************************************************************************************
+  // HEREAFTER UNREFACTORED *******************************************************************************************************************************************
+  // HEREAFTER UNREFACTORED *******************************************************************************************************************************************
+  // HEREAFTER UNREFACTORED *******************************************************************************************************************************************
 
   //GTSFMap =====================================================================================
 

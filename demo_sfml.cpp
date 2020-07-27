@@ -114,6 +114,7 @@ int main(int argc, char *argv[])
 
     // so HERE instead of that we need to load up a map in GameTree format and turn it into SFML-usable, yes?
     // Still got a piece left to do for that, though a lot of it is directly usable
+    // NOT REFACTORED YET
     GTSFMap the_map;
 
     //read in the map we want to load as a json string and 
@@ -125,18 +126,22 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+
+
     // snag the Samurai lady sprite-bank
-    std::shared_ptr<GTSFSpriteBank> samurai_sbank = std::shared_ptr<GTSFSpriteBank>(new GTSFSpriteBank());
-    GTSFActor samurai;
+    std::shared_ptr<GTSpriteBank> samurai_gt_sbank = std::shared_ptr<GTSpriteBank>(new GTSpriteBank());
     std::string sbank_filename = "demo_assets/outputs/Samurai.json_a2gt_out.json";
 
-    if(!samurai_sbank->load_from_json_file(sbank_filename)) {
+    if(!samurai_gt_sbank->load_from_json_file(sbank_filename)) {
         printf("Failed loading sprite bank %s\n",sbank_filename.c_str());
         printf("(are you running from GameTree dir?)\n");
         exit(1);
     }
 
-    samurai.set_sprite_bank(samurai_sbank);
+    //get sprite bank loaded before constructing an actor from it - does this help with Invisible Samurai bug? newp
+    GTActor samurai(samurai_gt_sbank);
+
+    //samurai.set_sprite_bank(samurai_sbank);
 
     //init samurai frame & such - temp, data-drive
     samurai.register_clock(g_time);
@@ -147,7 +152,9 @@ int main(int argc, char *argv[])
     samurai.set_direction("R");
     
     samurai.active = true;
-    
+
+    // so far all of this is pure gametree - now to make some SFML-specific objects
+    GTSFActor samurai_gtsf_actor(&samurai);
 
     // MAP AND CHARACTER SETUP ----------------------------------------------------------------------------------------------------------------------
     // at some point will get character's initial position from a point in the InteractionObject layer like this one
@@ -255,7 +262,18 @@ int main(int argc, char *argv[])
     }
 
     // sprites go here!
-    scene_objects.push_back(&samurai);
+    scene_objects.push_back(&samurai_gtsf_actor);
+    //scene_objects.push_back(samurai_gtsf_actor.spr.get());      //hm
+
+    //temp, put a sprite with whole sheet texture there - looks good
+    // Sprite s;
+    // s.setTexture(samurai_gtsf_actor.sfsb->spritesheet);
+    // scene_objects.push_back(&s);
+
+    // printf("s texture: %lu tr: (%d,%d - w%d,h%d) org: %f,%f\n",s.getTexture(),
+    //     s.getTextureRect().left, s.getTextureRect().top, s.getTextureRect().width, s.getTextureRect().height,
+    //     s.getOrigin().x, s.getOrigin().y);
+
 
     // then add the front layer
     std::string nam = "Front";
@@ -489,6 +507,9 @@ int main(int argc, char *argv[])
                                 samurai_world_x = last_worldx;
                                 samurai_world_y = last_worldy;
                             }
+                        } else {
+                            //other purposes: trigger, slow, etc.
+                            //HAVE THIS BE DATA DRIVEN RATHER THAN HARDCODEY ENUMS
                         }
                         
                     }
@@ -554,6 +575,7 @@ int main(int argc, char *argv[])
                 // then derive samurai onscreen position from her world position relative to the viewport, yes?
                 samurai_screen_x = (samurai_world_x - viewport_world_ulx);
                 samurai_screen_y = (samurai_world_y - viewport_world_uly);
+                //printf("samurai screen x: %d y: %d\n",samurai_screen_x, samurai_screen_y);
 
                 // printf("adxy: %d, %d view_world: %d,%d New samwpos: %d,%d sam_screen %d,%d lyrpos %f,%f\n",
                 //     actual_delta_x,actual_delta_y,viewport_world_ulx,viewport_world_uly,
@@ -586,8 +608,8 @@ int main(int argc, char *argv[])
             lyr->setPosition(layerPosX,layerPosY);
         }
 
-        //position character
-        samurai.setPosition(samurai_screen_x,samurai_screen_y);
+        //position character - platspec bc it's rendering-related
+        samurai_gtsf_actor.setPosition(samurai_screen_x,samurai_screen_y);
 
         // clear the window with black color
         // let's not do this anymore; assume tile map will do it? 
