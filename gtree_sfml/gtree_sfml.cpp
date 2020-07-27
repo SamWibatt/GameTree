@@ -4,7 +4,7 @@ using namespace gt;
 
 namespace gtree_sfml {
 
-  //SFMLMap =====================================================================================
+  //GTSFMapLayer ================================================================================
 
   bool GTSFMapLayer::build_vertarrays(GTMapLayer *lyr) {
 
@@ -97,81 +97,5 @@ namespace gtree_sfml {
 
     return true;
   }
-
-
-  // bool GTSFObjectsMapLayer::get_from_json(json& jt) {
-  //   if(!GTObjectsMapLayer::get_from_json(jt)) {
-  //     //failed to read!
-  //     return false;
-  //   }
-
-  //   //if there's imagery, make it a texture
-  //   layer_tex = nullptr;
-  //   layer_vertarrays = nullptr;
-  //   if(!image_data.empty()) {
-  //     //image data is a temporary in-memory png. create layer_tex from that.
-  //     layer_tex = std::shared_ptr<sf::Texture>(new sf::Texture());
-  //     layer_tex->loadFromMemory(image_data.data(), image_data.size());
-
-  //     // DANGER: THIS DESTRUCTIVELY MODIFIES IMAGE_DATA (GETS RID OF IT IN FAVOR OF THE TEXTURE!!!!!!!!!!!!!!!!!!!!!!!!!)
-  //     image_data.clear();
-
-  //     // NOW BUILD VERTEX ARRAYS
-  //     build_tile_object_vertarrays(tile_objects, tile_atlas, layer_tex.get());
-  //   }
-
-  //   // and find bounding box
-  //   calculate_bounding_box();
-
-  //   return true;
-  // }
-
-  // // ick, had to reconstruct the whole GTMap reader bc it has to allocate the right subclasses of layer
-  // // may need to refactor some
-  // bool GTSFMap::get_from_json(json& j) {
-  //   //we expect there to be an array of layers at the top level
-  //   // or no wait, "layers" : []
-  //   if(j.contains("layers")) {
-
-  //     for(json jlyr : j["layers"]) {
-  //       if(jlyr.contains("type")) {
-  //         if(jlyr["type"] == "tiled") {
-  //           auto lyr = std::shared_ptr<GTSFTiledMapLayer>(new GTSFTiledMapLayer());
-  //           if(lyr->get_from_json(jlyr) == true) {
-  //             layers.push_back(lyr);
-  //             slayers.push_back(lyr); //GROSS KLUDGE TO AVOID SLICING BC I SCREWED UP SOMEWHERE
-  //           } else {
-  //             fprintf(stderr,"*** ERROR: failed to read tiled map layer\n");
-  //             return false;
-  //           }
-  //         } else if(jlyr["type"] == "objects") {
-  //           auto lyr = std::shared_ptr<GTSFObjectsMapLayer>(new GTSFObjectsMapLayer());
-  //           if(lyr->get_from_json(jlyr) == true) {
-  //             layers.push_back(lyr);
-  //             slayers.push_back(lyr); //GROSS KLUDGE TO AVOID SLICING BC I SCREWED UP SOMEWHERE
-  //           } else {
-  //             fprintf(stderr,"*** ERROR: failed to read objects map layer\n");
-  //             return false;
-  //           }
-  //         } else {
-  //           fprintf(stderr,"*** ERROR: unknown layer type %s\n",std::string(jlyr["type"]).c_str());
-  //           return false;
-  //         } 
-  //       } else {
-  //         fprintf(stderr,"*** ERROR: no layer type given\n");
-  //         return false;
-  //       } 
-  //     }
-
-  //     return true;
-  //   } else {
-
-  //     fprintf(stderr,"*** ERROR: no 'layers' element at top level\n");
-  //     return false;       // there was no layers field! Fail!
-  //   }
-
-  //   return true;
-  // }
-
   
 }

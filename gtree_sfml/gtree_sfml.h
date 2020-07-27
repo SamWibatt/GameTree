@@ -1,6 +1,3 @@
-//sfmlmap is a tiled map background usable by SFML.
-//closely aligned to the Tiled map editor https://www.mapeditor.org/
-
 #ifndef GTREE_SFML_H_INCLUDED
 #define GTREE_SFML_H_INCLUDED
 
@@ -58,12 +55,6 @@ namespace gtree_sfml {
         spr->setTexture(sfsb->spritesheet);
       };
 
-      // GTSFActor() { 
-      //   spr = nullptr;
-      //   sfsb = nullptr;
-      //   ac = nullptr; 
-      // }
-
       GTSFActor(GTActor *nac) {
         std::shared_ptr<GTSFSpriteBank> nsfsb = std::shared_ptr<GTSFSpriteBank>(new GTSFSpriteBank(nac->sbank.get()));       //gross side effect clears samurai_sbank's image data
         ac = nac;
@@ -90,11 +81,6 @@ namespace gtree_sfml {
         //spr->setTexture(sbank->spritesheet);
         spr->setTextureRect(sf::IntRect(frm->ulx,frm->uly,frm->wid,frm->ht));
         spr->setOrigin(frm->offx, frm->offy);
-
-        // for Invisible Samurai bug this is showing getTexture() as 0 - and aha, that is actually shewing a pointer, so it's nullptr by here
-        // printf("spr texture: %lu tr: (%d,%d - w%d,h%d) org: %f,%f\n",spr->getTexture(),
-        //   spr->getTextureRect().left, spr->getTextureRect().top, spr->getTextureRect().width, spr->getTextureRect().height,
-        //   spr->getOrigin().x, spr->getOrigin().y);
 
         // Do I need to compose states's transform with anything? If I do:
         sf::RenderStates rs = states;
