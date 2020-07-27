@@ -50,6 +50,25 @@ namespace gt {
       ~GTPoint() {}
   };
 
+  //bounding box class
+  class GTBBox {
+    public:
+      GTcoord_t ulx;
+      GTcoord_t uly;
+      GTcoord_t wid;
+      GTcoord_t ht;
+
+    public:
+      GTBBox() { ulx = uly = wid = ht = 0; }
+      GTBBox(GTcoord_t nx, GTcoord_t ny, GTcoord_t nw, GTcoord_t nh) { 
+        ulx = nx;
+        uly = ny;
+        wid = nw;
+        ht = nh; 
+      }
+      ~GTBBox() {}
+  };
+
   // unique ID for every GameTree instance
   typedef uint32_t GTid_t;
 
@@ -663,50 +682,6 @@ namespace gt {
   };
 
 
-  //base class for layers - assuming that events will occur on them
-  class GTMapLayer : public GTEventEntity {
-    public:
-      //data members
-      std::string name;       //we'll want a way to choose these by name e.g. for interleaving sprites in the scene graph
-      //single source of tile imagery - 
-      //bytes that are just a png file in memory. May later have other formats
-      std::vector<uint8_t> image_data;
-      //tile atlas - texture coordinates within image for tile n
-      //tile 0 is always the no-tile, but put an entry in here for it
-      //to keep the map indexing simple
-      std::vector<GTTile> tile_atlas;
-
-    public:
-      void init() {
-        name.clear();
-        image_data.clear();
-        tile_atlas.clear();
-        //add a dummy tile for tile 0, which should never get rendered
-        tile_atlas.push_back(GTTile(0,0,0,0));
-      }
-      GTMapLayer() {
-        init();
-      }
-      virtual ~GTMapLayer() {}
-
-      // ****************************************************************
-      // ****************************************************************
-      // ****************************************************************
-      // JSON IN/OUT WILL NEED TO BE DONE BY SUBCLASSES.
-      // HOW DO WE KNOW WHICH KIND TO INSTANTIATE ON READING?
-      // DO WE NEED A TYPE FIELD?
-      // well.... *do* we need to stub these? There are the image_data
-      // and atlas to consider in each case.
-      // write image data with https://github.com/tplgy/cppcodec
-      // see https://github.com/tplgy/cppcodec#base64
-      // ****************************************************************
-      // ****************************************************************
-      // ****************************************************************
-      virtual bool add_to_json(json& j);
-      virtual bool get_from_json(json& jt);
-  };
-
-
   //location / extent of a free-floating tile as opposed to TiledMapLayer
   //grid-determined location
   //It's not an event entity but subclasses might be, consider
@@ -729,25 +704,22 @@ namespace gt {
       virtual bool get_from_json(json& jt);
   };
 
-  //layer that consists of tiles individually placed with no grid
-  class GTObjectsMapLayer : public GTMapLayer {
+  //base class for layers - assuming that events will occur on them
+  class GTMapLayer : public GTEventEntity {
     public:
-      std::vector<std::shared_ptr<GTObjectTile>> tile_objects;
-      std::vector<std::shared_ptr<GTShape>> shapes;
+      //data members
+      std::string name;       //we'll want a way to choose these by name e.g. for interleaving sprites in the scene graph
+      //single source of tile imagery - 
+      //bytes that are just a png file in memory. May later have other formats
+      std::vector<uint8_t> image_data;
+      //tile atlas - texture coordinates within image for tile n
+      //tile 0 is always the no-tile, but put an entry in here for it
+      //to keep the map indexing simple
+      std::vector<GTTile> tile_atlas;
 
-    public:
-      // json i/o
-      virtual bool add_to_json(json& j) override;
-      virtual bool get_from_json(json& jt) override;
-  };
+      GTBBox bounding_box;
 
-  // layer that consists of a square grid of (at least mostly) same-size tiles
-  // may have some odd-sized ones
-  // the defining characteristic is that tile placement is
-  // determined by the grid. 
-  // Though the odd sized ones are handled by tile_objects list.
-  class GTTiledMapLayer : public GTMapLayer {
-    public:
+      // merging tiled and objects layers so both have all the stuff
       GTcoord_t layer_tilewid;   //layer width in tiles
       GTcoord_t layer_tileht;    //height
       GTcoord_t tile_pixwid;     //tile grid width in pixels
@@ -756,14 +728,73 @@ namespace gt {
       //tilemap entries are indices into tile_atlas; 0 means no tile in
       //that grid location
       std::vector<GTtile_index_t> tile_map;
-
+      //tile_objects are tiles not aligned to grid but drawing from the tilesheet texture
       std::vector<std::shared_ptr<GTObjectTile>> tile_objects;
+      //shapes are (typically not drawn) areas e.g. rectangle, ellipse, polygon used for triggering, no-go, etc.
+      std::vector<std::shared_ptr<GTShape>> shapes;
+
 
     public:
-      // json i/o
-      virtual bool add_to_json(json& j) override;
-      virtual bool get_from_json(json& jt) override;
+      void init() {
+        name.clear();
+        image_data.clear();
+        tile_atlas.clear();
+        //add a dummy tile for tile 0, which should never get rendered
+        tile_atlas.push_back(GTTile(0,0,0,0));
+        bounding_box.ulx = bounding_box.uly = bounding_box.wid = bounding_box.ht = 0;
+      }
+      GTMapLayer() {
+        init();
+      }
+      virtual ~GTMapLayer() {}
+
+      //call calculate_bounding_box after getting from json or other source in order to re-reckon bounding box
+      virtual void calculate_bounding_box();
+      virtual GTBBox get_bounding_box() { return bounding_box; };
+
+      virtual bool add_to_json(json& basej);
+      virtual bool get_from_json(json& jt);
   };
+
+
+  // //layer that consists of tiles individually placed with no grid
+  // class GTObjectsMapLayer : public GTMapLayer {
+  //   public:
+  //     std::vector<std::shared_ptr<GTObjectTile>> tile_objects;
+  //     std::vector<std::shared_ptr<GTShape>> shapes;
+
+  //   public:
+  //     void calculate_bounding_box() override;     // call after contents are set up (get_from_json calls it automatically)
+
+  //     // json i/o
+  //     virtual bool add_to_json(json& j) override;
+  //     virtual bool get_from_json(json& jt) override;
+  // };
+
+  // // layer that consists of a square grid of (at least mostly) same-size tiles
+  // // may have some odd-sized ones
+  // // the defining characteristic is that tile placement is
+  // // determined by the grid. 
+  // // Though the odd sized ones are handled by tile_objects list.
+  // class GTTiledMapLayer : public GTMapLayer {
+  //   public:
+  //     GTcoord_t layer_tilewid;   //layer width in tiles
+  //     GTcoord_t layer_tileht;    //height
+  //     GTcoord_t tile_pixwid;     //tile grid width in pixels
+  //     GTcoord_t tile_pixht;      //height
+      
+  //     //tilemap entries are indices into tile_atlas; 0 means no tile in
+  //     //that grid location
+  //     std::vector<GTtile_index_t> tile_map;
+
+  //     std::vector<std::shared_ptr<GTObjectTile>> tile_objects;
+
+  //   public:
+  //     void calculate_bounding_box() override;     // call after contents are set up (get_from_json calls it automatically)
+  //     // json i/o
+  //     virtual bool add_to_json(json& j) override;
+  //     virtual bool get_from_json(json& jt) override;
+  // };
 
 
   class GTMap : public GTEventEntity {

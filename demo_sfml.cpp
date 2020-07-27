@@ -111,11 +111,13 @@ int main(int argc, char *argv[])
     // tri.setRotation(trot);
     // scene_objects.push_back(&tri);
 
+    // map load & setup ----------------------------------------------------------------------------------------------------------
 
     // so HERE instead of that we need to load up a map in GameTree format and turn it into SFML-usable, yes?
     // Still got a piece left to do for that, though a lot of it is directly usable
-    // NOT REFACTORED YET
-    GTSFMap the_map;
+    GTMap the_map;
+    std::vector<std::shared_ptr<GTSFMapLayer>> slayers;         //figure out where to put this - sfml wrappers for the map layers, in order they were added to scene graph
+
 
     //read in the map we want to load as a json string and 
     std::string map_filename = "demo_assets/outputs/DemoMap.tmx.json";
@@ -127,7 +129,7 @@ int main(int argc, char *argv[])
     }
 
 
-
+    // Samurai sprite load & setup -----------------------------------------------------------------------------------------------
     // snag the Samurai lady sprite-bank
     std::shared_ptr<GTSpriteBank> samurai_gt_sbank = std::shared_ptr<GTSpriteBank>(new GTSpriteBank());
     std::string sbank_filename = "demo_assets/outputs/Samurai.json_a2gt_out.json";
@@ -153,7 +155,7 @@ int main(int argc, char *argv[])
     
     samurai.active = true;
 
-    // so far all of this is pure gametree - now to make some SFML-specific objects
+    // so far all of this sprite setup is pure gametree - now to make some SFML-specific objects
     GTSFActor samurai_gtsf_actor(&samurai);
 
     // MAP AND CHARACTER SETUP ----------------------------------------------------------------------------------------------------------------------
@@ -164,8 +166,8 @@ int main(int argc, char *argv[])
 
     //let's set layer width and height kludgily from map's first slayer
     float mapWidth = 0.0, mapHeight = 0.0;
-    mapWidth = the_map.slayers[0]->get_bounding_box().width;
-    mapHeight = the_map.slayers[0]->get_bounding_box().width;
+    mapWidth = the_map.layers[0]->get_bounding_box().wid;
+    mapHeight = the_map.layers[0]->get_bounding_box().ht;
     printf("Map width: %f height: %f\n",mapWidth,mapHeight);
 
 
@@ -240,22 +242,26 @@ int main(int argc, char *argv[])
 
     // add the map layers in order by names: Background, BGOverlay, Gettables, <sprites go here>, Front
     // the "InteractionObject" layer should be handled differently... Should it be on the display list at all? Not yet
-    std::shared_ptr<GTMapLayer> int_layer = the_map.get_layer_by_name("InteractionObject");
+    std::shared_ptr<GTMapLayer> interaction_layer = the_map.get_layer_by_name("InteractionObject");
     // can you do this? I hate that you have to - nother slicey thing
-    std::shared_ptr<GTObjectsMapLayer> interaction_layer = std::static_pointer_cast<GTObjectsMapLayer>(int_layer);
     if(interaction_layer == nullptr) {
         printf("*** WARNING: no interaction layer found, won't do collisions\n");
     }
 
     // ***** ALSO CONSIDER SPECIAL HANDLING OF GETTABLES TO TURN THE OBJECT LIST THERE INTO A BUNCH OF SPRITES SO THEY
     // ***** CAN BE MOVED / HIDDEN INDEPENDENTLY!
-    std::shared_ptr<GTSFMapLayer> lyr;
+    std::shared_ptr<GTMapLayer> lyr;
     for(std::string nam : {"Background", "BGOverlay", "Gettables"}) {
-        lyr = the_map.get_sfml_layer_by_name(nam);
+        lyr = the_map.get_layer_by_name(nam);
         if(lyr != nullptr) {
-            lyr->setOrigin(0.0,0.0);              // WORK THIS OUT AT SOME POINT for now just draw from ul corner
-            lyr->setPosition(layerPosX,layerPosY);            // same
-            scene_objects.push_back(lyr.get());
+
+            // ok HERE have to create the wrappers for the map layers
+            auto slyr = std::shared_ptr<GTSFMapLayer>(new GTSFMapLayer(lyr.get()));
+
+            slyr->setOrigin(0.0,0.0);              // WORK THIS OUT AT SOME POINT for now just draw from ul corner
+            slyr->setPosition(layerPosX,layerPosY);            // same
+            scene_objects.push_back(slyr.get());
+            slayers.push_back(slyr);
         } else {
             printf("*** ERROR: couldn't find layer \"%s\"\n",nam.c_str());
         }
@@ -277,11 +283,13 @@ int main(int argc, char *argv[])
 
     // then add the front layer
     std::string nam = "Front";
-    lyr = the_map.get_sfml_layer_by_name(nam);
+    lyr = the_map.get_layer_by_name(nam);
     if(lyr != nullptr) {
-        lyr->setOrigin(0.0,0.0);              // WORK THIS OUT AT SOME POINT for now just draw from ul corner
-        lyr->setPosition(layerPosX,layerPosY);            // same
-        scene_objects.push_back(lyr.get());
+        auto slyr = std::shared_ptr<GTSFMapLayer>(new GTSFMapLayer(lyr.get()));
+        slyr->setOrigin(0.0,0.0);              // WORK THIS OUT AT SOME POINT for now just draw from ul corner
+        slyr->setPosition(layerPosX,layerPosY);            // same
+        scene_objects.push_back(slyr.get());
+        slayers.push_back(slyr);
     } else {
         printf("*** ERROR: couldn't find layer \"%s\"\n",nam.c_str());
     }
@@ -604,7 +612,7 @@ int main(int argc, char *argv[])
             samurai.set_action("Idle");             // write methods that do this w/index
         }
 
-        for(auto lyr: the_map.slayers) {
+        for(auto lyr: slayers) {
             lyr->setPosition(layerPosX,layerPosY);
         }
 

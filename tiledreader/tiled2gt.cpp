@@ -23,122 +23,128 @@ using json = nlohmann::json;
 
 // CONVERSION ====================================================================================
 
-std::shared_ptr<GTTiledMapLayer> tiled_tile_layer_to_gt_tile_layer(std::shared_ptr<TiledMapLayer> ptl, std::map<tile_index_t,GTtile_index_t>& gidmapping) {
-  std::shared_ptr<GTTiledMapLayer> pgtml = std::shared_ptr<GTTiledMapLayer>(new GTTiledMapLayer());
+std::shared_ptr<GTMapLayer> tiled_layer_to_gt_layer_aux(std::shared_ptr<TiledMapLayer> ptl, std::map<tile_index_t,GTtile_index_t>& gidmapping) {
+  std::shared_ptr<GTMapLayer> pgml = std::shared_ptr<GTMapLayer>(new GTMapLayer());
 
-  //fill in simple data members
-  pgtml->layer_tilewid = ptl->layer_w;
-  pgtml->layer_tileht = ptl->layer_h;
-  pgtml->tile_pixwid = ptl->tile_width;
-  pgtml->tile_pixht = ptl->tile_height;
+  //this may get filled in tiled or non-tiled map
+  pgml->tile_objects.clear();
+  pgml->shapes.clear();
 
-  //ok now step through the mapcells and remap
-  // * scan ptl->mapcells to produce pgtml->tile_map, copying any 0 across to 0, 
-  //   any other number to the map entry for it in the map we built before
-  //   OR could just put gidmapping[0] = 0
-  pgtml->tile_map.resize(ptl->mapcells.size());
-  //was std::transform(ptl->mapcells.begin(),ptl->mapcells.end(), pgtml->tile_map.begin(), [&gidmapping](tile_index_t i){ return gidmapping[i & 0x00FFFFFF]; });
+  if(ptl->type == TL_TiledLayer) {
+    //fill in simple data members
+    pgml->layer_tilewid = ptl->layer_w;
+    pgml->layer_tileht = ptl->layer_h;
+    pgml->tile_pixwid = ptl->tile_width;
+    pgml->tile_pixht = ptl->tile_height;
 
-  // HOWEVER: let's handle odd-sized tiles with a tile_objects list. Put a 0 in their tile map spot.
-  pgtml->tile_objects.clear();
-  int ox, oy;
-  for(auto j=0; j< ptl->mapcells.size(); j++) {
-    // if tile's height isn't the regular tile height or width not the same width, make an object for it
-    if(ptl->mapcells[j] != 0) {
-      atlas_record& atrec = (*(ptl->layer_atlas))[ptl->mapcells[j]];
-      if( atrec.ht != ptl->tile_height || atrec.wid != ptl->tile_width) {
-        pgtml->tile_map[j] = 0;
-        //what is the grid coordinate? derive from j & # columns & layer's tile pixel dims
-        ox = ((j % ptl->layer_w) * ptl->tile_width);
-        oy = ((j / ptl->layer_w) * ptl->tile_height);
-        // **** SHEAR OFF ROTATION FLAGS - HOW TO HANDLE THOSE?
-        pgtml->tile_objects.push_back(std::shared_ptr<GTObjectTile>(new GTObjectTile(gidmapping[atrec.gid  & 0x00FFFFFF],
-            ox, oy, atrec.wid, atrec.ht)));
+    //ok now step through the mapcells and remap
+    // * scan ptl->mapcells to produce pgtml->tile_map, copying any 0 across to 0, 
+    //   any other number to the map entry for it in the map we built before
+    //   OR could just put gidmapping[0] = 0
+    pgml->tile_map.resize(ptl->mapcells.size());
+    //was std::transform(ptl->mapcells.begin(),ptl->mapcells.end(), pgtml->tile_map.begin(), [&gidmapping](tile_index_t i){ return gidmapping[i & 0x00FFFFFF]; });
+
+    // HOWEVER: let's handle odd-sized tiles with a tile_objects list. Put a 0 in their tile map spot.
+    int ox, oy;
+    for(auto j=0; j< ptl->mapcells.size(); j++) {
+      // if tile's height isn't the regular tile height or width not the same width, make an object for it
+      if(ptl->mapcells[j] != 0) {
+        atlas_record& atrec = (*(ptl->layer_atlas))[ptl->mapcells[j]];
+        if( atrec.ht != ptl->tile_height || atrec.wid != ptl->tile_width) {
+          pgml->tile_map[j] = 0;
+          //what is the grid coordinate? derive from j & # columns & layer's tile pixel dims
+          ox = ((j % ptl->layer_w) * ptl->tile_width);
+          oy = ((j / ptl->layer_w) * ptl->tile_height);
+          // **** SHEAR OFF ROTATION FLAGS - HOW TO HANDLE THOSE?
+          pgml->tile_objects.push_back(std::shared_ptr<GTObjectTile>(new GTObjectTile(gidmapping[atrec.gid  & 0x00FFFFFF],
+              ox, oy, atrec.wid, atrec.ht)));
+        } else {
+          // **** SHEAR OFF ROTATION FLAGS - HOW TO HANDLE THOSE?
+          pgml->tile_map[j] = gidmapping[ptl->mapcells[j]  & 0x00FFFFFF ];
+        }
       } else {
-        // **** SHEAR OFF ROTATION FLAGS - HOW TO HANDLE THOSE?
-        pgtml->tile_map[j] = gidmapping[ptl->mapcells[j]  & 0x00FFFFFF ];
+        pgml->tile_map[j] = 0;
       }
-    } else {
-      pgtml->tile_map[j] = 0;
     }
+
+    //no shapes in tiled tiled layers
+
+  } else if(ptl->type == TL_ObjectLayer) {
+    //no tiled map part, zero / clear it out
+    pgml->layer_tilewid = 0;
+    pgml->layer_tileht = 0;
+    pgml->tile_pixwid = 0;
+    pgml->tile_pixht = 0;
+    pgml->tile_map.clear();
+
+    // then do the shapes
+    for(auto shap : ptl->shapes) {
+
+      // GTArea_type purpose;
+      // GTindex_t name_index;     // indexes into a list of strings; probably not have lots of same names but few shapes will have names and this is smaller than a string
+      // GTPoint position;         // we may want to move these around
+      // GTPoint bbox_ul;          // bounding box upper left, relative to position
+      // GTPoint bbox_lr;          // bounding box lower right, ""
+      GTPoint bbul = GTPoint(std::round(shap.bbox_ulx), std::round(shap.bbox_uly));
+      GTPoint bblr = GTPoint(std::round(shap.bbox_lrx), std::round(shap.bbox_lry));
+      GTPoint poz = GTPoint(std::round(shap.origin_x), std::round(shap.origin_y));
+      //FIGURE OUT HOW TO HANDLE NAME INDEX
+      GTindex_t nami = -1;    //This will later be an index into a bunch of names
+
+      //work out purpose
+      // typedef enum : GTindex_t {
+      //   GTAT_Unknown = 0,
+      //   GTAT_NoGo,
+      //   GTAT_Slow,
+      //   GTAT_Trigger
+      // } GTArea_type;
+      GTArea_type gat = GTAT_Unknown;
+      if(shap.type == "nogo") gat = GTAT_NoGo;
+      else if(shap.type == "slow") gat = GTAT_Slow;
+      else if(shap.type == "trigger") gat = GTAT_Trigger; 
+
+
+      if(shap.shape_type == TOS_Rectangle) {
+        std::shared_ptr<GTRectangle> recky = std::shared_ptr<GTRectangle>(new GTRectangle(gat, poz, bbul, bblr, nami));
+        pgml->shapes.push_back(recky);
+      } else if(shap.shape_type == TOS_Ellipse) {
+        std::shared_ptr<GTEllipse> lipsy = std::shared_ptr<GTEllipse>(new GTEllipse(gat, poz, bbul, bblr, nami));
+        pgml->shapes.push_back(lipsy);
+      } else if(shap.shape_type == TOS_Point) {
+        // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
+        // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
+        // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
+        // do we have a point class? Not in the way we want to!
+      } else if(shap.shape_type == TOS_Polygon) {
+        std::shared_ptr<GTPolygon> polly = std::shared_ptr<GTPolygon>(new GTPolygon(gat, poz, bbul, bblr, nami));
+        polly->points.resize(shap.polypoints.size());
+        // copy points across!
+        std::transform(shap.polypoints.begin(), shap.polypoints.end(),polly->points.begin(), 
+            [](std::pair<float,float> pt){ GTPoint p; p.x = std::round(pt.first); p.y = std::round(pt.second); return p; });
+        pgml->shapes.push_back(polly);
+      } else {
+        printf("*** ERROR: unknown shape type %d found for shape with name \"%s\", type \"%s\"\n",
+          shap.shape_type, shap.name.c_str(), shap.type.c_str());
+      }
+    }
+
+  } else {
+    //unknown layer type!
+    fprintf(stderr, "*** ERROR: unknown layer type %d\n",ptl->type);
+    return nullptr;
   }
 
-  return pgtml;
-}
-
-std::shared_ptr<GTObjectsMapLayer> tiled_obj_layer_to_gt_obj_layer(std::shared_ptr<TiledMapLayer> ptl, std::map<tile_index_t,GTtile_index_t>& gidmapping) {
-  std::shared_ptr<GTObjectsMapLayer> pgoml = std::shared_ptr<GTObjectsMapLayer>(new GTObjectsMapLayer());
-
-  //convert ptl->tile_objects to pgoml->tile_objects
-  //ptl->tile_objects is these class TiledMapObjectTileLocation {
-  // int id;
-  // tile_index_t gid;
-  // float orx;      //origin x/y, not upper left - can be other locations
-  // float ory;
-  // int wid;
-  // int ht;
-  pgoml->tile_objects.clear();
-
+  // known layer types so far all can have a tile_objects
   // so the remapping here is to replace the original TiledMapObjectTileLocation's gid with its remapped index into tile_atlas.
   for(auto tob : ptl->tile_objects) {
-    pgoml->tile_objects.push_back(std::shared_ptr<GTObjectTile>(
+    pgml->tile_objects.push_back(std::shared_ptr<GTObjectTile>(
       // ****** SHEAR OFF ROTATION FLAGS - HOW TO HANDLE THOSE?
       new GTObjectTile(gidmapping[tob->gid & 0x00FFFFFF], tob->orx, tob->ory, tob->wid, tob->ht))
     );
   }
 
-  // then do the shapes
-  for(auto shap : ptl->shapes) {
 
-    // GTArea_type purpose;
-    // GTindex_t name_index;     // indexes into a list of strings; probably not have lots of same names but few shapes will have names and this is smaller than a string
-    // GTPoint position;         // we may want to move these around
-    // GTPoint bbox_ul;          // bounding box upper left, relative to position
-    // GTPoint bbox_lr;          // bounding box lower right, ""
-    GTPoint bbul = GTPoint(std::round(shap.bbox_ulx), std::round(shap.bbox_uly));
-    GTPoint bblr = GTPoint(std::round(shap.bbox_lrx), std::round(shap.bbox_lry));
-    GTPoint poz = GTPoint(std::round(shap.origin_x), std::round(shap.origin_y));
-    //FIGURE OUT HOW TO HANDLE NAME INDEX
-    GTindex_t nami = -1;    //This will later be an index into a bunch of names
-
-    //work out purpose
-    // typedef enum : GTindex_t {
-    //   GTAT_Unknown = 0,
-    //   GTAT_NoGo,
-    //   GTAT_Slow,
-    //   GTAT_Trigger
-    // } GTArea_type;
-    GTArea_type gat = GTAT_Unknown;
-    if(shap.type == "nogo") gat = GTAT_NoGo;
-    else if(shap.type == "slow") gat = GTAT_Slow;
-    else if(shap.type == "trigger") gat = GTAT_Trigger; 
-
-
-    if(shap.shape_type == TOS_Rectangle) {
-      std::shared_ptr<GTRectangle> recky = std::shared_ptr<GTRectangle>(new GTRectangle(gat, poz, bbul, bblr, nami));
-      pgoml->shapes.push_back(recky);
-    } else if(shap.shape_type == TOS_Ellipse) {
-      std::shared_ptr<GTEllipse> lipsy = std::shared_ptr<GTEllipse>(new GTEllipse(gat, poz, bbul, bblr, nami));
-      pgoml->shapes.push_back(lipsy);
-    } else if(shap.shape_type == TOS_Point) {
-      // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
-      // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
-      // ********************************************* WRITE THIS!!!!!!!!!!!! ***************************************************
-      // do we have a point class? Not in the way we want to!
-    } else if(shap.shape_type == TOS_Polygon) {
-      std::shared_ptr<GTPolygon> polly = std::shared_ptr<GTPolygon>(new GTPolygon(gat, poz, bbul, bblr, nami));
-      polly->points.resize(shap.polypoints.size());
-      // copy points across!
-      std::transform(shap.polypoints.begin(), shap.polypoints.end(),polly->points.begin(), 
-          [](std::pair<float,float> pt){ GTPoint p; p.x = std::round(pt.first); p.y = std::round(pt.second); return p; });
-      pgoml->shapes.push_back(polly);
-    } else {
-      printf("*** ERROR: unknown shape type %d found for shape with name \"%s\", type \"%s\"\n",
-        shap.shape_type, shap.name.c_str(), shap.type.c_str());
-    }
-  }
-
-  return pgoml;
+  return pgml;
 }
 
 std::shared_ptr<GTMapLayer> tiled_layer_to_gt_layer(std::shared_ptr<TiledMap> ptm, int layer_num, std::string output_dir) {
@@ -162,17 +168,8 @@ std::shared_ptr<GTMapLayer> tiled_layer_to_gt_layer(std::shared_ptr<TiledMap> pt
   GTtile_index_t j = 1; //skip 0
   for(auto gid : ordered_gids) if(gid != 0) gidmapping[gid] = j++;
 
-  //now for layer-type-specific stuff
-
-  if(ptl->type == TL_TiledLayer) {
-    plyr = tiled_tile_layer_to_gt_tile_layer(ptl, gidmapping);
-  } else if(ptl->type == TL_ObjectLayer) {
-    plyr = tiled_obj_layer_to_gt_obj_layer(ptl, gidmapping);
-  } else {
-    //unknown!
-    fprintf(stderr, "*** ERROR: unknown layer type %d\n",ptl->type);
-    return nullptr;
-  }
+  //this is a little gross, artifact of when we had different GT layer types, which may happen again - so broken out into a function
+  plyr = tiled_layer_to_gt_layer_aux(ptl, gidmapping);
 
   //set name
   plyr->name = ptl->layer_name;

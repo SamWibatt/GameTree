@@ -58,11 +58,11 @@ namespace gtree_sfml {
         spr->setTexture(sfsb->spritesheet);
       };
 
-      GTSFActor() { 
-        spr = nullptr;
-        sfsb = nullptr;
-        ac = nullptr; 
-      }
+      // GTSFActor() { 
+      //   spr = nullptr;
+      //   sfsb = nullptr;
+      //   ac = nullptr; 
+      // }
 
       GTSFActor(GTActor *nac) {
         std::shared_ptr<GTSFSpriteBank> nsfsb = std::shared_ptr<GTSFSpriteBank>(new GTSFSpriteBank(nac->sbank.get()));       //gross side effect clears samurai_sbank's image data
@@ -103,15 +103,7 @@ namespace gtree_sfml {
       }
   };
 
-  // HEREAFTER UNREFACTORED *******************************************************************************************************************************************
-  // HEREAFTER UNREFACTORED *******************************************************************************************************************************************
-  // HEREAFTER UNREFACTORED *******************************************************************************************************************************************
-  // HEREAFTER UNREFACTORED *******************************************************************************************************************************************
-  // HEREAFTER UNREFACTORED *******************************************************************************************************************************************
-  // HEREAFTER UNREFACTORED *******************************************************************************************************************************************
-  // HEREAFTER UNREFACTORED *******************************************************************************************************************************************
-
-  //GTSFMap =====================================================================================
+  //GTSFMapLayer ================================================================================
 
   //base class so I can store these things in a vector
   class GTSFShape : public sf::Drawable, public sf::Transformable {
@@ -207,18 +199,24 @@ namespace gtree_sfml {
 
   class GTSFMapLayer : public sf::Drawable, public sf::Transformable {
     public:
+      GTMapLayer *ly;             //dumb pointer assumes GT version will outlive GTSF version - keep an eye on this
       std::shared_ptr<sf::Texture> layer_tex;                       //tilesheet, if any, nullptr if not
       std::shared_ptr<std::vector<GTSFVertArray>> layer_vertarrays;   //vertex arrays, if any,  nullptr if not
-      // box containing the min/max in each dimension
-      sf::Rect<int> bounding_box;
+
 
     public:
-      GTSFMapLayer() {}
+      virtual bool build_vertarrays(GTMapLayer *lyr);
+
+      //GTSFMapLayer() { ly = nullptr; }
+
+      GTSFMapLayer(GTMapLayer *nlyr) {
+        ly = nlyr;
+        build_vertarrays(ly);
+      }
+
       virtual ~GTSFMapLayer() {}
 
     public:
-      virtual bool build_tile_object_vertarrays(std::vector<std::shared_ptr<GTObjectTile>>& tile_objects, 
-                std::vector<GTTile>& tile_atlas, sf::Texture *tx);
 
       virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const {
         // I don't think I need to compose states's transform with anything? no, I think I do
@@ -231,57 +229,7 @@ namespace gtree_sfml {
         }
       }
 
-      //call calculate_bounding_box after getting from json or other source in order to re-reckon bounding box
-      virtual void calculate_bounding_box() = 0;
-      virtual sf::Rect<int> get_bounding_box() { return bounding_box; };
 
-  };
-
-  // ok, these are kind of gross, inheriting them from the gametree versions so the parent map can
-  // allocate them and handle them properly
-  class GTSFTiledMapLayer : public GTTiledMapLayer, public GTSFMapLayer {
-    public:
-
-    public:
-      virtual bool get_from_json(json& jt) override;
-
-    public:
-      bool build_tile_map_vertarrays();
-      void calculate_bounding_box() override;
-  };
-
-  class GTSFObjectsMapLayer : public GTObjectsMapLayer, public GTSFMapLayer {
-
-    public:
-      virtual bool get_from_json(json& jt) override;
-      void calculate_bounding_box() override;
-  };
-
-
-  class GTSFMap : public GTMap {
-    public:
-      //data members
-      std::vector<std::shared_ptr<GTSFMapLayer>> slayers;   //...not happy with this but layers are getting sliced
-      // and similar anti-slicer
-      std::shared_ptr<GTSFMapLayer> get_sfml_layer_by_name(std::string nm) {
-        int j = 0;
-        for(auto plyr : layers) {
-          if(plyr->name == nm) return slayers[j];       //dumb search but we're not likely to have lots of these
-          j++;
-        }
-        return nullptr; //didn't find it
-      }
-
-
-    public:
-      GTSFMap(){}
-      virtual ~GTSFMap() {}
-
-    public:
-      //member functions
-      // - reading from json also does the step where it constructs vertex arrays and textures
-      //   handled by the layers' get_from_jsons
-      virtual bool get_from_json(json& jt) override;
   };
 }
 

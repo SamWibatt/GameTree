@@ -345,51 +345,6 @@ namespace gt {
 
   // MAP =========================================================================================
 
-  // GTMapLayer ----------------------------------------------------------------------------------
-  // so this takes a json that is a sub-json created by one of the subclasses, qv.
-  bool GTMapLayer::add_to_json(json& j) {
-    // base class handles image_data and tile_atlas
-    // write image data in base64_url - https://github.com/tplgy/cppcodec#base64
-
-    j["name"] = name;
-
-    //OBJECT LAYERS MAY NOT HAVE IMAGE DATA! don't emit an image_data or tile_atlas if they don't!
-    if(!image_data.empty()) {
-      std::string encoded_png = base64::encode(image_data);
-
-      j["image_data"] = encoded_png;
-
-      for(auto t : tile_atlas) {
-        t.add_to_json(j["tile_atlas"]);
-      }
-    } else {
-      // is this even a problem?
-      //fprintf(stderr,"+++ WARNING: map layer doesn't have any image data. OK if it's a polygons-only object layer or something\n");
-    }
-
-    return true;
-  }
-
-  bool GTMapLayer::get_from_json(json& jt) {
-    // get the name
-    name = jt["name"];
-
-    if(!jt.contains("image_data") || !jt.contains("tile_atlas")) {
-      //fprintf(stderr,"+++ WARNING: map layer has no image_data or tile_atlas - ok if it's an object layer with no imagery\n");
-      return true;
-    }
-
-    // get the .png data
-    image_data = base64::decode(std::string(jt["image_data"]));
-    
-    //then the tile atlas!
-    tile_atlas.resize(jt["tile_atlas"].size());
-    for(auto j = 0; j < tile_atlas.size(); j++) {
-      tile_atlas[j].get_from_json(jt["tile_atlas"][j]);
-    }
-
-    return true;
-  }
 
 
   // GTObjectTile --------------------------------------------------------------------------------
@@ -619,49 +574,325 @@ namespace gt {
 
   // GTObjectsMapLayer ---------------------------------------------------------------------------
 
-  bool GTObjectsMapLayer::add_to_json(json& j) {
-    json subj;
-    if(!GTMapLayer::add_to_json(subj)) return false; 
+  // bool GTObjectsMapLayer::add_to_json(json& j) {
+  //   json subj;
+  //   if(!GTMapLayer::add_to_json(subj)) return false; 
 
-    //emit type
-    subj["type"] = "objects";
+  //   //emit type
+  //   subj["type"] = "objects";
 
-    //emit tile_objects
-    for(auto tob : tile_objects) {
-      tob->add_to_json(subj["tile_objects"]);
+  //   //emit tile_objects
+  //   for(auto tob : tile_objects) {
+  //     tob->add_to_json(subj["tile_objects"]);
+  //   }
+
+  //   // emit shapes
+  //   printf("---- about to emit shapes\n");
+  //   for(auto shap : shapes) {
+  //     shap->add_to_json(subj["shapes"]);
+  //   }
+
+  //   j.push_back(subj);
+
+  //   return true;
+  // }
+
+  // bool GTObjectsMapLayer::get_from_json(json& jt) {
+  //   if(!GTMapLayer::get_from_json(jt)) return false; 
+
+  //   //must have at least one of tile_objects or shapes
+  //   if(!jt.contains("tile_objects") && !jt.contains("shapes")) {
+  //     printf("*** ERROR: objects layer has no tile objects or shapes\n");
+  //     return false;
+  //   }
+
+  //   if(jt.contains("tile_objects")) {
+  //     tile_objects.resize(jt["tile_objects"].size());
+  //     for(auto j = 0; j <  jt["tile_objects"].size(); j++) {
+  //       tile_objects[j] = std::shared_ptr<GTObjectTile>(new GTObjectTile());
+  //       if(!tile_objects[j]->get_from_json(jt["tile_objects"][j])) {
+  //         printf("*** ERROR: failed to read tile object\n");
+  //         return false;
+  //       }
+  //     }
+  //   } 
+
+  //   if(jt.contains("shapes")) {
+  //     shapes.resize(jt["shapes"].size());
+  //     for(auto j = 0; j <  jt["shapes"].size(); j++) {
+  //       if(jt["shapes"][j].contains("type")) {
+  //         if(jt["shapes"][j]["type"] == "rectangle") {
+  //           shapes[j] = std::shared_ptr<GTRectangle>(new GTRectangle());
+  //           if(!shapes[j]->get_from_json(jt["shapes"][j])) {
+  //             printf("*** ERROR: failed to read Rectangle object\n");
+  //           }
+  //         } else if(jt["shapes"][j]["type"] == "ellipse") {
+  //           shapes[j] = std::shared_ptr<GTEllipse>(new GTEllipse());
+  //           if(!shapes[j]->get_from_json(jt["shapes"][j])) {
+  //             printf("*** ERROR: failed to read Ellipse object\n");
+  //           }
+  //         } else if(jt["shapes"][j]["type"] == "polygon") {
+  //           shapes[j] = std::shared_ptr<GTPolygon>(new GTPolygon());
+  //           if(!shapes[j]->get_from_json(jt["shapes"][j])) {
+  //             printf("*** ERROR: failed to read Polygon object\n");
+  //           }
+  //         } else {
+  //           // HEY HANDLE POINTS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  //           printf("*** ERROR: unrecognized shape type \"%s\" in shape\n",std::string(jt["shapes"][j]["type"]).c_str());
+  //         }
+  //       } else {
+  //         printf("*** ERROR: shape does not contain a type field\n");
+  //       }
+  //       // tile_objects[j] = std::shared_ptr<GTObjectTile>(new GTObjectTile());
+  //       // tile_objects[j]->get_from_json(jt["tile_objects"][j]);
+  //     }
+  //   } 
+
+  //   calculate_bounding_box();     //should this be in map data?
+
+  //   return true;
+  // }
+
+  // GTTiledMapLayer -----------------------------------------------------------------------------
+
+  // //subclass overrides need to call the base class one to add/get image data and tile atlas
+  // bool GTTiledMapLayer::add_to_json(json& j) {
+  //   json subj;
+
+  //   if(!GTMapLayer::add_to_json(subj)) return false; 
+
+  //   // put in a type field so reader knows how to handle - or should we just look for fields we know will be there?
+  //   // let's make it explicit
+  //   subj["type"] = "tiled";
+
+  //   // so for tiled map add the tile map specific stuff
+  //   subj["layer_tilewid"] = layer_tilewid;
+  //   subj["layer_tileht"] = layer_tileht;
+  //   subj["layer_pixwid"] = tile_pixwid;
+  //   subj["layer_pixht"] = tile_pixht;
+
+  //   // then emit tile_map;
+  //   for(auto ti : tile_map) {
+  //     subj["tile_map"].push_back(ti);
+  //   }
+
+  //   //emit tile_objects, if any - if not, json won't have a "tile_objects"
+  //   if(tile_objects.size() > 0) {
+  //     for(auto tob : tile_objects) {
+  //       tob->add_to_json(subj["tile_objects"]);
+  //     }
+  //   }
+
+  //   j.push_back(subj);
+
+  //   return true;
+  // }
+
+  // bool GTTiledMapLayer::get_from_json(json& jt) {
+  //   if(!GTMapLayer::get_from_json(jt)) return false; 
+
+  //   //sanity check - for now just look for required fields' presence. 
+  //   if(!jt.contains("layer_tilewid") || !jt.contains("layer_tileht") ||
+  //       !jt.contains("layer_pixwid") || !jt.contains("layer_pixht") ||
+  //       !jt.contains("tile_map")) {
+  //     fprintf(stderr,"*** ERROR: tiled layer requires layer_tilewid, layer_tileht, layer_pixwd, layer_pixht, and tile_map\n");
+  //     return false;
+  //   }
+
+  //   //read the simple ones
+  //   layer_tilewid = jt["layer_tilewid"];
+  //   layer_tileht = jt["layer_tileht"];
+  //   tile_pixwid = jt["layer_pixwid"];
+  //   tile_pixht = jt["layer_pixht"];
+
+  //   //then the tile map
+  //   tile_map.clear();
+  //   for(auto ind : jt["tile_map"]) {
+  //     tile_map.push_back(GTtile_index_t(ind));
+  //   }
+
+  //   // there might also be a tile_objects
+  //   if(jt.contains("tile_objects")) {
+  //     tile_objects.resize(jt["tile_objects"].size());
+  //     for(auto j = 0; j <  jt["tile_objects"].size(); j++) {
+  //       tile_objects[j] = std::shared_ptr<GTObjectTile>(new GTObjectTile());
+  //       tile_objects[j]->get_from_json(jt["tile_objects"][j]);
+  //     }
+  //   }
+
+  //   //calculate bounding box - should this be in the map data?
+  //   calculate_bounding_box();
+
+  //   return true;
+  // }
+
+
+    // GTMapLayer ----------------------------------------------------------------------------------
+
+  void GTMapLayer::calculate_bounding_box() {
+    //factor in both tiled map and object tiles, if any
+    //if there is a tile_map, start with tiled map as initial values, assuming origin is 0,0 at upper left of map
+    int ulx, uly, lrx, lry;
+    if(!tile_map.empty()) {
+      ulx = 0;
+      uly = 0;
+      lrx = layer_tilewid * tile_pixwid;
+      lry = layer_tileht * tile_pixht;
+    } else {
+      // init with suitable values - will we get past 1M pixels? probably not
+      ulx = 999999;
+      uly = 999999;
+      lrx = -999999;
+      lry = -999999;
     }
 
-    // emit shapes
-    printf("---- about to emit shapes\n");
+    // do shapes - find the bounding box around their bounding boxes
+    for(auto shap : shapes) {
+      if(shap->bbox_ul.x < ulx) ulx = shap->bbox_ul.x;
+      if(shap->bbox_lr.x > lrx) lrx = shap->bbox_lr.x;
+      if(shap->bbox_ul.y < uly) uly = shap->bbox_ul.y;
+      if(shap->bbox_lr.y > lry) lry = shap->bbox_lr.y;
+    }
+
+    //then do tile_objects - remember they're oriented around lower left, not upper left
+    for(auto tob : tile_objects) {
+      if(tob->orx < ulx) ulx = tob->orx;
+      if(tob->ory - tob->ht < uly) uly = tob->ory - tob->ht;
+      if(tob->orx + tob->wid > lrx) lrx = tob->orx + tob->wid;
+      if(tob->ory > lry) lry = tob->ory;
+    }
+
+    bounding_box.ulx = ulx;
+    bounding_box.uly = uly;
+    bounding_box.wid = (lrx - ulx);
+    bounding_box.ht = (lry - uly);
+  }
+
+
+
+  // so this takes a json that is a sub-json created by one of the subclasses, qv.
+  bool GTMapLayer::add_to_json(json& basej) {
+    // write image data in base64_url - https://github.com/tplgy/cppcodec#base64
+    json subj;
+
+    subj["name"] = name;
+
+    //OBJECT LAYERS MAY NOT HAVE IMAGE DATA! don't emit an image_data or tile_atlas if they don't!
+    if(!image_data.empty()) {
+      std::string encoded_png = base64::encode(image_data);
+
+      subj["image_data"] = encoded_png;
+
+      for(auto t : tile_atlas) {
+        t.add_to_json(subj["tile_atlas"]);
+      }
+    } else {
+      // is this even a problem?
+      //fprintf(stderr,"+++ WARNING: map layer doesn't have any image data. OK if it's a polygons-only object layer or something\n");
+    }
+
+    // put in a type field so reader knows how to handle - or should we just look for fields we know will be there?
+    // let's make it explicit
+    //subj["type"] = "tiled";
+
+    // so for tiled map add the tile map specific stuff, if any
+    if(!tile_map.empty()) {
+      subj["layer_tilewid"] = layer_tilewid;
+      subj["layer_tileht"] = layer_tileht;
+      subj["layer_pixwid"] = tile_pixwid;
+      subj["layer_pixht"] = tile_pixht;
+
+      // then emit tile_map;
+      for(auto ti : tile_map) {
+        subj["tile_map"].push_back(ti);
+      }
+    } else {
+      // do we need to bother?
+      subj["layer_tilewid"] = 0;
+      subj["layer_tileht"] = 0;
+      subj["layer_pixwid"] = 0;
+      subj["layer_pixht"] = 0;
+    }
+
+    //emit tile_objects, if any - if not, json won't have a "tile_objects"
+    if(tile_objects.size() > 0) {
+      for(auto tob : tile_objects) {
+        tob->add_to_json(subj["tile_objects"]);
+      }
+    }
+
+    //emit shapes, if any
     for(auto shap : shapes) {
       shap->add_to_json(subj["shapes"]);
     }
 
-    j.push_back(subj);
+
+    basej.push_back(subj);
 
     return true;
+
   }
 
-  bool GTObjectsMapLayer::get_from_json(json& jt) {
-    if(!GTMapLayer::get_from_json(jt)) return false; 
+  bool GTMapLayer::get_from_json(json& jt) {
 
-    //must have at least one of tile_objects or shapes
-    if(!jt.contains("tile_objects") && !jt.contains("shapes")) {
-      printf("*** ERROR: objects layer has no tile objects or shapes\n");
+    // there should be at least one of tile_map, tile_objects, and shapes
+    if(!jt.contains("tile_map") && !jt.contains("tile_objects") && !jt.contains("shapes")) {
+      printf("*** ERROR: map layer must contain at least one of tile_map, tile_objects, shapes\n");
       return false;
     }
 
+    //there is other sanity checking to do
+
+    // get the name
+    name = jt["name"];
+
+    // get the .png data, if any
+    if(jt.contains("image_data")) {
+      image_data = base64::decode(std::string(jt["image_data"]));
+    } else {
+      image_data.clear();
+    }
+
+    //then the tile atlas, if any
+    if(jt.contains("tile_atlas")) {
+      tile_atlas.resize(jt["tile_atlas"].size());
+      for(auto j = 0; j < tile_atlas.size(); j++) {
+        tile_atlas[j].get_from_json(jt["tile_atlas"][j]);
+      }
+    } else {
+      tile_atlas.clear();
+    }
+
+    //tiled map stuff
+    if(!jt.contains("layer_tilewid") || !jt.contains("layer_tileht") ||
+        !jt.contains("layer_pixwid") || !jt.contains("layer_pixht") || !jt.contains("tile_map")) {
+      //must have all tile map stuff to have any
+      layer_tilewid = layer_tileht = tile_pixwid = tile_pixht = 0;
+      tile_map.clear();
+    } else {
+      //read the simple ones
+      layer_tilewid = jt["layer_tilewid"];
+      layer_tileht = jt["layer_tileht"];
+      tile_pixwid = jt["layer_pixwid"];
+      tile_pixht = jt["layer_pixht"];
+      //then the tile map
+      tile_map.clear();
+      for(auto ind : jt["tile_map"]) {
+        tile_map.push_back(GTtile_index_t(ind));
+      }
+    }
+
+
+    // there might also be a tile_objects
     if(jt.contains("tile_objects")) {
       tile_objects.resize(jt["tile_objects"].size());
       for(auto j = 0; j <  jt["tile_objects"].size(); j++) {
         tile_objects[j] = std::shared_ptr<GTObjectTile>(new GTObjectTile());
-        if(!tile_objects[j]->get_from_json(jt["tile_objects"][j])) {
-          printf("*** ERROR: failed to read tile object\n");
-          return false;
-        }
+        tile_objects[j]->get_from_json(jt["tile_objects"][j]);
       }
-    } 
+    }
 
+    //aaaaaand there might be a shapes
     if(jt.contains("shapes")) {
       shapes.resize(jt["shapes"].size());
       for(auto j = 0; j <  jt["shapes"].size(); j++) {
@@ -693,78 +924,12 @@ namespace gt {
       }
     } 
 
-    return true;
-  }
-
-  // GTTiledMapLayer -----------------------------------------------------------------------------
-
-  //subclass overrides need to call the base class one to add/get image data and tile atlas
-  bool GTTiledMapLayer::add_to_json(json& j) {
-    json subj;
-
-    if(!GTMapLayer::add_to_json(subj)) return false; 
-
-    // put in a type field so reader knows how to handle - or should we just look for fields we know will be there?
-    // let's make it explicit
-    subj["type"] = "tiled";
-
-    // so for tiled map add the tile map specific stuff
-    subj["layer_tilewid"] = layer_tilewid;
-    subj["layer_tileht"] = layer_tileht;
-    subj["layer_pixwid"] = tile_pixwid;
-    subj["layer_pixht"] = tile_pixht;
-
-    // then emit tile_map;
-    for(auto ti : tile_map) {
-      subj["tile_map"].push_back(ti);
-    }
-
-    //emit tile_objects, if any - if not, json won't have a "tile_objects"
-    if(tile_objects.size() > 0) {
-      for(auto tob : tile_objects) {
-        tob->add_to_json(subj["tile_objects"]);
-      }
-    }
-
-    j.push_back(subj);
+    //calculate bounding box - should this be in the map data?
+    calculate_bounding_box();
 
     return true;
   }
 
-  bool GTTiledMapLayer::get_from_json(json& jt) {
-    if(!GTMapLayer::get_from_json(jt)) return false; 
-
-    //sanity check - for now just look for required fields' presence. 
-    if(!jt.contains("layer_tilewid") || !jt.contains("layer_tileht") ||
-        !jt.contains("layer_pixwid") || !jt.contains("layer_pixht") ||
-        !jt.contains("tile_map")) {
-      fprintf(stderr,"*** ERROR: tiled layer requires layer_tilewid, layer_tileht, layer_pixwd, layer_pixht, and tile_map\n");
-      return false;
-    }
-
-    //read the simple ones
-    layer_tilewid = jt["layer_tilewid"];
-    layer_tileht = jt["layer_tileht"];
-    tile_pixwid = jt["layer_pixwid"];
-    tile_pixht = jt["layer_pixht"];
-
-    //then the tile map
-    tile_map.clear();
-    for(auto ind : jt["tile_map"]) {
-      tile_map.push_back(GTtile_index_t(ind));
-    }
-
-    // there might also be a tile_objects
-    if(jt.contains("tile_objects")) {
-      tile_objects.resize(jt["tile_objects"].size());
-      for(auto j = 0; j <  jt["tile_objects"].size(); j++) {
-        tile_objects[j] = std::shared_ptr<GTObjectTile>(new GTObjectTile());
-        tile_objects[j]->get_from_json(jt["tile_objects"][j]);
-      }
-    }
-
-    return true;
-  }
 
 
   // GTMap ---------------------------------------------------------------------------------------
@@ -791,31 +956,13 @@ namespace gt {
     if(j.contains("layers")) {
 
       for(json jlyr : j["layers"]) {
-        if(jlyr.contains("type")) {
-          if(jlyr["type"] == "tiled") {
-            auto lyr = std::shared_ptr<GTTiledMapLayer>(new GTTiledMapLayer());
-            if(lyr->get_from_json(jlyr) == true) {
-              layers.push_back(lyr);
-            } else {
-              fprintf(stderr,"*** ERROR: failed to read tiled map layer\n");
-              return false;
-            }
-          } else if(jlyr["type"] == "objects") {
-            auto lyr = std::shared_ptr<GTObjectsMapLayer>(new GTObjectsMapLayer());
-            if(lyr->get_from_json(jlyr) == true) {
-              layers.push_back(lyr);
-            } else {
-              fprintf(stderr,"*** ERROR: failed to read objects map layer\n");
-              return false;
-            }
-          } else {
-            fprintf(stderr,"*** ERROR: unknown layer type %s\n",std::string(jlyr["type"]).c_str());
-            return false;
-          } 
+        auto lyr = std::shared_ptr<GTMapLayer>(new GTMapLayer());
+        if(lyr->get_from_json(jlyr) == true) {
+          layers.push_back(lyr);
         } else {
-          fprintf(stderr,"*** ERROR: no layer type given\n");
+          fprintf(stderr,"*** ERROR: failed to read map layer\n");
           return false;
-        } 
+        }
       }
 
       return true;
