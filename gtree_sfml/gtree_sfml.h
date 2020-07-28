@@ -94,6 +94,9 @@ namespace gtree_sfml {
   //base class so I can store these things in a vector
   class GTSFShape : public sf::Drawable, public sf::Transformable {
     public:
+      GTShape *sh;
+
+    public:
       GTSFShape() {}
       virtual ~GTSFShape() {}
 
@@ -108,8 +111,9 @@ namespace gtree_sfml {
       std::shared_ptr<sf::RectangleShape> r;
 
     public:
-      GTSFRectangle() {}
-      GTSFRectangle(std::shared_ptr<sf::RectangleShape>& rec) { 
+      //GTSFRectangle() {}
+      GTSFRectangle(GTShape *s, std::shared_ptr<sf::RectangleShape>& rec) { 
+        sh = s;
         r = rec; 
       }
       virtual ~GTSFRectangle() {}
@@ -132,7 +136,8 @@ namespace gtree_sfml {
 
     public:
       GTSFCircle() {}
-      GTSFCircle(std::shared_ptr<sf::CircleShape>& circ) { 
+      GTSFCircle(GTShape *s, std::shared_ptr<sf::CircleShape>& circ) { 
+        sh = s;
         c = circ; 
       }
       virtual ~GTSFCircle() {}
@@ -156,7 +161,8 @@ namespace gtree_sfml {
       sf::Texture *tex; 
 
     public:
-      GTSFVertArray(sf::PrimitiveType pty, size_t nPoints, sf::Texture *tx) {
+      GTSFVertArray(GTShape *s, sf::PrimitiveType pty, size_t nPoints, sf::Texture *tx) {
+        sh = s;
         va = sf::VertexArray(pty, nPoints);
         tex = tx;
       }
@@ -188,21 +194,30 @@ namespace gtree_sfml {
       GTMapLayer *ly;             //dumb pointer assumes GT version will outlive GTSF version - keep an eye on this
       std::shared_ptr<sf::Texture> layer_tex;                       //tilesheet, if any, nullptr if not
       std::shared_ptr<std::vector<GTSFVertArray>> layer_vertarrays;   //vertex arrays, if any,  nullptr if not
-
+      std::vector<std::shared_ptr<GTSFShape>> layer_shapes;
 
     public:
-      virtual bool build_vertarrays(GTMapLayer *lyr);
+      virtual bool build_drawables(GTMapLayer *lyr);
 
       //GTSFMapLayer() { ly = nullptr; }
 
       GTSFMapLayer(GTMapLayer *nlyr) {
         ly = nlyr;
-        build_vertarrays(ly);
+        build_drawables(ly);
       }
 
       virtual ~GTSFMapLayer() {}
 
     public:
+      // colors for filling or outlining collision shapes
+      sf::Color get_color_for_purpose(GTArea_type t, sf::Uint8 alpha) {
+          switch(t) {
+              case GTAT_NoGo: return sf::Color(255,0,0,alpha);      //red for nogo
+              case GTAT_Slow: return sf::Color(0,0,255,alpha);      //blue for slow
+              case GTAT_Trigger: return sf::Color(0,255,0,alpha);   //green for trigger
+              default: return sf::Color(128,128,128,alpha);         //grey for unk
+          }
+      }
 
       virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const {
         // I don't think I need to compose states's transform with anything? no, I think I do
@@ -211,6 +226,13 @@ namespace gtree_sfml {
           rs.transform = states.transform * getTransform();
           for(auto j = 0; j < layer_vertarrays->size(); j++) {
             (*layer_vertarrays)[j].draw(target,rs);
+          }
+        }
+        if(!layer_shapes.empty()) {
+          sf::RenderStates rs = states;
+          rs.transform = states.transform * getTransform();
+          for(auto j = 0; j < layer_shapes.size(); j++) {
+            target.draw(*(layer_shapes[j].get()),rs);
           }
         }
       }
