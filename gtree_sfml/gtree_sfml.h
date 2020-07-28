@@ -115,6 +115,8 @@ namespace gtree_sfml {
       GTSFRectangle(GTShape *s, std::shared_ptr<sf::RectangleShape>& rec) { 
         sh = s;
         r = rec; 
+        //make sure to communicate base shape's position to this wrapper
+        r->setPosition(sf::Vector2f(sh->position.x,sh->position.y));
       }
       virtual ~GTSFRectangle() {}
       virtual sf::Shape *get_shape() override { return r.get(); }
@@ -139,6 +141,8 @@ namespace gtree_sfml {
       GTSFCircle(GTShape *s, std::shared_ptr<sf::CircleShape>& circ) { 
         sh = s;
         c = circ; 
+        //make sure to communicate base shape's position to this wrapper
+        c->setPosition(sf::Vector2f(sh->position.x,sh->position.y));
       }
       virtual ~GTSFCircle() {}
       virtual sf::Shape *get_shape() override { return c.get(); }
@@ -165,6 +169,8 @@ namespace gtree_sfml {
         sh = s;
         va = sf::VertexArray(pty, nPoints);
         tex = tx;
+        //make sure to communicate base shape's position to this wrapper - if we're wrapping a shape.
+        if(sh != nullptr) setPosition(sf::Vector2f(sh->position.x,sh->position.y));
       }
 
       void append(sf::Vertex v) {

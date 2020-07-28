@@ -292,88 +292,6 @@ int main(int argc, char *argv[])
     }
     // what about scene graph? Let's not put them on there... do them in loop down below
 
-
-    // moved this into GTSFMapLayer
-    // // INTERACTION SHAPES! REFACTOR THIS KIND OF THING INTO SCENE GRAPH! ==============================================================================
-    // //on top of everything, put the collision shapes!
-    // //Ugh, I might need my own class for this that's both drawable and transformable
-    // //That's what SFML shape was about - The problem is that my SFMLVertArray isn't a sf::Shape, so I can't use that
-    // //I need both Drawable and Transformable, so I can't use either one as the type for this
-    // std::vector<std::shared_ptr<GTSFShape>> int_shapes;
-    // // super gross, here is a parallel array of the gtshapes so we can know the origins
-    // // GTShape should have some kind of stub for drawing that plat-spec implementations fill in ...? 
-    // // I guess get_geometry is the nod at it for now
-    // std::vector<std::shared_ptr<GTShape>> int_gtshapes;
-    // // being able to show or hide all these at once is just the sort of thing a scene graph node could do.
-    // for(auto shap: interaction_layer->shapes) {
-    //     //get geometry from the shape - bounding box, list of points, etc.
-    //     std::shared_ptr<std::vector<GTPoint>> geo = shap->get_geometry();
-    //     std::shared_ptr<GTSFShape> nu_sfmlshape = nullptr;
-        
-    //     if(shap->get_shape_type() == GTST_Rectangle) {
-    //         auto nu_rect = std::shared_ptr<sf::RectangleShape>(
-    //             new sf::RectangleShape(
-    //                 // SHOULD THIS ALLOW FOR AN OFFSET OF SOME KIND? I guess only screen position needs to, qv.
-    //                 sf::Vector2f((*geo)[1].x - (*geo)[0].x, (*geo)[1].y - (*geo)[0].y)
-    //             )
-    //         );
-    //         nu_rect->setFillColor(get_color_for_purpose(shap->purpose, 64));       //low-opacity fill
-    //         nu_rect->setOutlineColor(get_color_for_purpose(shap->purpose, 255));   //opaque outline
-    //         nu_rect->setOutlineThickness(-1.0);    //thin outline, inside shape
-    //         //this is screen position! nu_shape->setPosition(shap->position.x, shap->position.y);
-    //         nu_sfmlshape = std::shared_ptr<GTSFRectangle>(new GTSFRectangle(nu_rect));
-    //     } else if(shap->get_shape_type() == GTST_Ellipse) {
-    //         //make a circle s.t. its scale is 1 in the major axis and
-    //         //minor/major in the minor axis
-    //         float major_axis = std::max((*geo)[1].x,(*geo)[1].y);
-    //         auto nu_circ = std::shared_ptr<sf::CircleShape>(new sf::CircleShape(major_axis/2.0));
-    //         if((*geo)[1].x > (*geo)[1].y) {
-    //             // x larger, so set Y scale to y/x
-    //             nu_circ->scale(1.0, float((*geo)[1].y) / major_axis);
-    //         } else {
-    //             // y larger, so set X scale to x/y
-    //             nu_circ->scale(float((*geo)[1].x) / major_axis,1.0);
-    //         }
-    //         nu_circ->setFillColor(get_color_for_purpose(shap->purpose, 64));       //low-opacity fill
-    //         nu_circ->setOutlineColor(get_color_for_purpose(shap->purpose, 255));   //opaque outline
-    //         nu_circ->setOutlineThickness(-1.0);    //thin outline, inside shape
-    //         //this is screen position! nu_shape->setPosition(shap->position.x, shap->position.y);
-    //         nu_sfmlshape = std::shared_ptr<GTSFCircle>(new GTSFCircle(nu_circ));
-    //     } else if(shap->get_shape_type() == GTST_Polygon) {
-    //         //argh, how to do this? I guess just connected lines atm
-    //         //I don't want to do the whole triangulating thing again
-    //         //sf::PrimitiveType pty, size_t nPoints, sf::Texture *tx
-    //         auto nu_poly = std::shared_ptr<GTSFVertArray>(new GTSFVertArray(sf::PrimitiveType::LineStrip,geo->size()+1,nullptr));
-    //         //fill in all the vertices from geometry, with color determined by shape's purpose
-    //         sf::Color col = get_color_for_purpose(shap->purpose,255);       //opaque outline
-    //         for(int i = 0; i < geo->size(); i++) {
-    //             //let's just put all the points in verbatim
-    //             nu_poly->set_vertex(i,sf::Vertex(sf::Vector2f((*geo)[i].x, (*geo)[i].y),col));
-    //         }
-    //         // one last vertex to close up the polyline
-    //         nu_poly->set_vertex(geo->size(),sf::Vertex(sf::Vector2f((*geo)[0].x, (*geo)[0].y),col));
-    //         nu_sfmlshape = nu_poly;
-    //     } else if(shap->get_shape_type() == GTST_Point) {
-    //         printf("*** WARNING: Point not yet supported, skipping\n");
-    //         nu_sfmlshape = nullptr;
-    //     } else {
-    //         printf("*** WARNING: unknown shape type, skipping\n");
-    //         nu_sfmlshape = nullptr;
-    //     }
-
-    //     //add  to scene graph
-    //     if(nu_sfmlshape != nullptr) {
-    //         // figure out the sfml shape's position wrt screen
-    //         nu_sfmlshape->setPosition(shap->position.x - viewport_world_ulx, shap->position.y - viewport_world_uly);
-    //         int_shapes.push_back(nu_sfmlshape);           // do we even need this? Yes, for adjusting positions onscreen
-    //         int_gtshapes.push_back(shap);                 // oh man this is gross, we need proper classes and scene graph
-    //         scene_objects.push_back(nu_sfmlshape.get());
-    //     }
-    // }
-
-    // end INTERACTION SHAPES! REFACTOR THIS KIND OF THING INTO SCENE GRAPH! ==========================================================================
-
-
     // for map scrolling
     //float scroll_velocity = 5.0;
     // end MAP AND CHARACTER SETUP ------------------------------------------------------------------------------------------------------------------
@@ -467,14 +385,6 @@ int main(int argc, char *argv[])
                     if(shap->inside(samurai_world_x, samurai_world_y)) {
                         //collide!
                         //printf("Collision with shape of type %d\n",shap->purpose);
-                        // OK THAT WORKS BUT DOESN'T DO ANYTHING YET!
-                        // ******************* WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                        // ******************* WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                        // ******************* WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                        // ******************* WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                        // ******************* WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                        // ******************* WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                        // ******************* WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                         // I added a shap->get_shape_type() method that returns GTST_Unknown, GTST_Rectangle, GTST_Ellipse,
                         // GTST_Polygon, or GTST_Point... but that doesn't tell me much.
                         // considering a get_geometry method that returns a vector of GTPoint; rects return ul/lr or ul/hw,
@@ -518,6 +428,14 @@ int main(int argc, char *argv[])
                         } else {
                             //other purposes: trigger, slow, etc.
                             //HAVE THIS BE DATA DRIVEN RATHER THAN HARDCODEY ENUMS
+                            // ******************* WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                            // ******************* WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                            // ******************* WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                            // ******************* WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                            // ******************* WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                            // ******************* WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                            // ******************* WRITE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
                         }
                         
                     }
@@ -583,31 +501,6 @@ int main(int argc, char *argv[])
                 // then derive samurai onscreen position from her world position relative to the viewport, yes?
                 samurai_screen_x = (samurai_world_x - viewport_world_ulx);
                 samurai_screen_y = (samurai_world_y - viewport_world_uly);
-                //printf("samurai screen x: %d y: %d\n",samurai_screen_x, samurai_screen_y);
-
-                // printf("adxy: %d, %d view_world: %d,%d New samwpos: %d,%d sam_screen %d,%d lyrpos %f,%f\n",
-                //     actual_delta_x,actual_delta_y,viewport_world_ulx,viewport_world_uly,
-                //     samurai_world_x,samurai_world_y,samurai_screen_x,samurai_screen_y,layerPosX,layerPosY);
-
-                // tweak onscreen positions of interaction shapes
-                // do I need to? I think so.. something along these lines
-                for(auto ish : interaction_slayer->layer_shapes) {
-                   ish->setPosition(ish->sh->position.x - viewport_world_ulx, 
-                                       ish->sh->position.y - viewport_world_uly);
-                }
-
-                // // using embarrasingly gross parallel arrays of sfml shapes and GTShapes
-                // // that's asking for a mad refactor
-                // for(int i = 0; i < int_shapes.size(); i++) {
-                //     auto ishape = int_shapes[i];
-                //     auto gshape = int_gtshapes[i];
-
-                //     // FIGURE OUT IF GIVEN SHAPE IS ONSCREEN AND DRAW IT IF SO
-                //     // first just draw it
-                //     // DOES THIS NEED TO ACCOUNT FOR AN OFFSET OF SOME SORT? Doesn't seem to!
-                //     // might need to if there's a rectangle or ellipse whose ulx isn't 0?
-                //     ishape->setPosition(gshape->position.x - viewport_world_ulx, gshape->position.y - viewport_world_uly);
-                // }
             } else {
                 //since she didn't actually move, make her idle
                 samurai.set_action("Idle");             // write methods that do this w/index
@@ -618,6 +511,7 @@ int main(int argc, char *argv[])
             samurai.set_action("Idle");             // write methods that do this w/index
         }
 
+        // draw layers!
         for(auto lyr: slayers) {
             lyr->setPosition(layerPosX,layerPosY);
         }
