@@ -511,7 +511,7 @@ int main(int argc, char *argv[])
             samurai.set_action("Idle");             // write methods that do this w/index
         }
 
-        // draw layers!
+        // position layers!
         for(auto lyr: slayers) {
             lyr->setPosition(layerPosX,layerPosY);
         }
