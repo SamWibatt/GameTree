@@ -1,3 +1,5 @@
+// NOT INTENDED TO BE INCLUDED DIRECTLY - JUST INCLUDE gametree.h
+
 #ifndef GTREE_MAP_H_INCLUDED
 #define GTREE_MAP_H_INCLUDED
 
@@ -213,7 +215,7 @@ namespace gt {
   //**********************************************************************************************
   //**********************************************************************************************
   class GTEventEntity;
-  
+
   class GTAnimatedTile: public GTTile, public GTEventEntity {
     public:
       GTAnimatedTile() {}
