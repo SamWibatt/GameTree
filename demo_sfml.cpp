@@ -25,10 +25,12 @@ int main(int argc, char *argv[])
     sf::VideoMode screenMode = sf::VideoMode(720, 400);
     //sf::VideoMode screenMode = sf::VideoMode(600, 600);
 
-    sf::Transform globalTransform = sf::Transform();
-    float globalScaleX = 2.0;
-    float globalScaleY = 2.0;
-    globalTransform.scale(sf::Vector2f(globalScaleX,globalScaleY));
+    // OK, let's get rid of globalScale/Transform and use a view
+
+    // sf::Transform globalTransform = sf::Transform();
+    // float globalScaleX = 2.0;
+    // float globalScaleY = 2.0;
+    // globalTransform.scale(sf::Vector2f(globalScaleX,globalScaleY));
     bool fullscreen = false;         // can derive from whether any valid mode was found, etc.
 
     //CREATE WINDOW
@@ -37,6 +39,29 @@ int main(int argc, char *argv[])
     //how do you make vsync actually work? see https://www.maketecheasier.com/get-rid-screen-tearing-linux/ - yup, like that, the intel
     //section worked on entrapta
     window.setVerticalSyncEnabled(true); // call it once, after creating the window
+
+    //set a view
+    //sf::View view = window.getView();
+    // view by center / size in world coords
+    // world-relative - hand-entered values from "start_point" point in map data
+    // GTcoord_t samurai_world_x = 198;
+    // GTcoord_t samurai_world_y = 410;
+    sf::View view(sf::Vector2f(198,410),  // center
+        sf::Vector2f(480.0,360.0f));
+//    window.setView(view);
+    // define a centered viewport, with half the size of the window
+    //view.setViewport(sf::FloatRect(0.25f, 0.25, 0.5f, 0.5f));
+    // so figure out the fraction of the window the 480x360 occupies
+    float fraction_w = 480.0 / window.getSize().x;
+    float fraction_h = 360.0 / window.getSize().y;
+    float margin_x = (1.0 - fraction_w) / 2.0;
+    float margin_y = (1.0 - fraction_h)  / 2.0;
+    view.zoom(0.5);     //hardcode scale factor
+    printf("fraction_w %f h %f margx %f margy %f\n",fraction_w, fraction_h, margin_x, margin_y);
+    view.setViewport(sf::FloatRect(margin_x, margin_y, fraction_w,fraction_h));
+    //view.setViewport(sf::FloatRect(0.0,0.0,0.5,1.0));
+    window.setView(view);
+
 
     //Check for joystick!
     printf("Checking for joysticks...\n");
@@ -180,8 +205,8 @@ int main(int argc, char *argv[])
 
     // center her onscreen; I don't think I need to scale pixels - oh, nope, do
     // also figure out how to make relative to a viewport
-    GTcoord_t samurai_screen_x = round((window.getSize().x / 2.0) / globalScaleX);
-    GTcoord_t samurai_screen_y = round((window.getSize().y / 2.0) / globalScaleY);
+    //GTcoord_t samurai_screen_x = round(view.getSize().x / 2.0); // / globalScaleX);
+    //GTcoord_t samurai_screen_y = round(view.getSize().y / 2.0); // / globalScaleY);
 
     // let's represent everything in world coordinates as much as we can.
     // we have to start with screen coords if we want her centered - but do we?
@@ -189,8 +214,8 @@ int main(int argc, char *argv[])
     // screen coords.
     // perhaps a GTviewport class?
     // anyway, figure out what the window's presence is in world coordinates.
-    GTcoord_t viewport_world_width = window.getSize().x / globalScaleX;
-    GTcoord_t viewport_world_height = window.getSize().y / globalScaleY;
+    GTcoord_t viewport_world_width = view.getSize().x; // / globalScaleX;
+    GTcoord_t viewport_world_height = view.getSize().y; // / globalScaleY;
     GTcoord_t viewport_world_ulx = samurai_world_x - (viewport_world_width / 2);
     GTcoord_t viewport_world_uly = samurai_world_y - (viewport_world_height / 2);
 
@@ -203,29 +228,31 @@ int main(int argc, char *argv[])
     GTcoord_t viewport_world_right_scroll_margin = 64 + 8;      // 4 tiles + about half a character width
 
 
-    //ok! now let's do a quick thing to add the map's layers to our scene objects and see what we get
-    // then I'll just make layers drawable/transformable and that's what it takes
-    // - that works
-    // - Layers should all have their own separate transforms so you can do multiple parallax and stuff
-    //   - similarly I don't think the map itself should be a drawable... or should it?
-    // - should the map have a transform?
-    // - that could be global_transform
-    float layerPosX = 0.0, layerPosY = 0.0;
-    //work out how to derive these from samurai's world position
-    //recall that if we want the map to appear to move left, we move its position right
-    // to center the character's hot spot, hm.
-    layerPosX = ((window.getSize().x / 2.0) / globalScaleX) - samurai_world_x;
-    layerPosY = ((window.getSize().y / 2.0) / globalScaleY) - samurai_world_y;
-    // that's good for an initial spot. Here reckon the max and min layer positions:
-    // remember that max of 0 bc we move it "backwards" wrt how it appears to move onscreen
-    float minLayerPosX = -(mapWidth-(window.getSize().x / globalScaleX));
-    float maxLayerPosX = 0.0;
-    float minLayerPosY = -(mapHeight-(window.getSize().y / globalScaleY));
-    float maxLayerPosY = 0.0;
-    // we'll check against those when moving herself around, but for now allow any position at start.
+    // //ok! now let's do a quick thing to add the map's layers to our scene objects and see what we get
+    // // then I'll just make layers drawable/transformable and that's what it takes
+    // // - that works
+    // // - Layers should all have their own separate transforms so you can do multiple parallax and stuff
+    // //   - similarly I don't think the map itself should be a drawable... or should it?
+    // // - should the map have a transform?
+    // // - that could be global_transform
+    // float layerPosX = 0.0, layerPosY = 0.0;
+    // //work out how to derive these from samurai's world position
+    // //recall that if we want the map to appear to move left, we move its position right
+    // // to center the character's hot spot, hm.
+    // // layerPosX = ((view.getSize().x / 2.0) / globalScaleX) - samurai_world_x;
+    // // layerPosY = ((view.getSize().y / 2.0) / globalScaleY) - samurai_world_y;
+    // layerPosX = (view.getSize().x / 2.0) - samurai_world_x;
+    // layerPosY = (view.getSize().y / 2.0) - samurai_world_y;
+    // // that's good for an initial spot. Here reckon the max and min layer positions:
+    // // remember that max of 0 bc we move it "backwards" wrt how it appears to move onscreen
+    // float minLayerPosX = -(mapWidth-(view.getSize().x)); // / globalScaleX));
+    // float maxLayerPosX = 0.0;
+    // float minLayerPosY = -(mapHeight-(view.getSize().y)); // / globalScaleY));
+    // float maxLayerPosY = 0.0;
+    // // we'll check against those when moving herself around, but for now allow any position at start.
 
-    printf("Viewport ul: %d, %d dims: %d x %d lyrpos %f, %f\n",viewport_world_ulx,viewport_world_uly,viewport_world_width,viewport_world_height,
-        layerPosX,layerPosY);
+    // printf("Viewport ul: %d, %d dims: %d x %d lyrpos %f, %f\n",viewport_world_ulx,viewport_world_uly,viewport_world_width,viewport_world_height,
+    //     layerPosX,layerPosY);
 
 
     // add the map layers in order by names: Background, BGOverlay, Gettables, <sprites go here>, Front
@@ -241,7 +268,7 @@ int main(int argc, char *argv[])
             auto slyr = std::shared_ptr<GTSFMapLayer>(new GTSFMapLayer(lyr.get()));
 
             slyr->setOrigin(0.0,0.0);              // WORK THIS OUT AT SOME POINT for now just draw from ul corner
-            slyr->setPosition(layerPosX,layerPosY);            // same
+            //slyr->setPosition(layerPosX,layerPosY);            // same
             scene_objects.push_back(slyr.get());
             slayers.push_back(slyr);
         } else {
@@ -269,7 +296,7 @@ int main(int argc, char *argv[])
     if(lyr != nullptr) {
         auto slyr = std::shared_ptr<GTSFMapLayer>(new GTSFMapLayer(lyr.get()));
         slyr->setOrigin(0.0,0.0);              // WORK THIS OUT AT SOME POINT for now just draw from ul corner
-        slyr->setPosition(layerPosX,layerPosY);            // same
+        //slyr->setPosition(layerPosX,layerPosY);            // same
         scene_objects.push_back(slyr.get());
         slayers.push_back(slyr);
     } else {
@@ -285,7 +312,7 @@ int main(int argc, char *argv[])
     } else {
         auto slyr = std::shared_ptr<GTSFMapLayer>(new GTSFMapLayer(interaction_layer.get()));
         slyr->setOrigin(0.0,0.0);              // WORK THIS OUT AT SOME POINT for now just draw from ul corner
-        slyr->setPosition(layerPosX,layerPosY);            // same
+        //slyr->setPosition(layerPosX,layerPosY);            // same
         scene_objects.push_back(slyr.get());
         slayers.push_back(slyr);
         interaction_slayer = slyr;
@@ -299,7 +326,7 @@ int main(int argc, char *argv[])
     // MAIN LOOP =============================================================================================
 
     //initial clear for trails version
-    //window.clear(sf::Color::Black);
+    //view.clear(sf::Color::Black);
 
 
     // handle ongoing stuff like held down keys or stick 
@@ -495,12 +522,18 @@ int main(int argc, char *argv[])
                 }
 
                 // OK so derive the layers' position from the viewport position
-                layerPosX = -viewport_world_ulx;
-                layerPosY = -viewport_world_uly;
+                //layerPosX = -viewport_world_ulx;
+                //layerPosY = -viewport_world_uly;
+                // view-based way
+                //printf("Moving view center to %f, %f\n",viewport_world_ulx + (view.getSize().x / 2),
+                //    viewport_world_uly + (view.getSize().y / 2));
+                // for some reason this doesn't make the view scroll - maybe need to setView over n over
+                view.setCenter(viewport_world_ulx + (view.getSize().x / 2),
+                    viewport_world_uly + (view.getSize().y / 2));
 
                 // then derive samurai onscreen position from her world position relative to the viewport, yes?
-                samurai_screen_x = (samurai_world_x - viewport_world_ulx);
-                samurai_screen_y = (samurai_world_y - viewport_world_uly);
+                //samurai_screen_x = (samurai_world_x - viewport_world_ulx);
+                //samurai_screen_y = (samurai_world_y - viewport_world_uly);
             } else {
                 //since she didn't actually move, make her idle
                 samurai.set_action("Idle");             // write methods that do this w/index
@@ -511,13 +544,18 @@ int main(int argc, char *argv[])
             samurai.set_action("Idle");             // write methods that do this w/index
         }
 
+        //see if this makes view scroll - yup that does it
+        window.setView(view);
+
         // draw layers!
-        for(auto lyr: slayers) {
-            lyr->setPosition(layerPosX,layerPosY);
-        }
+        // for(auto lyr: slayers) {
+        //     lyr->setPosition(layerPosX,layerPosY);
+        // }
 
         //position character - platspec bc it's rendering-related
-        samurai_gtsf_actor.setPosition(samurai_screen_x,samurai_screen_y);
+        //samurai_gtsf_actor.setPosition(samurai_screen_x,samurai_screen_y);
+        // with viewport should be able to do world?
+        samurai_gtsf_actor.setPosition(samurai_world_x, samurai_world_y);
 
         // clear the window with black color
         // let's not do this anymore; assume tile map will do it? 
@@ -528,8 +566,8 @@ int main(int argc, char *argv[])
         // draw everything here...
         // again, simple kludgy way to do a scene graph
         for(auto sobj : scene_objects) {
-            // apply global transform to everything
-            window.draw(*sobj,globalTransform);
+            //draws to current view
+            window.draw(*sobj); //,globalTransform);
         }
 
         // end the current frame
