@@ -40,28 +40,33 @@ int main(int argc, char *argv[])
     //section worked on entrapta
     window.setVerticalSyncEnabled(true); // call it once, after creating the window
 
-    //set a view
-    //sf::View view = window.getView();
-    // view by center / size in world coords
-    // world-relative - hand-entered values from "start_point" point in map data
-    // GTcoord_t samurai_world_x = 198;
-    // GTcoord_t samurai_world_y = 410;
-    sf::View view(sf::Vector2f(198,410),  // center
-        sf::Vector2f(480.0,360.0f));
-//    window.setView(view);
-    // define a centered viewport, with half the size of the window
-    //view.setViewport(sf::FloatRect(0.25f, 0.25, 0.5f, 0.5f));
-    // so figure out the fraction of the window the 480x360 occupies
-    float fraction_w = 480.0 / window.getSize().x;
-    float fraction_h = 360.0 / window.getSize().y;
-    float margin_x = (1.0 - fraction_w) / 2.0;
-    float margin_y = (1.0 - fraction_h)  / 2.0;
-    view.zoom(0.5);     //hardcode scale factor
-    printf("fraction_w %f h %f margx %f margy %f\n",fraction_w, fraction_h, margin_x, margin_y);
-    view.setViewport(sf::FloatRect(margin_x, margin_y, fraction_w,fraction_h));
-    //view.setViewport(sf::FloatRect(0.0,0.0,0.5,1.0));
-    window.setView(view);
+    // move this down by scrolling view setup
+//     // viewport setup: figure out a size for it - hardcodey here
+//     GTcoord_t view_width = 480;
+//     GTcoord_t view_height = 360;
 
+//     //set a view
+//     //sf::View view = window.getView();
+//     // view by center / size in world coords
+//     // world-relative - hand-entered values from "start_point" point in map data
+//     // GTcoord_t samurai_world_x = 198;
+//     // GTcoord_t samurai_world_y = 410;
+//     sf::View view(sf::Vector2f(198,410),  // center
+//         sf::Vector2f(480.0,360.0f));
+// //    window.setView(view);
+//     // define a centered viewport, with half the size of the window
+//     //view.setViewport(sf::FloatRect(0.25f, 0.25, 0.5f, 0.5f));
+//     // so figure out the fraction of the window the 480x360 occupies
+//     float fraction_w = 480.0 / window.getSize().x;
+//     float fraction_h = 360.0 / window.getSize().y;
+//     float margin_x = (1.0 - fraction_w) / 2.0;
+//     float margin_y = (1.0 - fraction_h)  / 2.0;
+//     view.zoom(0.5);     //hardcode scale factor
+//     printf("fraction_w %f h %f margx %f margy %f\n",fraction_w, fraction_h, margin_x, margin_y);
+//     view.setViewport(sf::FloatRect(margin_x, margin_y, fraction_w,fraction_h));
+//     //view.setViewport(sf::FloatRect(0.0,0.0,0.5,1.0));
+//     window.setView(view);
+    //end move this down by scrolling view setup
 
     //Check for joystick!
     printf("Checking for joysticks...\n");
@@ -103,26 +108,6 @@ int main(int argc, char *argv[])
 
     // KLUDGY WAY TO DO A SCENE GRAPH
     std::vector<sf::Drawable *> scene_objects;
-
-    // // set up some stuff to draw
-    // sf::CircleShape circy(50.f);
-    // circy.setFillColor(sf::Color(100, 250, 50));
-    // circy.setOrigin(0,0);
-    // scene_objects.push_back(&circy);
-
-    // // let's find out if you can transform VertexArrays
-    // xfVertArray tri(sf::PrimitiveType::Triangles,3, nullptr);
-    // sf::Vertex vert = sf::Vertex(sf::Vector2f(-50.0,-50.0),sf::Color(255,0,0));
-    // tri.append(vert);
-    // vert = sf::Vertex(sf::Vector2f(50.0,-50.0),sf::Color(0,255,0));
-    // tri.append(vert);
-    // vert = sf::Vertex(sf::Vector2f(0.0,50.0),sf::Color(0,0,255));
-    // tri.append(vert);
-    // tri.setPosition(150.0,150.0);
-    // tri.setOrigin(0.0,0.0);
-    // float trot = 30.0;
-    // tri.setRotation(trot);
-    // scene_objects.push_back(&tri);
 
     // map load & setup ----------------------------------------------------------------------------------------------------------
 
@@ -196,6 +181,17 @@ int main(int argc, char *argv[])
     GTcoord_t samurai_world_x = 198;
     GTcoord_t samurai_world_y = 410;
 
+    // SET UP SCROLLING VIEWPORT -----------------------------------------------------------------------------------------------------------------------------------------------
+    // viewport setup: figure out a size for it - hardcodey here
+    GTcoord_t view_screen_width = 480;
+    GTcoord_t view_screen_height = 360;
+    int zoom_factor = 2;
+    //BECAUSE WE ARE ZOOMING, THE REAL WIDTH/HEIGHT ARE HALF THAT
+    // GENERALIZE THIS!!!!!!!!!!!!!!!
+    GTcoord_t view_width = view_screen_width / zoom_factor;
+    GTcoord_t view_height = view_screen_height / zoom_factor;
+
+
     // minimum / maximum positions; could do better but let's just make it half a tile away from 
     // edges in x, 1 pixel up from the bottom in y, 20 pix down from top
     GTcoord_t min_samurai_world_x = 8;
@@ -203,57 +199,52 @@ int main(int argc, char *argv[])
     GTcoord_t min_samurai_world_y = 20;
     GTcoord_t max_samurai_world_y = mapHeight - 1;
 
-    // center her onscreen; I don't think I need to scale pixels - oh, nope, do
-    // also figure out how to make relative to a viewport
-    //GTcoord_t samurai_screen_x = round(view.getSize().x / 2.0); // / globalScaleX);
-    //GTcoord_t samurai_screen_y = round(view.getSize().y / 2.0); // / globalScaleY);
-
-    // let's represent everything in world coordinates as much as we can.
-    // we have to start with screen coords if we want her centered - but do we?
-    // there should be a function that, given her world coordinates, figures out the appropriate
-    // screen coords.
-    // perhaps a GTviewport class?
-    // anyway, figure out what the window's presence is in world coordinates.
-    GTcoord_t viewport_world_width = view.getSize().x; // / globalScaleX;
-    GTcoord_t viewport_world_height = view.getSize().y; // / globalScaleY;
-    GTcoord_t viewport_world_ulx = samurai_world_x - (viewport_world_width / 2);
-    GTcoord_t viewport_world_uly = samurai_world_y - (viewport_world_height / 2);
-
+    GTcoord_t viewport_world_ulx = samurai_world_x - (view_width / 2);
+    GTcoord_t viewport_world_uly = samurai_world_y - (view_height / 2);
 
     // then set up scroll margins so she can wander around a bit before the screen starts scrolling - assume symmetrical?
     // nah, have separate, like the max world y is
-    GTcoord_t viewport_world_top_scroll_margin = 84;            // 4 tiles + rough character height
-    GTcoord_t viewport_world_bottom_scroll_margin = 64;         // 4 tiles
-    GTcoord_t viewport_world_left_scroll_margin = 64 + 8;       // 4 tiles + about half a character width
-    GTcoord_t viewport_world_right_scroll_margin = 64 + 8;      // 4 tiles + about half a character width
+
+    GTcoord_t viewport_top_scroll_margin = 84;            // 4 tiles + rough character height
+    GTcoord_t viewport_bottom_scroll_margin = 64;         // 4 tiles
+    GTcoord_t viewport_left_scroll_margin = 64 + 8;       // 4 tiles + about half a character width
+    GTcoord_t viewport_right_scroll_margin = 64 + 8;      // 4 tiles + about half a character width
+
+    // construct a scrolling view out of that
+    // ... should viewport world_ulx/y need to be handed in? they can be deduced - assuming the tracking point is to start out centered. So yeah, hand them in for now
+    GTScrollBoxViewport gtsbview(viewport_world_ulx, viewport_world_uly, view_width, view_height, mapWidth, mapHeight,          //initial upper-left in world coords, w/h of view, w/h of world
+        samurai_world_x, samurai_world_y,           // tracking point
+        min_samurai_world_x, max_samurai_world_x, min_samurai_world_x, max_samurai_world_y,
+        viewport_left_scroll_margin, viewport_right_scroll_margin, viewport_top_scroll_margin, viewport_bottom_scroll_margin);
+
+    //set a view - THIS NEEDS TO BE PART OF GTSF WRAPPER FOR VIEW!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //sf::View view = window.getView();
+    // view by center / size in world coords
+    // world-relative - hand-entered values from "start_point" point in map data
+    // GTcoord_t samurai_world_x = 198;
+    // GTcoord_t samurai_world_y = 410;
+    sf::View view(sf::Vector2f(samurai_world_x,samurai_world_y),  // center - wrapper will get this from gtsbview's tracking point
+        sf::Vector2f(view_screen_width,view_screen_height));
+//    window.setView(view);
+    // define a centered viewport, with half the size of the window
+    //view.setViewport(sf::FloatRect(0.25f, 0.25, 0.5f, 0.5f));
+    // so figure out the fraction of the window the 480x360 occupies
+    float fraction_w = 480.0 / window.getSize().x;
+    float fraction_h = 360.0 / window.getSize().y;
+    float margin_x = (1.0 - fraction_w) / 2.0;
+    float margin_y = (1.0 - fraction_h)  / 2.0;
+    view.zoom(1.0 / zoom_factor);
+    printf("fraction_w %f h %f margx %f margy %f\n",fraction_w, fraction_h, margin_x, margin_y);
+    view.setViewport(sf::FloatRect(margin_x, margin_y, fraction_w,fraction_h));
+    //view.setViewport(sf::FloatRect(0.0,0.0,0.5,1.0));
+    // end THIS NEEDS TO BE PART OF GTSF WRAPPER FOR VIEW!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    window.setView(view);
 
 
-    // //ok! now let's do a quick thing to add the map's layers to our scene objects and see what we get
-    // // then I'll just make layers drawable/transformable and that's what it takes
-    // // - that works
-    // // - Layers should all have their own separate transforms so you can do multiple parallax and stuff
-    // //   - similarly I don't think the map itself should be a drawable... or should it?
-    // // - should the map have a transform?
-    // // - that could be global_transform
-    // float layerPosX = 0.0, layerPosY = 0.0;
-    // //work out how to derive these from samurai's world position
-    // //recall that if we want the map to appear to move left, we move its position right
-    // // to center the character's hot spot, hm.
-    // // layerPosX = ((view.getSize().x / 2.0) / globalScaleX) - samurai_world_x;
-    // // layerPosY = ((view.getSize().y / 2.0) / globalScaleY) - samurai_world_y;
-    // layerPosX = (view.getSize().x / 2.0) - samurai_world_x;
-    // layerPosY = (view.getSize().y / 2.0) - samurai_world_y;
-    // // that's good for an initial spot. Here reckon the max and min layer positions:
-    // // remember that max of 0 bc we move it "backwards" wrt how it appears to move onscreen
-    // float minLayerPosX = -(mapWidth-(view.getSize().x)); // / globalScaleX));
-    // float maxLayerPosX = 0.0;
-    // float minLayerPosY = -(mapHeight-(view.getSize().y)); // / globalScaleY));
-    // float maxLayerPosY = 0.0;
-    // // we'll check against those when moving herself around, but for now allow any position at start.
 
-    // printf("Viewport ul: %d, %d dims: %d x %d lyrpos %f, %f\n",viewport_world_ulx,viewport_world_uly,viewport_world_width,viewport_world_height,
-    //     layerPosX,layerPosY);
 
+    // MAP LAYERS SETUP ---------------------------------------------------------------------------------------------------
 
     // add the map layers in order by names: Background, BGOverlay, Gettables, <sprites go here>, Front
 
@@ -317,10 +308,7 @@ int main(int argc, char *argv[])
         slayers.push_back(slyr);
         interaction_slayer = slyr;
     }
-    // what about scene graph? Let's not put them on there... do them in loop down below
 
-    // for map scrolling
-    //float scroll_velocity = 5.0;
     // end MAP AND CHARACTER SETUP ------------------------------------------------------------------------------------------------------------------
 
     // MAIN LOOP =============================================================================================
@@ -470,7 +458,7 @@ int main(int argc, char *argv[])
             }
             
 
-            //clamp to world bounds
+            //clamp to world bounds - DO WE NEED THIS WITH SCROLLING VIEW?
             if(samurai_world_x < min_samurai_world_x) samurai_world_x = min_samurai_world_x;
             if(samurai_world_y < min_samurai_world_y) samurai_world_y = min_samurai_world_y;
             if(samurai_world_x > max_samurai_world_x) samurai_world_x = max_samurai_world_x;
@@ -493,33 +481,37 @@ int main(int argc, char *argv[])
                     samurai.set_direction("U");
                 }
 
-                // if her new position is within the (world coord) scroll box, let her move and all's well
-                // so - if she's NOT, we need to do something about scroll position, IF WE CAN!
-                // memorize last viewport world ulx & y so we don't change anything when we don't need to
-                // I think there's some rockiness bc of that
-                if(samurai_world_x < viewport_world_ulx + viewport_world_left_scroll_margin) {
-                    //she's off the left edge of the scroll box
-                    // so: if the view can move left, have it do so. 
-                    viewport_world_ulx -= (viewport_world_ulx + viewport_world_left_scroll_margin) - samurai_world_x;
-                    if(viewport_world_ulx < 0) viewport_world_ulx = 0;
-                } else if(samurai_world_x > viewport_world_ulx + viewport_world_width - viewport_world_right_scroll_margin) {
-                    //she's off the right edge of the scroll box
-                    // so: if the view can move right, have it do so. 
-                    viewport_world_ulx += samurai_world_x - (viewport_world_ulx + viewport_world_width - viewport_world_right_scroll_margin);
-                    if(viewport_world_ulx > mapWidth - viewport_world_width) viewport_world_ulx = mapWidth - viewport_world_width;
-                }
+                // reckon scroll box with gtsbview - LATER DO WITH GTFS WRAPPER
+                gtsbview.set_tracking_point(samurai_world_x, samurai_world_y);
 
-                if(samurai_world_y < viewport_world_uly + viewport_world_top_scroll_margin) {
-                    //she's off the top edge of the scroll box
-                    // so: if the view can move down, have it do so. 
-                    viewport_world_uly -= (viewport_world_uly + viewport_world_top_scroll_margin) - samurai_world_y;
-                    if(viewport_world_uly < 0) viewport_world_uly = 0;
-                } else if(samurai_world_y > viewport_world_uly + viewport_world_height - viewport_world_bottom_scroll_margin) {
-                    //she's off the bottom edge of the scroll box
-                    // so: if the view can move down, have it do so. 
-                    viewport_world_uly += samurai_world_y - (viewport_world_uly + viewport_world_height - viewport_world_bottom_scroll_margin);
-                    if(viewport_world_uly > mapHeight - viewport_world_height) viewport_world_uly = mapHeight - viewport_world_height;
-                }
+                //scroll box reckoning old
+                // // if her new position is within the (world coord) scroll box, let her move and all's well
+                // // so - if she's NOT, we need to do something about scroll position, IF WE CAN!
+                // // memorize last viewport world ulx & y so we don't change anything when we don't need to
+                // // I think there's some rockiness bc of that
+                // if(samurai_world_x < viewport_world_ulx + viewport_world_left_scroll_margin) {
+                //     //she's off the left edge of the scroll box
+                //     // so: if the view can move left, have it do so. 
+                //     viewport_world_ulx -= (viewport_world_ulx + viewport_world_left_scroll_margin) - samurai_world_x;
+                //     if(viewport_world_ulx < 0) viewport_world_ulx = 0;
+                // } else if(samurai_world_x > viewport_world_ulx + viewport_world_width - viewport_world_right_scroll_margin) {
+                //     //she's off the right edge of the scroll box
+                //     // so: if the view can move right, have it do so. 
+                //     viewport_world_ulx += samurai_world_x - (viewport_world_ulx + viewport_world_width - viewport_world_right_scroll_margin);
+                //     if(viewport_world_ulx > mapWidth - viewport_world_width) viewport_world_ulx = mapWidth - viewport_world_width;
+                // }
+
+                // if(samurai_world_y < viewport_world_uly + viewport_world_top_scroll_margin) {
+                //     //she's off the top edge of the scroll box
+                //     // so: if the view can move down, have it do so. 
+                //     viewport_world_uly -= (viewport_world_uly + viewport_world_top_scroll_margin) - samurai_world_y;
+                //     if(viewport_world_uly < 0) viewport_world_uly = 0;
+                // } else if(samurai_world_y > viewport_world_uly + viewport_world_height - viewport_world_bottom_scroll_margin) {
+                //     //she's off the bottom edge of the scroll box
+                //     // so: if the view can move down, have it do so. 
+                //     viewport_world_uly += samurai_world_y - (viewport_world_uly + viewport_world_height - viewport_world_bottom_scroll_margin);
+                //     if(viewport_world_uly > mapHeight - viewport_world_height) viewport_world_uly = mapHeight - viewport_world_height;
+                // }
 
                 // OK so derive the layers' position from the viewport position
                 //layerPosX = -viewport_world_ulx;
@@ -527,9 +519,11 @@ int main(int argc, char *argv[])
                 // view-based way
                 //printf("Moving view center to %f, %f\n",viewport_world_ulx + (view.getSize().x / 2),
                 //    viewport_world_uly + (view.getSize().y / 2));
-                // for some reason this doesn't make the view scroll - maybe need to setView over n over
-                view.setCenter(viewport_world_ulx + (view.getSize().x / 2),
-                    viewport_world_uly + (view.getSize().y / 2));
+                // for some reason this doesn't make the view scroll - maybe need to setView over n over - oh yup
+                // view.setCenter(viewport_world_ulx + (view.getSize().x / 2),
+                //     viewport_world_uly + (view.getSize().y / 2));
+                // this should be handled by the GTFS wrapper for the view
+                view.setCenter(gtsbview.world_ulx + (gtsbview.wid / 2), gtsbview.world_uly + (gtsbview.ht / 2));
 
                 // then derive samurai onscreen position from her world position relative to the viewport, yes?
                 //samurai_screen_x = (samurai_world_x - viewport_world_ulx);
