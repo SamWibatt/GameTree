@@ -242,9 +242,39 @@ namespace gtree_sfml {
           }
         }
       }
-
-
   };
+
+  // GTFSViewport ============================================================================================
+
+  // ok this is a bit different - it will wrap a GTViewport but also a sf::View
+  // Should it be a view subclass? That could be kinda fun
+
+  class GTFSViewport : public sf::View {
+    public:
+      //data members
+      GTViewport *vp;
+
+    public:
+      GTFSViewport(GTViewport *nvp) {
+        vp = nvp;
+      }
+      // do a detailed one with all the dimensions and positions and stuff... do we need it?
+      virtual ~GTFSViewport() {}
+  };
+
+  class GTFSScrollBoxViewport : public sf::View {
+    public:
+      //data members
+      GTScrollBoxViewport *sbvp;
+
+    public:
+      GTFSScrollBoxViewport(GTScrollBoxViewport *nvp) {
+        sbvp = nvp;
+      }
+      // do a detailed one with all the dimensions and positions and stuff ... if needed
+      virtual ~GTFSScrollBoxViewport() {}
+  };
+
 }
 
 #endif
