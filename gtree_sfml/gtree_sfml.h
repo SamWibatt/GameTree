@@ -255,10 +255,14 @@ namespace gtree_sfml {
       GTViewport *vp;
 
     public:
-      GTFSViewport(GTViewport *nvp) {
+      GTFSViewport(GTViewport *nvp, int zoom_factor = 1) {
         vp = nvp;
+        setCenter(vp->world_ulx + (vp->wid/2), vp->world_uly + (vp->ht/2));
+        setSize(vp->wid * zoom_factor, vp->ht * zoom_factor);   //these are *world* coords so mult by zoom
+        zoom(1.0 / zoom_factor);
       }
       // do a detailed one with all the dimensions and positions and stuff... do we need it?
+      // nah, the GTViewport will have the deets
       virtual ~GTFSViewport() {}
   };
 
@@ -268,8 +272,36 @@ namespace gtree_sfml {
       GTScrollBoxViewport *sbvp;
 
     public:
-      GTFSScrollBoxViewport(GTScrollBoxViewport *nvp) {
+      GTFSScrollBoxViewport(GTScrollBoxViewport *nvp, int zoom_factor = 1) {
         sbvp = nvp;
+
+        // //assuming the input nvp has the deets
+
+        //something like this:
+
+        // sf::View view(sf::Vector2f(samurai_world_x,samurai_world_y),  // center - wrapper will get this from gtsbview's tracking point
+        //     sf::Vector2f(view_screen_width,view_screen_height));
+        // assuming centering on track_x and y - 
+        // setCenter(sbvp->track_x, sbvp->track_y);
+        // or let's try centering using the ulx/uly; that will make it so it sets the center in the
+        // middle of the view no matter where track point is?
+        setCenter(sbvp->world_ulx + (sbvp->wid/2), sbvp->world_uly + (sbvp->ht/2));
+        setSize(sbvp->wid * zoom_factor, sbvp->ht * zoom_factor);   //these are *world* coords so mult by zoom
+
+        // view.zoom(1.0 / zoom_factor);
+        zoom(1.0 / zoom_factor);
+
+        // should we pass in window position?
+        // // so figure out the fraction of the window the 480x360 occupies
+        // float fraction_w = 480.0 / window.getSize().x;
+        // float fraction_h = 360.0 / window.getSize().y;
+        // float margin_x = (1.0 - fraction_w) / 2.0;
+        // float margin_y = (1.0 - fraction_h)  / 2.0;
+
+
+        // printf("fraction_w %f h %f margx %f margy %f\n",fraction_w, fraction_h, margin_x, margin_y);
+        // view.setViewport(sf::FloatRect(margin_x, margin_y, fraction_w,fraction_h));
+
       }
       // do a detailed one with all the dimensions and positions and stuff ... if needed
       virtual ~GTFSScrollBoxViewport() {}

@@ -4,10 +4,8 @@
 #include "gametree.h"
 #include "gtree_sfml.h"
 
-
 using namespace gt;
 using namespace gtree_sfml;
-
 
 // MAIN ###########################################################################################################################
 
@@ -25,12 +23,6 @@ int main(int argc, char *argv[])
     sf::VideoMode screenMode = sf::VideoMode(720, 400);
     //sf::VideoMode screenMode = sf::VideoMode(600, 600);
 
-    // OK, let's get rid of globalScale/Transform and use a view
-
-    // sf::Transform globalTransform = sf::Transform();
-    // float globalScaleX = 2.0;
-    // float globalScaleY = 2.0;
-    // globalTransform.scale(sf::Vector2f(globalScaleX,globalScaleY));
     bool fullscreen = false;         // can derive from whether any valid mode was found, etc.
 
     //CREATE WINDOW
@@ -39,34 +31,6 @@ int main(int argc, char *argv[])
     //how do you make vsync actually work? see https://www.maketecheasier.com/get-rid-screen-tearing-linux/ - yup, like that, the intel
     //section worked on entrapta
     window.setVerticalSyncEnabled(true); // call it once, after creating the window
-
-    // move this down by scrolling view setup
-//     // viewport setup: figure out a size for it - hardcodey here
-//     GTcoord_t view_width = 480;
-//     GTcoord_t view_height = 360;
-
-//     //set a view
-//     //sf::View view = window.getView();
-//     // view by center / size in world coords
-//     // world-relative - hand-entered values from "start_point" point in map data
-//     // GTcoord_t samurai_world_x = 198;
-//     // GTcoord_t samurai_world_y = 410;
-//     sf::View view(sf::Vector2f(198,410),  // center
-//         sf::Vector2f(480.0,360.0f));
-// //    window.setView(view);
-//     // define a centered viewport, with half the size of the window
-//     //view.setViewport(sf::FloatRect(0.25f, 0.25, 0.5f, 0.5f));
-//     // so figure out the fraction of the window the 480x360 occupies
-//     float fraction_w = 480.0 / window.getSize().x;
-//     float fraction_h = 360.0 / window.getSize().y;
-//     float margin_x = (1.0 - fraction_w) / 2.0;
-//     float margin_y = (1.0 - fraction_h)  / 2.0;
-//     view.zoom(0.5);     //hardcode scale factor
-//     printf("fraction_w %f h %f margx %f margy %f\n",fraction_w, fraction_h, margin_x, margin_y);
-//     view.setViewport(sf::FloatRect(margin_x, margin_y, fraction_w,fraction_h));
-//     //view.setViewport(sf::FloatRect(0.0,0.0,0.5,1.0));
-//     window.setView(view);
-    //end move this down by scrolling view setup
 
     //Check for joystick!
     printf("Checking for joysticks...\n");
@@ -126,7 +90,6 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-
     // Samurai sprite load & setup -----------------------------------------------------------------------------------------------
     // snag the Samurai lady sprite-bank
     std::shared_ptr<GTSpriteBank> samurai_gt_sbank = std::shared_ptr<GTSpriteBank>(new GTSpriteBank());
@@ -140,8 +103,6 @@ int main(int argc, char *argv[])
 
     //get sprite bank loaded before constructing an actor from it - does this help with Invisible Samurai bug? newp
     GTActor samurai(samurai_gt_sbank);
-
-    //samurai.set_sprite_bank(samurai_sbank);
 
     //init samurai frame & such - temp, data-drive
     samurai.register_clock(g_time);
@@ -217,15 +178,11 @@ int main(int argc, char *argv[])
         min_samurai_world_x, max_samurai_world_x, min_samurai_world_x, max_samurai_world_y,
         viewport_left_scroll_margin, viewport_right_scroll_margin, viewport_top_scroll_margin, viewport_bottom_scroll_margin);
 
-    //set a view - THIS NEEDS TO BE PART OF GTSF WRAPPER FOR VIEW!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //sf::View view = window.getView();
-    // view by center / size in world coords
-    // world-relative - hand-entered values from "start_point" point in map data
-    // GTcoord_t samurai_world_x = 198;
-    // GTcoord_t samurai_world_y = 410;
-    sf::View view(sf::Vector2f(samurai_world_x,samurai_world_y),  // center - wrapper will get this from gtsbview's tracking point
-        sf::Vector2f(view_screen_width,view_screen_height));
-//    window.setView(view);
+    // HERE WE WILL INSTEAD CREATE A GTSFScrollBoxViewport out of gtsbview
+    GTFSScrollBoxViewport view(&gtsbview,zoom_factor);
+
+    // sf::View view(sf::Vector2f(samurai_world_x,samurai_world_y),  // center - wrapper will get this from gtsbview's tracking point
+    //     sf::Vector2f(view_screen_width,view_screen_height));
     // define a centered viewport, with half the size of the window
     //view.setViewport(sf::FloatRect(0.25f, 0.25, 0.5f, 0.5f));
     // so figure out the fraction of the window the 480x360 occupies
@@ -233,11 +190,8 @@ int main(int argc, char *argv[])
     float fraction_h = 360.0 / window.getSize().y;
     float margin_x = (1.0 - fraction_w) / 2.0;
     float margin_y = (1.0 - fraction_h)  / 2.0;
-    view.zoom(1.0 / zoom_factor);
     printf("fraction_w %f h %f margx %f margy %f\n",fraction_w, fraction_h, margin_x, margin_y);
     view.setViewport(sf::FloatRect(margin_x, margin_y, fraction_w,fraction_h));
-    //view.setViewport(sf::FloatRect(0.0,0.0,0.5,1.0));
-    // end THIS NEEDS TO BE PART OF GTSF WRAPPER FOR VIEW!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     window.setView(view);
 
@@ -269,17 +223,6 @@ int main(int argc, char *argv[])
 
     // sprites go here!
     scene_objects.push_back(&samurai_gtsf_actor);
-    //scene_objects.push_back(samurai_gtsf_actor.spr.get());      //hm
-
-    //temp, put a sprite with whole sheet texture there - looks good
-    // Sprite s;
-    // s.setTexture(samurai_gtsf_actor.sfsb->spritesheet);
-    // scene_objects.push_back(&s);
-
-    // printf("s texture: %lu tr: (%d,%d - w%d,h%d) org: %f,%f\n",s.getTexture(),
-    //     s.getTextureRect().left, s.getTextureRect().top, s.getTextureRect().width, s.getTextureRect().height,
-    //     s.getOrigin().x, s.getOrigin().y);
-
 
     // then add the front layer
     std::string nam = "Front";
@@ -313,10 +256,6 @@ int main(int argc, char *argv[])
 
     // MAIN LOOP =============================================================================================
 
-    //initial clear for trails version
-    //view.clear(sf::Color::Black);
-
-
     // handle ongoing stuff like held down keys or stick 
     // NEED TO ACCOUNT FOR TIME ELAPSED BT FRAMES
     float deltaX, deltaY;
@@ -328,9 +267,6 @@ int main(int argc, char *argv[])
     {
         //timing stuff see https://www.sfml-dev.org/tutorials/2.5/system-time.php
         sf::Time elapsed = clock.restart();
-        //RIDICULOUSLY VERBOSE DEBUG
-        //this ranges from 1 to 19, with the large majority being 16
-        //printf("frame elapsed millis = %d\n",elapsed.asMilliseconds());
 
         //so, we need to update the global event clock
         //updateGame(elapsed);
@@ -359,8 +295,6 @@ int main(int argc, char *argv[])
             float stick_y = sf::Joystick::getAxisPosition(firststick,sf::Joystick::Axis::Y);
             
             //move according to scaled joystick value
-            //have a dead spot in the middle of the joystick so princess doesn't wander when stick
-            //is released
             if(std::abs(stick_x) > joystick_deadspot) deltaX += ((stick_x / 100.0) * samurai_velocity);
             if(std::abs(stick_y) > joystick_deadspot) deltaY += ((stick_y / 100.0) * samurai_velocity);
         } 
@@ -372,11 +306,6 @@ int main(int argc, char *argv[])
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) deltaY -= samurai_velocity;
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) deltaY += samurai_velocity;
 
-        // so: if samurai is within the screen bounding box, let her just move onscreen
-        // ELSE if the screen hasn't scrolled all the way in the direction it needs to go, scroll
-        // ELSE let her move to her world min/max
-        //... the better way would be to do all the reckoning in world coordinates and derive screen from that
-        // only bother if at least one delta is nonzero bc that will affect which action she's using
         if(deltaX != 0.0 || deltaY != 0.0) {
             //printf("DeltaX %f Y %f\n",deltaX, deltaY);
 
@@ -483,51 +412,7 @@ int main(int argc, char *argv[])
 
                 // reckon scroll box with gtsbview - LATER DO WITH GTFS WRAPPER
                 gtsbview.set_tracking_point(samurai_world_x, samurai_world_y);
-
-                //scroll box reckoning old
-                // // if her new position is within the (world coord) scroll box, let her move and all's well
-                // // so - if she's NOT, we need to do something about scroll position, IF WE CAN!
-                // // memorize last viewport world ulx & y so we don't change anything when we don't need to
-                // // I think there's some rockiness bc of that
-                // if(samurai_world_x < viewport_world_ulx + viewport_world_left_scroll_margin) {
-                //     //she's off the left edge of the scroll box
-                //     // so: if the view can move left, have it do so. 
-                //     viewport_world_ulx -= (viewport_world_ulx + viewport_world_left_scroll_margin) - samurai_world_x;
-                //     if(viewport_world_ulx < 0) viewport_world_ulx = 0;
-                // } else if(samurai_world_x > viewport_world_ulx + viewport_world_width - viewport_world_right_scroll_margin) {
-                //     //she's off the right edge of the scroll box
-                //     // so: if the view can move right, have it do so. 
-                //     viewport_world_ulx += samurai_world_x - (viewport_world_ulx + viewport_world_width - viewport_world_right_scroll_margin);
-                //     if(viewport_world_ulx > mapWidth - viewport_world_width) viewport_world_ulx = mapWidth - viewport_world_width;
-                // }
-
-                // if(samurai_world_y < viewport_world_uly + viewport_world_top_scroll_margin) {
-                //     //she's off the top edge of the scroll box
-                //     // so: if the view can move down, have it do so. 
-                //     viewport_world_uly -= (viewport_world_uly + viewport_world_top_scroll_margin) - samurai_world_y;
-                //     if(viewport_world_uly < 0) viewport_world_uly = 0;
-                // } else if(samurai_world_y > viewport_world_uly + viewport_world_height - viewport_world_bottom_scroll_margin) {
-                //     //she's off the bottom edge of the scroll box
-                //     // so: if the view can move down, have it do so. 
-                //     viewport_world_uly += samurai_world_y - (viewport_world_uly + viewport_world_height - viewport_world_bottom_scroll_margin);
-                //     if(viewport_world_uly > mapHeight - viewport_world_height) viewport_world_uly = mapHeight - viewport_world_height;
-                // }
-
-                // OK so derive the layers' position from the viewport position
-                //layerPosX = -viewport_world_ulx;
-                //layerPosY = -viewport_world_uly;
-                // view-based way
-                //printf("Moving view center to %f, %f\n",viewport_world_ulx + (view.getSize().x / 2),
-                //    viewport_world_uly + (view.getSize().y / 2));
-                // for some reason this doesn't make the view scroll - maybe need to setView over n over - oh yup
-                // view.setCenter(viewport_world_ulx + (view.getSize().x / 2),
-                //     viewport_world_uly + (view.getSize().y / 2));
-                // this should be handled by the GTFS wrapper for the view
                 view.setCenter(gtsbview.world_ulx + (gtsbview.wid / 2), gtsbview.world_uly + (gtsbview.ht / 2));
-
-                // then derive samurai onscreen position from her world position relative to the viewport, yes?
-                //samurai_screen_x = (samurai_world_x - viewport_world_ulx);
-                //samurai_screen_y = (samurai_world_y - viewport_world_uly);
             } else {
                 //since she didn't actually move, make her idle
                 samurai.set_action("Idle");             // write methods that do this w/index
@@ -541,20 +426,12 @@ int main(int argc, char *argv[])
         //see if this makes view scroll - yup that does it
         window.setView(view);
 
-        // draw layers!
-        // for(auto lyr: slayers) {
-        //     lyr->setPosition(layerPosX,layerPosY);
-        // }
-
         //position character - platspec bc it's rendering-related
         //samurai_gtsf_actor.setPosition(samurai_screen_x,samurai_screen_y);
         // with viewport should be able to do world?
         samurai_gtsf_actor.setPosition(samurai_world_x, samurai_world_y);
 
         // clear the window with black color
-        // let's not do this anymore; assume tile map will do it? 
-        // only if scroll is constrained s.t. nothing outside the map shows
-        // leave it for debug purps
         window.clear(sf::Color::Black);
 
         // draw everything here...
